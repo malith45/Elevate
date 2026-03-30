@@ -1,4 +1,5 @@
 import SwiftUI
+import LocalAuthentication
 
 struct SignInView: View {
     @State private var email = ""
@@ -6,6 +7,7 @@ struct SignInView: View {
     @State private var rememberMe = false
     @State private var showPassword = false
     @State private var showSignUp = false
+    @State private var showDashboard = false
     
     // Extracted Colors
     let bgColor = Color(red: 15/255, green: 23/255, blue: 42/255) // #0F172A
@@ -102,7 +104,8 @@ struct SignInView: View {
                     
                     // Sign In Button
                     Button(action: {
-                        // Action for Sign In
+                        // Transition to dashboard
+                        showDashboard = true
                     }) {
                         Text("Sign In")
                             .font(.subheadline)
@@ -133,7 +136,7 @@ struct SignInView: View {
                     
                     // Face ID / Touch ID Button
                     Button(action: {
-                        // Biometrics action
+                        authenticate()
                     }) {
                         HStack(spacing: 8) {
                             Image(systemName: "faceid")
@@ -184,6 +187,35 @@ struct SignInView: View {
         }
         .fullScreenCover(isPresented: $showSignUp) {
             SignUpView()
+        }
+        .fullScreenCover(isPresented: $showDashboard) {
+            HomeDashboardView()
+        }
+    }
+    
+    // Biometric Authentication Controller
+    func authenticate() {
+        let context = LAContext()
+        var error: NSError?
+
+        // Check if biometrics (Face ID / Touch ID) are mathematically available
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            let reason = "Log in to your Elevate account"
+
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
+                // UI updates must happen on the main thread
+                DispatchQueue.main.async {
+                    if success {
+                        // Authorized securely
+                        showDashboard = true
+                    } else {
+                        print("Authentication failed: \(authenticationError?.localizedDescription ?? "Unknown error")")
+                    }
+                }
+            }
+        } else {
+            // Hardware doesn't support it or isn't enrolled
+            print("Biometrics unavailable: \(error?.localizedDescription ?? "No biometrics")")
         }
     }
 }

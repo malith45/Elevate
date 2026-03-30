@@ -4,7 +4,7 @@ struct SignUpView: View {
     @Environment(\.dismiss) var dismiss
     
     @State private var username = ""
-    @State private var companyCode = ""
+    @State private var organizationCode = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -67,13 +67,13 @@ struct SignUpView: View {
                             .foregroundColor(primaryText)
                     }
                     
-                    // Company Code Field
+                    // Organization Code Field
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Company Code")
+                        Text("Organization Code")
                             .font(.footnote)
                             .foregroundColor(primaryText)
                         
-                        TextField("", text: $companyCode)
+                        TextField("", text: $organizationCode)
                             .padding(.vertical, 12)
                             .padding(.horizontal, 14)
                             .background(textBoxColor)

@@ -12,6 +12,7 @@ struct ElevateApp: App {
     var body: some Scene {
         WindowGroup {
             SplashScreenView()
+                .fontDesign(.rounded)
         }
     }
 }

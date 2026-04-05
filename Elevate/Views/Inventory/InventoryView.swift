@@ -1,13 +1,15 @@
 import SwiftUI
 
 struct InventoryView: View {
+    let jobId: String
+
+    @EnvironmentObject private var appSession: AppSession
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var viewModel = InventoryViewModel()
+    @ObservedObject private var network = NetworkService.shared
     @State private var searchText: String = ""
     @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
-    
-    // Using simple state dictionaries for increment counters for layout demonstration.
-    @State private var electricalQuantities: [String: Int] = ["Relay": 1, "Contactor": 0, "Limit": 2]
-    @State private var mechanicalQuantities: [String: Int] = ["Valve": 0]
+    @State private var navigateToQuotation = false
     
     var body: some View {
         ZStack {
@@ -22,7 +24,7 @@ struct InventoryView: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.elevateTextGray)
                     TextField("Search", text: $searchText)
-                        .font(.system(size: 16))
+                        .scaledFont(size: 16)
                 }
                 .padding()
                 .background(Color.elevateLightGray.opacity(0.5))
@@ -32,61 +34,45 @@ struct InventoryView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        
-                        // ELECTRICAL COMPONENTS
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("ELECTRICAL COMPONENTS")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.elevateTextGray)
-                                Spacer()
-                                Text("15 ITEMS AVAILABLE")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.elevateTextGray)
+                        ForEach(groupedItems(), id: \.key) { category, items in
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text(category.uppercased())
+                                        .scaledFont(size: 12, weight: .bold)
+                                        .foregroundColor(.elevateTextGray)
+                                    Spacer()
+                                    Text("\(items.count) ITEMS AVAILABLE")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(.elevateTextGray)
+                                }
+
+                                ForEach(items, id: \.id) { item in
+                                    InventoryItemCard(
+                                        icon: "cube.box",
+                                        title: item.name,
+                                        desc: item.category,
+                                        price: currencyString(item.unitPrice),
+                                        quantity: viewModel.quantity(for: item.id),
+                                        onAdd: { viewModel.increment(itemId: item.id) },
+                                        onRemove: { viewModel.decrement(itemId: item.id) }
+                                    )
+                                }
                             }
-                            
-                            InventoryItemCard(
-                                icon: "bolt.fill",
-                                title: "Relay Switch 24V",
-                                desc: "OMRON Industrial",
-                                price: "LKR 4,250",
-                                quantity: binding(for: "Relay", in: $electricalQuantities)
-                            )
-                            InventoryItemCard(
-                                icon: "bolt.batteryblock.fill",
-                                title: "Contactor 3-Pole",
-                                desc: "Schneider LC1D",
-                                price: "LKR 18,400",
-                                quantity: binding(for: "Contactor", in: $electricalQuantities)
-                            )
-                            InventoryItemCard(
-                                icon: "slider.vertical.3",
-                                title: "Limit Switch",
-                                desc: "Roller Lever Type",
-                                price: "LKR 3,150",
-                                quantity: binding(for: "Limit", in: $electricalQuantities)
-                            )
                         }
-                        
-                        // MECHANICAL PARTS
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("MECHANICAL PARTS")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.elevateTextGray)
-                                Spacer()
-                                Text("12 ITEMS AVAILABLE")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.elevateTextGray)
-                            }
-                            
-                            InventoryItemCard(
-                                icon: "wrench.and.screwdriver.fill",
-                                title: "Hydraulic Valve",
-                                desc: "High Pressure 1/2\"",
-                                price: "LKR 6,800",
-                                quantity: binding(for: "Valve", in: $mechanicalQuantities)
-                            )
+
+                        Button(action: submitQuotation) {
+                            Text("REQUEST QUOTATION")
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.elevateDarkGreen)
+                                .cornerRadius(10)
+                        }
+                        .padding(.horizontal, 24)
+
+                        NavigationLink(destination: QuotationStatusView(jobId: jobId), isActive: $navigateToQuotation) {
+                            EmptyView()
                         }
                         
                         Spacer().frame(height: 120)
@@ -99,13 +85,50 @@ struct InventoryView: View {
             ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            if let user = appSession.currentUser {
+                viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
+            }
+        }
+        .onChange(of: network.isOnline) { isOnline in
+            if let user = appSession.currentUser {
+                viewModel.loadItems(organizationId: user.organizationId, isOnline: isOnline)
+            }
+        }
+        .alert("Inventory", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
-    
-    private func binding(for key: String, in dict: Binding<[String: Int]>) -> Binding<Int> {
-        Binding<Int>(
-            get: { dict.wrappedValue[key] ?? 0 },
-            set: { dict.wrappedValue[key] = $0 }
+
+    private func groupedItems() -> [(key: String, value: [InventoryItem])] {
+        let filtered = viewModel.items.filter {
+            searchText.isEmpty || $0.name.lowercased().contains(searchText.lowercased())
+        }
+        let groups = Dictionary(grouping: filtered, by: { $0.category })
+        return groups.sorted { $0.key < $1.key }
+    }
+
+    private func currencyString(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "LKR"
+        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+    }
+
+    private func submitQuotation() {
+        guard let user = appSession.currentUser else { return }
+        viewModel.submitQuotationRequest(
+            jobId: jobId,
+            userId: user.id,
+            organizationId: user.organizationId,
+            isOnline: network.isOnline
         )
+        navigateToQuotation = true
     }
 }
 
@@ -114,7 +137,9 @@ struct InventoryItemCard: View {
     var title: String
     var desc: String
     var price: String
-    @Binding var quantity: Int
+    var quantity: Int
+    var onAdd: () -> Void
+    var onRemove: () -> Void
     
     var body: some View {
         HStack(spacing: 16) {
@@ -127,12 +152,12 @@ struct InventoryItemCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .scaledFont(size: 16, weight: .bold)
                 Text(desc)
-                    .font(.system(size: 12))
+                    .scaledFont(size: 12)
                     .foregroundColor(.gray)
                 Text(price)
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(size: 14, weight: .bold)
                     .foregroundColor(.elevateDarkGreen)
                     .padding(.top, 4)
             }
@@ -142,7 +167,7 @@ struct InventoryItemCard: View {
             // Stepper
             HStack(spacing: 0) {
                 Button(action: {
-                    if quantity > 0 { quantity -= 1 }
+                    onRemove()
                 }) {
                     Image(systemName: "minus")
                         .foregroundColor(.black)
@@ -150,12 +175,12 @@ struct InventoryItemCard: View {
                 }
                 
                 Text("\(quantity)")
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(size: 14, weight: .bold)
                     .frame(width: 24)
                     .multilineTextAlignment(.center)
                 
                 Button(action: {
-                    quantity += 1
+                    onAdd()
                 }) {
                     Image(systemName: "plus")
                         .foregroundColor(.white)
@@ -174,5 +199,6 @@ struct InventoryItemCard: View {
 }
 
 #Preview {
-    InventoryView()
+    InventoryView(jobId: "sample")
+        .environmentObject(AppSession())
 }

@@ -2,6 +2,10 @@ import SwiftUI
 import Charts
 
 struct TechnicianDashboardView: View {
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = DashboardViewModel()
+    @ObservedObject private var network = NetworkService.shared
+    @ObservedObject private var syncManager = SyncManager.shared
     @State private var selectedTab: TabItem = .dashboard
     
     enum TabItem {
@@ -25,7 +29,7 @@ struct TechnicianDashboardView: View {
             
             VStack(spacing: 0) {
                 // Top Bar
-                BrandHeaderNav(showOnlineStatus: true)
+                BrandHeaderNav(showOnlineStatus: true, isOnline: network.isOnline)
                 
                 // Content Spacer
                 ScrollView(showsIndicators: false) {
@@ -33,12 +37,32 @@ struct TechnicianDashboardView: View {
                         
                         // Header text
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("THURSDAY, OCT 24")
-                                .font(.system(size: 12, weight: .bold))
+                            Text(todayString())
+                                .scaledFont(size: 12, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                             
-                            Text("Good morning, Marcus")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                            Text("Good morning, \(appSession.currentUser?.displayName ?? "Technician")")
+                                .scaledFont(size: 24, weight: .bold, design: .rounded)
+                        }
+
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(syncStatusColor())
+                                .frame(width: 8, height: 8)
+                            Text(syncStatusText())
+                                .scaledFont(size: 12, weight: .bold)
+                                .foregroundColor(syncStatusColor())
+                            if syncManager.pendingCount > 0 {
+                                Text("Pending: \(syncManager.pendingCount)")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                            }
+                        }
+
+                        // Quick Stats
+                        HStack(spacing: 16) {
+                            StatPill(icon: "calendar", value: "\(viewModel.totalJobsToday)", title: "TODAY'S JOBS", isPrimary: true)
+                            StatPill(icon: "exclamationmark.triangle", value: "\(viewModel.urgentJobsToday)", title: "URGENT", isPrimary: false)
                         }
                         
                         // Urgent Update Banner
@@ -49,10 +73,10 @@ struct TechnicianDashboardView: View {
                             
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("URGENT UPDATE")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.white.opacity(0.8))
                                 Text("New high-priority job assigned in Soho")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .scaledFont(size: 14, weight: .medium)
                                     .foregroundColor(.white)
                             }
                             Spacer()
@@ -69,15 +93,15 @@ struct TechnicianDashboardView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("WEEKLY PERFORMANCE")
-                                        .font(.system(size: 12, weight: .bold))
+                                        .scaledFont(size: 12, weight: .bold)
                                         .foregroundColor(.elevateTextGray)
                                     
                                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                                         Text("42")
-                                            .font(.system(size: 28, weight: .bold))
+                                            .scaledFont(size: 28, weight: .bold)
                                             .foregroundColor(.elevateDarkGreen)
                                         Text("Jobs Completed")
-                                            .font(.system(size: 14))
+                                            .scaledFont(size: 14)
                                             .foregroundColor(.elevateTextGray)
                                     }
                                 }
@@ -86,7 +110,7 @@ struct TechnicianDashboardView: View {
                                     Image(systemName: "arrow.up.right")
                                     Text("12%")
                                 }
-                                .font(.system(size: 12, weight: .bold))
+                                .scaledFont(size: 12, weight: .bold)
                                 .foregroundColor(.green)
                             }
                             
@@ -104,7 +128,7 @@ struct TechnicianDashboardView: View {
                                     AxisValueLabel {
                                         if let day = value.as(String.self) {
                                             Text(day)
-                                                .font(.system(size: 10, weight: .bold))
+                                                .scaledFont(size: 10, weight: .bold)
                                                 .foregroundColor(.elevateTextGray)
                                         }
                                     }
@@ -119,12 +143,14 @@ struct TechnicianDashboardView: View {
                         
                         // Shortcuts
                         HStack(spacing: 16) {
-                            ShortcutBox(title: "START JOB", icon: "play.fill", dest: EmptyView())
+                            NavigationLink(destination: JobListView()) {
+                                ShortcutBoxInternal(title: "JOB LIST", icon: "briefcase")
+                            }
                             NavigationLink(destination: TechnicianCalendarView()) {
                                 ShortcutBoxInternal(title: "CALENDAR", icon: "calendar")
                             }
-                            NavigationLink(destination: TechnicianStatisticsView()) {
-                                ShortcutBoxInternal(title: "STATISTICS", icon: "chart.bar.fill")
+                            NavigationLink(destination: TechnicianNotificationsView()) {
+                                ShortcutBoxInternal(title: "ALERTS", icon: "bell")
                             }
                         }
                         
@@ -132,18 +158,27 @@ struct TechnicianDashboardView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("TODAY'S TASKS")
-                                    .font(.system(size: 14, weight: .bold))
+                                    .scaledFont(size: 14, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
-                                Text("View All")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.elevateDarkGreen)
+                                NavigationLink(destination: JobListView()) {
+                                    Text("View All")
+                                        .scaledFont(size: 12, weight: .bold)
+                                        .foregroundColor(.elevateDarkGreen)
+                                }
                             }
                             
                             VStack(spacing: 16) {
-                                TaskRow(time: "09:22", ampm: "AM", title: "HVAC System Calibration", location: "Lexington Towers, Suite 405", priority: "HIGH PRIORITY", color: .red)
-                                TaskRow(time: "11:32", ampm: "AM", title: "Routine Filter Change", location: "Northside Corporate Park", priority: "MEDIUM", color: .blue)
-                                TaskRow(time: "02:15", ampm: "PM", title: "Site Inspection", location: "Grand Central Station Mall", priority: "LOW", color: .gray)
+                                ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                    TaskRow(
+                                        time: timeString(from: job.scheduledAt),
+                                        ampm: ampmString(from: job.scheduledAt),
+                                        title: job.title,
+                                        location: job.location,
+                                        priority: job.priority.uppercased(),
+                                        color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                    )
+                                }
                             }
                         }
                         
@@ -159,6 +194,64 @@ struct TechnicianDashboardView: View {
             ReusableBottomNav(selectedTab: .constant(.dashboard))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            if let user = appSession.currentUser {
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+            }
+        }
+        .onChange(of: network.isOnline) { isOnline in
+            if let user = appSession.currentUser {
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+            }
+        }
+    }
+
+    private func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm"
+        return formatter.string(from: date)
+    }
+
+    private func todayString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter.string(from: Date()).uppercased()
+    }
+
+    private func ampmString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "a"
+        return formatter.string(from: date)
+    }
+
+    private func syncStatusText() -> String {
+        switch syncManager.status {
+        case .idle:
+            return "Sync idle"
+        case .syncing:
+            return "Syncing"
+        case .offline:
+            return "Offline"
+        case .upToDate:
+            return "Up to date"
+        case .error:
+            return "Sync error"
+        }
+    }
+
+    private func syncStatusColor() -> Color {
+        switch syncManager.status {
+        case .idle:
+            return .elevateTextGray
+        case .syncing:
+            return .elevateDarkGreen
+        case .offline:
+            return .orange
+        case .upToDate:
+            return .green
+        case .error:
+            return .red
+        }
     }
 }
 
@@ -188,7 +281,7 @@ struct ShortcutBoxInternal: View {
                     .font(.system(size: 20))
             }
             Text(title)
-                .font(.system(size: 10, weight: .bold))
+                .scaledFont(size: 10, weight: .bold)
                 .foregroundColor(.black)
         }
     }
@@ -206,21 +299,21 @@ struct TaskRow: View {
         HStack(alignment: .top, spacing: 16) {
             VStack(spacing: 2) {
                 Text(time)
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(size: 14, weight: .bold)
                 Text(ampm)
-                    .font(.system(size: 10, weight: .bold))
+                    .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .scaledFont(size: 16, weight: .bold)
                 Text(location)
-                    .font(.system(size: 12))
+                    .scaledFont(size: 12)
                     .foregroundColor(.elevateTextGray)
                 
                 Text(priority)
-                    .font(.system(size: 10, weight: .bold))
+                    .scaledFont(size: 10, weight: .bold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(color.opacity(0.1))
@@ -262,7 +355,7 @@ struct TabBarButton: View {
                         .font(.system(size: 20))
                         .environment(\.symbolVariants, .fill)
                     Text(title)
-                        .font(.system(size: 10, weight: .bold))
+                        .scaledFont(size: 10, weight: .bold)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -274,7 +367,7 @@ struct TabBarButton: View {
                     Image(systemName: iconName)
                         .font(.system(size: 20))
                     Text(title)
-                        .font(.system(size: 10, weight: .bold))
+                        .scaledFont(size: 10, weight: .bold)
                 }
                 .foregroundColor(.elevateTextGray)
                 .frame(maxWidth: .infinity)
@@ -286,4 +379,5 @@ struct TabBarButton: View {
 
 #Preview {
     TechnicianDashboardView()
+        .environmentObject(AppSession())
 }

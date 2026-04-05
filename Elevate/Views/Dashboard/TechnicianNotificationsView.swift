@@ -3,6 +3,8 @@ import SwiftUI
 struct TechnicianNotificationsView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var selectedTab: TechnicianDashboardView.TabItem = .dashboard
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = NotificationsViewModel()
     
     var body: some View {
         ZStack {
@@ -18,70 +20,22 @@ struct TechnicianNotificationsView: View {
                         // Header
                         HStack {
                             Text("Notifications")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .scaledFont(size: 32, weight: .bold, design: .rounded)
                             Spacer()
-                            Text("Clear All")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.elevateDarkGreen)
+                            Button("Clear All") {
+                                clearNotifications()
+                            }
+                            .scaledFont(size: 14, weight: .bold)
+                            .foregroundColor(.elevateDarkGreen)
                         }
                         .padding(.horizontal, 24)
                         
-                        // TODAY
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("TODAY")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.elevateTextGray)
-                                .padding(.horizontal, 24)
-                            
-                            NotificationCard(
-                                title: "New Job Assigned",
-                                message: "Maintenance has been assigned to you at 442 Park Avenue. Emergency repair required.",
-                                timeAgo: "12M AGO",
-                                isUnread: true
-                            )
-                            
-                            NotificationCard(
-                                title: "Shift Starting Soon",
-                                message: "Your evening shift starts in 15 minutes. Remember to clock in via the dashboard.",
-                                timeAgo: "45M AGO",
-                                isUnread: false
-                            )
-                            
-                            NotificationCard(
-                                title: "Report Approved",
-                                message: "Your inspection report for 'Skyline Plaza' has been reviewed and approved by the supervisor.",
-                                timeAgo: "2H AGO",
-                                isUnread: true
-                            )
-                        }
-                        
-                        // YESTERDAY
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("YESTERDAY")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.elevateTextGray)
-                                .padding(.horizontal, 24)
-                            
-                            NotificationCard(
-                                title: "Payment Dispatched",
-                                message: "Your weekly earnings of $1,240.50 have been sent to your primary bank account.",
-                                timeAgo: "1D AGO",
-                                isUnread: false
-                            )
-                            
-                            NotificationCard(
-                                title: "Inventory Restocked",
-                                message: "The requested HVAC components have been delivered to the central locker station.",
-                                timeAgo: "1D AGO",
-                                isUnread: false
-                            )
-                            
-                            NotificationCard(
-                                title: "New Message",
-                                message: "David M. left a comment on your latest maintenance ticket: \"Great job on the filter replacement.\"",
-                                timeAgo: "1D AGO",
-                                isUnread: false
-                            )
+                        if viewModel.notifications.isEmpty {
+                            EmptyStateCard()
+                        } else {
+                            NotificationSection(title: "TODAY", items: viewModel.todayItems)
+                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems)
+                            NotificationSection(title: "EARLIER", items: viewModel.olderItems)
                         }
                         
                         Spacer().frame(height: 100)
@@ -94,34 +48,45 @@ struct TechnicianNotificationsView: View {
             ReusableBottomNav(selectedTab: .constant(.dashboard))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            loadNotifications()
+        }
+    }
+
+    private func loadNotifications() {
+        guard let user = appSession.currentUser else { return }
+        let isOnline = NetworkService.shared.isOnline
+        viewModel.load(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+    }
+
+    private func clearNotifications() {
+        guard let user = appSession.currentUser else { return }
+        viewModel.clearAll(organizationId: user.organizationId, userId: user.id)
     }
 }
 
 struct NotificationCard: View {
-    var title: String
-    var message: String
-    var timeAgo: String
-    var isUnread: Bool
+    var item: NotificationItem
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Unread Indicator Bar
             Rectangle()
-                .fill(isUnread ? Color.elevateDarkGreen : Color.clear)
+                .fill(item.isRead ? Color.clear : Color.elevateDarkGreen)
                 .frame(width: 4)
                 .cornerRadius(2)
             
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .bold))
+                    Text(item.title)
+                        .scaledFont(size: 16, weight: .bold)
                     Spacer()
                     HStack(spacing: 8) {
-                        Text(timeAgo)
-                            .font(.system(size: 10, weight: .bold))
+                        Text(timeAgo(from: item.createdAt))
+                            .scaledFont(size: 10, weight: .bold)
                             .foregroundColor(.elevateTextGray)
                         
-                        if isUnread {
+                        if !item.isRead {
                             Circle()
                                 .fill(Color.elevateDarkGreen)
                                 .frame(width: 8, height: 8)
@@ -133,8 +98,8 @@ struct NotificationCard: View {
                     }
                 }
                 
-                Text(message)
-                    .font(.system(size: 14))
+                Text(item.body)
+                    .scaledFont(size: 14)
                     .foregroundColor(Color.gray)
                     .lineSpacing(4)
             }
@@ -146,8 +111,61 @@ struct NotificationCard: View {
         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
     }
+
+    private func timeAgo(from date: Date) -> String {
+        let minutes = Int(Date().timeIntervalSince(date) / 60)
+        if minutes < 60 {
+            return "\(max(minutes, 1))M AGO"
+        }
+        let hours = minutes / 60
+        if hours < 24 {
+            return "\(hours)H AGO"
+        }
+        let days = hours / 24
+        return "\(days)D AGO"
+    }
+}
+
+struct NotificationSection: View {
+    let title: String
+    let items: [NotificationItem]
+
+    var body: some View {
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(title)
+                    .scaledFont(size: 12, weight: .bold)
+                    .foregroundColor(.elevateTextGray)
+                    .padding(.horizontal, 24)
+
+                ForEach(items) { item in
+                    NotificationCard(item: item)
+                }
+            }
+        }
+    }
+}
+
+struct EmptyStateCard: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("No notifications yet")
+                .scaledFont(size: 18, weight: .bold)
+            Text("Updates about jobs, approvals, and inventory will show up here.")
+                .scaledFont(size: 14)
+                .foregroundColor(.elevateTextGray)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 6)
+        .padding(.horizontal, 24)
+    }
 }
 
 #Preview {
     TechnicianNotificationsView()
+        .environmentObject(AppSession())
 }

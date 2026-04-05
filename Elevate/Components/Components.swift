@@ -11,7 +11,7 @@ struct CustomTextField: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
-                    .font(.system(size: 12, weight: .bold))
+                    .scaledFont(size: 12, weight: .bold)
                     .foregroundColor(.elevateTextGray)
                     .textCase(.uppercase)
                 
@@ -28,7 +28,7 @@ struct CustomTextField: View {
                     .frame(width: 20)
                 
                 TextField(placeholder, text: $text)
-                    .font(.system(size: 16))
+                    .scaledFont(size: 16)
                     .foregroundColor(.black)
                     .autocapitalization(.none)
             }
@@ -52,7 +52,7 @@ struct SecureCustomTextField: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
-                    .font(.system(size: 12, weight: .bold))
+                    .scaledFont(size: 12, weight: .bold)
                     .foregroundColor(.elevateTextGray)
                     .textCase(.uppercase)
                 
@@ -70,11 +70,11 @@ struct SecureCustomTextField: View {
                 
                 if isSecure {
                     SecureField(placeholder, text: $text)
-                        .font(.system(size: 16))
+                        .scaledFont(size: 16)
                         .foregroundColor(.black)
                 } else {
                     TextField(placeholder, text: $text)
-                        .font(.system(size: 16))
+                        .scaledFont(size: 16)
                         .foregroundColor(.black)
                         .autocapitalization(.none)
                 }
@@ -106,7 +106,7 @@ struct PrimaryButton: View {
                     Image(systemName: iconName)
                 }
             }
-            .font(.system(size: 16, weight: .bold))
+            .scaledFont(size: 16, weight: .bold)
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
@@ -132,7 +132,7 @@ struct SecondaryButton: View {
                 Text(title)
                     .foregroundColor(.black)
             }
-            .font(.system(size: 16, weight: .bold))
+            .scaledFont(size: 16, weight: .bold)
             .frame(maxWidth: .infinity)
             .padding()
             .background(Color.white)

@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct TechnicianProfileView: View {
-    @State private var enableFaceID = true
-    @State private var enableNotifications = true
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = ProfileViewModel()
+    @ObservedObject private var accessibilitySettings = AccessibilitySettings.shared
+    @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
+    @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     
     var body: some View {
         ZStack {
@@ -26,8 +29,8 @@ struct TechnicianProfileView: View {
                                         .foregroundColor(.white)
                                 )
                             
-                            Text("Marcus V.")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                            Text(displayName)
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
                         }
                         .padding(.top, 32)
                         
@@ -35,7 +38,7 @@ struct TechnicianProfileView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("ORGANIZATION DETAILS")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
                                 Image(systemName: "building.2")
@@ -43,11 +46,11 @@ struct TechnicianProfileView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Skyline Corp")
-                                    .font(.system(size: 18, weight: .bold))
+                                Text(organizationName)
+                                    .scaledFont(size: 18, weight: .bold)
                                     .foregroundColor(.elevateDarkGreen)
-                                Text("ORG-1024-SV")
-                                    .font(.system(size: 12))
+                                Text(organizationCode)
+                                    .scaledFont(size: 12)
                             }
                         }
                         .padding(20)
@@ -58,13 +61,17 @@ struct TechnicianProfileView: View {
                         // APP SETTINGS
                         VStack(alignment: .leading, spacing: 12) {
                             Text("APP SETTINGS")
-                                .font(.system(size: 12, weight: .bold))
+                                .scaledFont(size: 12, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             VStack(spacing: 0) {
-                                AppSettingToggleRow(title: "Enable Face ID", subtitle: "Secure biometric login", icon: "faceid", isOn: $enableFaceID)
+                                AppSettingToggleRow(title: "Enable Face ID", subtitle: "Secure biometric login", icon: "faceid", isOn: $biometricLoginEnabled)
                                 Divider().padding(.leading, 64)
-                                AppSettingToggleRow(title: "Notification Preferences", subtitle: "Manage push alerts", icon: "bell", isOn: $enableNotifications)
+                                AppSettingToggleRow(title: "Notification Preferences", subtitle: "Manage push alerts", icon: "bell", isOn: $pushNotificationsEnabled)
+                                Divider().padding(.leading, 64)
+                                AppSettingToggleRow(title: "High Contrast", subtitle: "Enhance visibility", icon: "circle.lefthalf.fill", isOn: $accessibilitySettings.isHighContrast)
+                                Divider().padding(.leading, 64)
+                                AppSettingToggleRow(title: "Haptic Feedback", subtitle: "Vibration for taps", icon: "hand.tap", isOn: $accessibilitySettings.hapticFeedback)
                                 Divider().padding(.leading, 64)
                                 
                                 NavigationLink(destination: TechnicianAccessibilityView()) {
@@ -77,7 +84,7 @@ struct TechnicianProfileView: View {
                                             .cornerRadius(6)
                                         
                                         Text("Accessibility Settings")
-                                            .font(.system(size: 16, weight: .semibold))
+                                            .scaledFont(size: 16, weight: .semibold)
                                             .foregroundColor(.black)
                                         
                                         Spacer()
@@ -96,12 +103,12 @@ struct TechnicianProfileView: View {
                         }
                         
                         // LOGOUT
-                        Button(action: {}) {
+                        Button(action: signOut) {
                             HStack(spacing: 8) {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
                                 Text("LOGOUT")
                             }
-                            .font(.system(size: 14, weight: .bold))
+                            .scaledFont(size: 14, weight: .bold)
                             .foregroundColor(.red)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
@@ -120,6 +127,48 @@ struct TechnicianProfileView: View {
             ReusableBottomNav(selectedTab: .constant(.profile))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            loadProfile()
+        }
+    }
+
+    private var displayName: String {
+        if let user = viewModel.user {
+            return user.displayName.isEmpty ? user.username : user.displayName
+        }
+        if let user = appSession.currentUser {
+            return user.displayName.isEmpty ? user.username : user.displayName
+        }
+        return "Technician"
+    }
+
+    private var organizationName: String {
+        if !viewModel.organizationName.isEmpty {
+            return viewModel.organizationName
+        }
+        if let user = appSession.currentUser {
+            return user.organizationId
+        }
+        return ""
+    }
+
+    private var organizationCode: String {
+        if !viewModel.organizationCode.isEmpty {
+            return viewModel.organizationCode
+        }
+        if let user = appSession.currentUser {
+            return user.organizationId
+        }
+        return ""
+    }
+
+    private func loadProfile() {
+        guard let user = appSession.currentUser else { return }
+        viewModel.load(userId: user.id)
+    }
+
+    private func signOut() {
+        appSession.signOut()
     }
 }
 
@@ -140,9 +189,9 @@ struct AppSettingToggleRow: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .scaledFont(size: 16, weight: .semibold)
                 Text(subtitle)
-                    .font(.system(size: 12))
+                    .scaledFont(size: 12)
                     .foregroundColor(.gray)
             }
             Spacer()

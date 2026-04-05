@@ -1,7 +1,10 @@
 import SwiftUI
 
 struct JobListView: View {
+    @EnvironmentObject private var appSession: AppSession
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var viewModel = JobsViewModel()
+    @ObservedObject private var network = NetworkService.shared
     @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
     @State private var selectedFilter = 0
     
@@ -15,118 +18,55 @@ struct JobListView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
+                        // Search
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.elevateTextGray)
+                            TextField("Search jobs", text: $viewModel.searchText)
+                                .scaledFont(size: 14)
+                        }
+                        .padding(12)
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 12)
                         
                         // Filters Segment
                         HStack(spacing: 0) {
-                            FilterButton(title: "Today", isSelected: selectedFilter == 0) { selectedFilter = 0 }
-                            FilterButton(title: "Upcoming", isSelected: selectedFilter == 1) { selectedFilter = 1 }
-                            FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2 }
+                            FilterButton(title: "Today", isSelected: selectedFilter == 0) { selectedFilter = 0; viewModel.selectedFilter = .today }
+                            FilterButton(title: "Upcoming", isSelected: selectedFilter == 1) { selectedFilter = 1; viewModel.selectedFilter = .upcoming }
+                            FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
                         .background(Color.elevateLightGray)
                         .cornerRadius(8)
                         .padding(.horizontal, 24)
-                        .padding(.top, 16)
+                        .padding(.top, 4)
                         
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                                 .textCase(.uppercase)
                             
-                            Text("Wednesday, May 24")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                            Text(todayString())
+                                .scaledFont(size: 24, weight: .bold, design: .rounded)
                                 .foregroundColor(.elevateDarkGreen)
                         }
                         .padding(.horizontal, 24)
                         
                         // Job Cards
                         VStack(spacing: 16) {
-                            // In Progress Card
-                            VStack(spacing: 16) {
-                                HStack(alignment: .top) {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("IN PROGRESS")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.green.opacity(0.2))
-                                            .foregroundColor(Color.elevateDarkGreen)
-                                            .cornerRadius(12)
-                                        
-                                        Text("HVAC Calibration")
-                                            .font(.system(size: 18, weight: .bold))
-                                    }
-                                    Spacer()
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        Text("10:30 AM")
-                                            .font(.system(size: 14, weight: .bold))
-                                        Text("Est. 2h 30m")
-                                            .font(.system(size: 10))
-                                            .foregroundColor(.elevateTextGray)
-                                    }
-                                }
-                                
-                                HStack(spacing: 12) {
-                                    Image(systemName: "mappin.and.ellipse")
-                                        .frame(width: 32, height: 32)
-                                        .background(Color.elevateLightGray)
-                                        .cornerRadius(8)
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Grand Central Mall")
-                                            .font(.system(size: 14, weight: .bold))
-                                        Text("4th Floor, Service Area B")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.elevateTextGray)
-                                    }
-                                    Spacer()
-                                }
-                                
-                                HStack(spacing: 12) {
-                                    NavigationLink(destination: JobDetailsView()) {
-                                        Text("Open Details")
-                                            .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(.white)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 14)
-                                            .background(Color.elevateDarkGreen)
-                                            .cornerRadius(8)
-                                    }
-                                    
-                                    Button(action: {}) {
-                                        Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.black)
-                                            .frame(width: 48, height: 48)
-                                            .background(Color.elevateLightGray)
-                                            .cornerRadius(8)
-                                    }
-                                }
+                            ForEach(viewModel.filteredJobs, id: \.id) { job in
+                                JobCard(job: job)
                             }
-                            .padding(20)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.elevateDarkGreen, lineWidth: 4)
-                                    .alignmentGuide(.leading) { $0[.leading] }
-                            )
-                            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
-                            .padding(.horizontal, 24)
-                            
-                            // Scheduled Card 1
-                            JobScheduledCard(title: "Elevator Maintenance", time: "01:15 PM", location: "Skyline Office Plaza", desc: "Tower 2, Lifts 5-8", icon: "building.2.fill")
-                            
-                            // Scheduled Card 2
-                            JobScheduledCard(title: "Fire Safety Inspection", time: "03:45 PM", location: "Metropolis Industrial", desc: "Warehouse 4, Zone A", icon: "building.fill")
                         }
                         
                         // Bottom Stats
                         HStack(spacing: 16) {
-                            StatPill(icon: "checkmark.circle", value: "12", title: "JOBS COMPLETED", isPrimary: true)
-                            StatPill(icon: "clock", value: "3", title: "PENDING JOBS", isPrimary: false)
+                            StatPill(icon: "checkmark.circle", value: "\(viewModel.jobs.filter { $0.status.uppercased() == "COMPLETED" }.count)", title: "JOBS COMPLETED", isPrimary: true)
+                            StatPill(icon: "clock", value: "\(viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" }.count)", title: "PENDING JOBS", isPrimary: false)
                         }
                         .padding(.horizontal, 24)
                         
@@ -138,6 +78,22 @@ struct JobListView: View {
             ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            if let user = appSession.currentUser {
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+            }
+        }
+        .onChange(of: network.isOnline) { isOnline in
+            if let user = appSession.currentUser {
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+            }
+        }
+    }
+
+    private func todayString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter.string(from: Date())
     }
 }
 
@@ -148,7 +104,7 @@ struct FilterButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .bold))
+                .scaledFont(size: 14, weight: .bold)
                 .foregroundColor(isSelected ? .elevateDarkGreen : .elevateTextGray)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -159,47 +115,45 @@ struct FilterButton: View {
     }
 }
 
-struct JobScheduledCard: View {
-    var title: String
-    var time: String
-    var location: String
-    var desc: String
-    var icon: String
+struct JobCard: View {
+    var job: Job
     
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("SCHEDULED")
-                        .font(.system(size: 10, weight: .bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.elevateLightGray)
-                        .foregroundColor(.elevateTextGray)
-                        .cornerRadius(12)
-                    
-                    Text(title)
-                        .font(.system(size: 18, weight: .bold))
+        NavigationLink(destination: JobDetailsView(jobId: job.id)) {
+            VStack(spacing: 16) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(job.status.uppercased())
+                            .scaledFont(size: 10, weight: .bold)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.elevateLightGray)
+                            .foregroundColor(.elevateTextGray)
+                            .cornerRadius(12)
+                        
+                        Text(job.title)
+                            .scaledFont(size: 18, weight: .bold)
+                    }
+                    Spacer()
+                    Text(timeString(from: job.scheduledAt))
+                        .scaledFont(size: 14, weight: .bold)
                 }
-                Spacer()
-                Text(time)
-                    .font(.system(size: 14, weight: .bold))
-            }
-            
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .frame(width: 32, height: 32)
-                    .background(Color.elevateLightGray)
-                    .cornerRadius(8)
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(location)
-                        .font(.system(size: 14, weight: .bold))
-                    Text(desc)
-                        .font(.system(size: 12))
-                        .foregroundColor(.elevateTextGray)
+                HStack(spacing: 12) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .frame(width: 32, height: 32)
+                        .background(Color.elevateLightGray)
+                        .cornerRadius(8)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(job.location)
+                            .scaledFont(size: 14, weight: .bold)
+                        Text(job.notes ?? "")
+                            .scaledFont(size: 12)
+                            .foregroundColor(.elevateTextGray)
+                    }
+                    Spacer()
                 }
-                Spacer()
             }
         }
         .padding(20)
@@ -207,6 +161,12 @@ struct JobScheduledCard: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
         .padding(.horizontal, 24)
+    }
+
+    private func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: date)
     }
 }
 
@@ -224,10 +184,10 @@ struct StatPill: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
-                    .font(.system(size: 28, weight: .bold))
+                    .scaledFont(size: 28, weight: .bold)
                     .foregroundColor(isPrimary ? .white : .black)
                 Text(title)
-                    .font(.system(size: 10, weight: .bold))
+                    .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(isPrimary ? .white.opacity(0.8) : .elevateTextGray)
             }
         }
@@ -240,4 +200,5 @@ struct StatPill: View {
 
 #Preview {
     JobListView()
+        .environmentObject(AppSession())
 }

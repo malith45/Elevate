@@ -1,7 +1,10 @@
 import SwiftUI
 
 struct QuotationStatusView: View {
+    let jobId: String
+
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var viewModel = QuotationStatusViewModel()
     @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
     
     var body: some View {
@@ -16,46 +19,61 @@ struct QuotationStatusView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         
                         Text("Quotation Status")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .scaledFont(size: 32, weight: .bold, design: .rounded)
                             .foregroundColor(.black)
                         
                         // APPROVED ITEMS
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("APPROVED ITEMS")
-                                    .font(.system(size: 12, weight: .bold))
+                                    .scaledFont(size: 12, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
-                                Text("2 ITEMS")
-                                    .font(.system(size: 10, weight: .bold))
+                                Text("\(viewModel.approvedItems.count) ITEMS")
+                                    .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
                                     .background(Color.green.opacity(0.2))
                                     .foregroundColor(.green)
                                     .cornerRadius(12)
                             }
-                            
-                            QuotationItemCard(icon: "slider.vertical.3", title: "Industrial Capacitor\n45uF", price: "LKR 4500.00", statusText: "APPROVED", isApproved: true)
-                            QuotationItemCard(icon: "bolt.fill", title: "Heavy Duty Relay\nSwitch", price: "LKR 3200.00", statusText: "APPROVED", isApproved: true)
+
+                            ForEach(viewModel.approvedItems, id: \.id) { item in
+                                QuotationItemCard(
+                                    icon: "checkmark.circle",
+                                    title: item.name,
+                                    price: currencyString(Double(item.quantity) * item.unitPrice),
+                                    statusText: item.status.uppercased(),
+                                    isApproved: true
+                                )
+                            }
                         }
                         
                         // PENDING APPROVAL
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("PENDING APPROVAL")
-                                    .font(.system(size: 12, weight: .bold))
+                                    .scaledFont(size: 12, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
-                                Text("1 ITEM")
-                                    .font(.system(size: 10, weight: .bold))
+                                Text("\(viewModel.pendingItems.count) ITEMS")
+                                    .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
                                     .background(Color.red.opacity(0.1))
                                     .foregroundColor(.red)
                                     .cornerRadius(12)
                             }
-                            
-                            QuotationItemCard(icon: "snowflake", title: "R-410A Coolant (2\nlbs)", price: "LKR 1000.00", statusText: "PENDING", isApproved: false)
+
+                            ForEach(viewModel.pendingItems, id: \.id) { item in
+                                QuotationItemCard(
+                                    icon: "clock",
+                                    title: item.name,
+                                    price: currencyString(Double(item.quantity) * item.unitPrice),
+                                    statusText: item.status.uppercased(),
+                                    isApproved: false
+                                )
+                            }
                         }
                         
                         // Bottom Metrics + Action
@@ -63,10 +81,10 @@ struct QuotationStatusView: View {
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("TOTAL VALUE")
-                                        .font(.system(size: 10, weight: .bold))
+                                        .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(.white.opacity(0.8))
-                                    Text("LKR\n8,700")
-                                        .font(.system(size: 28, weight: .bold))
+                                    Text("LKR\n\(formattedTotal())")
+                                        .scaledFont(size: 28, weight: .bold)
                                         .foregroundColor(.white)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -76,10 +94,10 @@ struct QuotationStatusView: View {
                                 
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("ITEMS ORDERED")
-                                        .font(.system(size: 10, weight: .bold))
+                                        .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(.elevateTextGray)
-                                    Text("03")
-                                        .font(.system(size: 28, weight: .bold))
+                                    Text("\(viewModel.items.count)")
+                                        .scaledFont(size: 28, weight: .bold)
                                         .foregroundColor(.elevateDarkGreen)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -92,7 +110,7 @@ struct QuotationStatusView: View {
                             HStack(spacing: 16) {
                                 Button(action: {}) {
                                     Text("CONFIRM")
-                                        .font(.system(size: 14, weight: .bold))
+                                        .scaledFont(size: 14, weight: .bold)
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
@@ -100,12 +118,12 @@ struct QuotationStatusView: View {
                                         .cornerRadius(8)
                                 }
                                 
-                                NavigationLink(destination: InventoryView()) {
+                                NavigationLink(destination: InventoryView(jobId: jobId)) {
                                     HStack(spacing: 6) {
                                         Image(systemName: "plus.circle")
                                         Text("ADD ITEMS")
                                     }
-                                    .font(.system(size: 14, weight: .bold))
+                                    .scaledFont(size: 14, weight: .bold)
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
@@ -125,6 +143,29 @@ struct QuotationStatusView: View {
             ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
+        .onAppear { viewModel.load(jobId: jobId) }
+        .alert("Quotation", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+    }
+
+    private func formattedTotal() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: viewModel.totalCost)) ?? "0"
+    }
+
+    private func currencyString(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "LKR"
+        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
     }
 }
 
@@ -146,16 +187,16 @@ struct QuotationItemCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .scaledFont(size: 16, weight: .bold)
                     .lineLimit(2)
                 Text(price)
-                    .font(.system(size: 12, weight: .bold))
+                    .scaledFont(size: 12, weight: .bold)
                     .foregroundColor(.elevateDarkGreen)
             }
             Spacer()
             
             Text(statusText)
-                .font(.system(size: 10, weight: .bold))
+                .scaledFont(size: 10, weight: .bold)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(isApproved ? Color.green.opacity(0.2) : Color.red.opacity(0.1))
@@ -170,5 +211,5 @@ struct QuotationItemCard: View {
 }
 
 #Preview {
-    QuotationStatusView()
+    QuotationStatusView(jobId: "sample")
 }

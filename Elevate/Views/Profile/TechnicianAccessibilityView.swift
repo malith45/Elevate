@@ -1,10 +1,7 @@
 import SwiftUI
 
 struct TechnicianAccessibilityView: View {
-    @State private var isHighContrast = true
-    @State private var isVoiceOver = false
-    @State private var textSize: Double = 0.5
-    @State private var hapticFeedback = true
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         ZStack {
@@ -20,9 +17,11 @@ struct TechnicianAccessibilityView: View {
                         // Header
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Accessibility")
-                                .font(.system(size: 32, weight: .black, design: .rounded))
+                                .scaledFont(size: 32)
+                                .fontWeight(.black)
+                                .fontDesign(.rounded)
                             Text("Customize your experience to fit your specific needs and preferences.")
-                                .font(.system(size: 14))
+                                .scaledFont(size: 14)
                                 .foregroundColor(.elevateTextGray)
                                 .lineSpacing(4)
                         }
@@ -31,13 +30,14 @@ struct TechnicianAccessibilityView: View {
                         // VISION SUPPORT
                         VStack(alignment: .leading, spacing: 12) {
                             Text("VISION SUPPORT")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10)
+                                .fontWeight(.bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             VStack(spacing: 0) {
-                                AccessToggleRow(title: "High Contrast Mode", desc: "Enhance visibility of UI elements", icon: "circle.lefthalf.fill", isOn: $isHighContrast)
+                                AccessToggleRow(title: "High Contrast Mode", desc: "Enhance visibility of UI elements", icon: "circle.lefthalf.fill", isOn: $settings.isHighContrast)
                                 Divider().padding(.leading, 64)
-                                AccessToggleRow(title: "VoiceOver Compatibility", desc: "Optimized layout for screen readers", icon: "person.wave.2.fill", isOn: $isVoiceOver)
+                                AccessToggleRow(title: "VoiceOver Compatibility", desc: "Optimized layout for screen readers", icon: "person.wave.2.fill", isOn: $settings.isVoiceOver)
                             }
                             .background(Color.white)
                             .cornerRadius(12)
@@ -46,7 +46,8 @@ struct TechnicianAccessibilityView: View {
                         // TYPOGRAPHY
                         VStack(alignment: .leading, spacing: 12) {
                             Text("TYPOGRAPHY")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10)
+                                .fontWeight(.bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             VStack(spacing: 24) {
@@ -58,10 +59,12 @@ struct TechnicianAccessibilityView: View {
                                         .background(Color.elevateLightGray)
                                         .cornerRadius(8)
                                     Text("Text Size Adjustment")
-                                        .font(.system(size: 14, weight: .bold))
+                                        .scaledFont(size: 14)
+                                        .fontWeight(.bold)
                                     Spacer()
                                     Text("DEFAULT")
-                                        .font(.system(size: 10, weight: .bold))
+                                        .scaledFont(size: 10)
+                                        .fontWeight(.bold)
                                         .padding(.horizontal, 10)
                                         .padding(.vertical, 4)
                                         .background(Color.elevateLightGray.opacity(0.8))
@@ -70,14 +73,14 @@ struct TechnicianAccessibilityView: View {
                                 }
                                 
                                 HStack {
-                                    Text("A").font(.system(size: 12, weight: .bold)).foregroundColor(.gray)
-                                    Slider(value: $textSize, in: 0...1)
+                                    Text("A").scaledFont(size: 12).fontWeight(.bold).foregroundColor(.gray)
+                                    Slider(value: $settings.textSize, in: 0...1)
                                         .accentColor(.elevateDarkGreen)
-                                    Text("A").font(.system(size: 20, weight: .bold)).foregroundColor(.gray)
+                                    Text("A").scaledFont(size: 20).fontWeight(.bold).foregroundColor(.gray)
                                 }
                                 
                                 Text("\"The Precise Monolith aesthetic combines Swiss editorial design with modern glassmorphism.\"")
-                                    .font(.system(size: 14))
+                                    .scaledFont(size: 14)
                                     .lineSpacing(6)
                                     .italic()
                                     .padding(20)
@@ -92,11 +95,12 @@ struct TechnicianAccessibilityView: View {
                         // INTERACTION
                         VStack(alignment: .leading, spacing: 12) {
                             Text("INTERACTION")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10)
+                                .fontWeight(.bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             VStack(spacing: 0) {
-                                AccessToggleRow(title: "Haptic Feedback", desc: "Vibration for interface interactions", icon: "hand.tap", isOn: $hapticFeedback)
+                                AccessToggleRow(title: "Haptic Feedback", desc: "Vibration for interface interactions", icon: "hand.tap", isOn: $settings.hapticFeedback)
                             }
                             .background(Color.white)
                             .cornerRadius(12)
@@ -132,16 +136,23 @@ struct AccessToggleRow: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(size: 14)
+                    .fontWeight(.bold)
                 Text(desc)
-                    .font(.system(size: 12))
+                    .scaledFont(size: 12)
                     .foregroundColor(.gray)
             }
             Spacer()
             
-            Toggle("", isOn: $isOn)
-                .tint(.elevateDarkGreen)
-                .labelsHidden()
+            Toggle("", isOn: Binding(
+                get: { isOn },
+                set: { newValue in
+                    isOn = newValue
+                    HapticManager.shared.playSelection()
+                }
+            ))
+            .tint(.elevateDarkGreen)
+            .labelsHidden()
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 20)

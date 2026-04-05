@@ -6,8 +6,18 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6452779D2F82802D0008744D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6452779C2F82802D0008744D /* FirebaseAuth */; };
+		6452779F2F82802D0008744D /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6452779E2F82802D0008744D /* FirebaseCore */; };
+		645277A12F82802D0008744D /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 645277A02F82802D0008744D /* FirebaseFirestore */; };
+		645277A32F82802D0008744D /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 645277A22F82802D0008744D /* FirebaseMessaging */; };
+		645277A52F82802D0008744D /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 645277A42F82802D0008744D /* FirebaseStorage */; };
+		645277A72F8283850008744D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 645277A62F8283850008744D /* GoogleService-Info.plist */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		642B88A82F7A6D23000ECE2C /* Elevate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Elevate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		645277A62F8283850008744D /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +33,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				645277A32F82802D0008744D /* FirebaseMessaging in Frameworks */,
+				6452779F2F82802D0008744D /* FirebaseCore in Frameworks */,
+				6452779D2F82802D0008744D /* FirebaseAuth in Frameworks */,
+				645277A52F82802D0008744D /* FirebaseStorage in Frameworks */,
+				645277A12F82802D0008744D /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,6 +47,7 @@
 		642B889F2F7A6D22000ECE2C = {
 			isa = PBXGroup;
 			children = (
+				645277A62F8283850008744D /* GoogleService-Info.plist */,
 				642B88AA2F7A6D23000ECE2C /* Elevate */,
 				642B88A92F7A6D23000ECE2C /* Products */,
 			);
@@ -65,6 +81,11 @@
 			);
 			name = Elevate;
 			packageProductDependencies = (
+				6452779C2F82802D0008744D /* FirebaseAuth */,
+				6452779E2F82802D0008744D /* FirebaseCore */,
+				645277A02F82802D0008744D /* FirebaseFirestore */,
+				645277A22F82802D0008744D /* FirebaseMessaging */,
+				645277A42F82802D0008744D /* FirebaseStorage */,
 			);
 			productName = Elevate;
 			productReference = 642B88A82F7A6D23000ECE2C /* Elevate.app */;
@@ -94,6 +115,9 @@
 			);
 			mainGroup = 642B889F2F7A6D22000ECE2C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 642B88A92F7A6D23000ECE2C /* Products */;
 			projectDirPath = "";
@@ -109,6 +133,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				645277A72F8283850008744D /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,7 +278,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow access to the camera to upload job photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Log in securely using Face ID";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Allow access to your location to show job routes.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow access to the photo library to select job photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -285,7 +313,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow access to the camera to upload job photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Log in securely using Face ID";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Allow access to your location to show job routes.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow access to the photo library to select job photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -330,6 +361,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6452779C2F82802D0008744D /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		6452779E2F82802D0008744D /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		645277A02F82802D0008744D /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		645277A22F82802D0008744D /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		645277A42F82802D0008744D /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6452779B2F82802C0008744D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 642B88A02F7A6D23000ECE2C /* Project object */;
 }

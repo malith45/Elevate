@@ -8,17 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var isAuthenticated = false
+    @EnvironmentObject private var appSession: AppSession
     
     var body: some View {
-        if isAuthenticated {
+        if appSession.currentUser != nil {
             MainTabView()
         } else {
-            SignInView(isAuthenticated: $isAuthenticated)
+            SignInView()
         }
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AppSession())
 }

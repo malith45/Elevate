@@ -20,7 +20,7 @@ struct SplashScreenView: View {
                 .ignoresSafeArea()
                 
                 Text("elevate")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .scaledFont(size: 48, weight: .bold, design: .rounded)
                     .foregroundColor(.elevateDarkGreen)
                     .scaleEffect(scale)
                     .opacity(opacity)

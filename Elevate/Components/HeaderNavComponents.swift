@@ -23,11 +23,12 @@ struct NotificationBell: View {
 
 struct BrandHeaderNav: View {
     var showOnlineStatus: Bool = false
+    var isOnline: Bool = true
     
     var body: some View {
         HStack {
             Text("elevate")
-                .font(.system(size: 24, weight: .black, design: .rounded))
+                .scaledFont(size: 24, weight: .black, design: .rounded)
                 .foregroundColor(.elevateDarkGreen)
             
             Spacer()
@@ -36,11 +37,11 @@ struct BrandHeaderNav: View {
                 if showOnlineStatus {
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(Color.elevateDarkGreen)
+                            .fill(isOnline ? Color.elevateDarkGreen : Color.red)
                             .frame(width: 6, height: 6)
-                        Text("ONLINE")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.elevateDarkGreen)
+                        Text(isOnline ? "ONLINE" : "OFFLINE")
+                            .scaledFont(size: 11, weight: .bold)
+                            .foregroundColor(isOnline ? .elevateDarkGreen : .red)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -66,7 +67,7 @@ struct BackHeaderNav: View {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .bold))
                     Text("Back")
-                        .font(.system(size: 16, weight: .bold))
+                        .scaledFont(size: 16, weight: .bold)
                 }
                 .foregroundColor(.elevateDarkGreen)
             }
@@ -131,7 +132,7 @@ struct GlobalTabBarButton: View {
                         .font(.system(size: 20))
                         .environment(\.symbolVariants, .fill)
                     Text(title)
-                        .font(.system(size: 10, weight: .bold))
+                        .scaledFont(size: 10, weight: .bold)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -143,7 +144,7 @@ struct GlobalTabBarButton: View {
                     Image(systemName: iconName)
                         .font(.system(size: 20))
                     Text(title)
-                        .font(.system(size: 10, weight: .bold))
+                        .scaledFont(size: 10, weight: .bold)
                 }
                 .foregroundColor(.elevateTextGray)
                 .frame(maxWidth: .infinity)

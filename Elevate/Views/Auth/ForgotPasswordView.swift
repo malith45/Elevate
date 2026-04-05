@@ -20,10 +20,10 @@ struct ForgotPasswordView: View {
                 }
                 
                 Text("Forgot Password")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .scaledFont(size: 24, weight: .bold, design: .rounded)
                 
                 Text("Enter your email or user ID to receive a\nrecovery link")
-                    .font(.system(size: 14))
+                    .scaledFont(size: 14)
                     .foregroundColor(.elevateTextGray)
                     .multilineTextAlignment(.center)
             }
@@ -53,7 +53,7 @@ struct ForgotPasswordView: View {
                         Text("Back to Sign In")
                             .fontWeight(.bold)
                     }
-                    .font(.system(size: 14))
+                    .scaledFont(size: 14)
                     .foregroundColor(.elevateDarkGreen)
                 }
             }

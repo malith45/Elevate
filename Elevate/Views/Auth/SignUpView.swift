@@ -25,7 +25,7 @@ struct SignUpView: View {
                     }
                     
                     Text("Create Organization")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .scaledFont(size: 24, weight: .bold, design: .rounded)
                 }
                 .padding(.bottom, 8)
                 
@@ -73,14 +73,14 @@ struct SignUpView: View {
                 // Footer
                 HStack(spacing: 4) {
                     Text("Already have an account?")
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .foregroundColor(.elevateTextGray)
                     
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
                         Text("Sign In")
-                            .font(.system(size: 14, weight: .bold))
+                            .scaledFont(size: 14, weight: .bold)
                             .foregroundColor(.elevateDarkGreen)
                     }
                 }

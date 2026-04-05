@@ -32,7 +32,7 @@ struct TechnicianCalendarView: View {
                         // Calendar Header
                         HStack {
                             Text("October 2024")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                                .scaledFont(size: 24, weight: .bold, design: .rounded)
                             
                             Spacer()
                             
@@ -47,7 +47,7 @@ struct TechnicianCalendarView: View {
                         
                         // Today Badge
                         Text("Today")
-                            .font(.system(size: 14, weight: .medium))
+                            .scaledFont(size: 14, weight: .medium)
                             .foregroundColor(.elevateDarkGreen)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
@@ -61,7 +61,7 @@ struct TechnicianCalendarView: View {
                             HStack {
                                 ForEach(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"], id: \.self) { day in
                                     Text(day)
-                                        .font(.system(size: 10, weight: .bold))
+                                        .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(.elevateTextGray)
                                         .frame(maxWidth: .infinity)
                                 }
@@ -73,7 +73,7 @@ struct TechnicianCalendarView: View {
                                     let item = days[i]
                                     VStack(spacing: 4) {
                                         Text(item.0)
-                                            .font(.system(size: 16))
+                                            .scaledFont(size: 16)
                                             .foregroundColor(item.0 == "30" ? .elevateTextGray : (item.2 ? .white : .black))
                                             .frame(width: 32, height: 32)
                                             .background(item.2 ? Color.elevateDarkGreen : Color.clear)
@@ -94,13 +94,13 @@ struct TechnicianCalendarView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("FRIDAY, OCT 11")
-                                    .font(.system(size: 12, weight: .bold))
+                                    .scaledFont(size: 12, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 
                                 Spacer()
                                 
                                 Text("2 JOBS")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .background(Color.elevateDarkGreen.opacity(0.1))
@@ -118,7 +118,7 @@ struct TechnicianCalendarView: View {
                             HStack {
                                 Spacer()
                                 Text("No more jobs scheduled for today")
-                                    .font(.system(size: 14))
+                                    .scaledFont(size: 14)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
                             }
@@ -148,20 +148,20 @@ struct JobCalendarRow: View {
         HStack(alignment: .center, spacing: 16) {
             VStack(spacing: 2) {
                 Text(time)
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(size: 14, weight: .bold)
                 Text(ampm)
-                    .font(.system(size: 10, weight: .bold))
+                    .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .scaledFont(size: 16, weight: .bold)
                 HStack(spacing: 4) {
                     Image(systemName: "mappin.and.ellipse")
                         .font(.system(size: 10))
                     Text(location)
-                        .font(.system(size: 12))
+                        .scaledFont(size: 12)
                 }
                 .foregroundColor(.elevateTextGray)
             }

@@ -6,13 +6,23 @@
 //
 
 import SwiftUI
+import FirebaseCore
 
 @main
 struct ElevateApp: App {
+    @StateObject private var appSession = AppSession()
+
+    init() {
+        FirebaseApp.configure()
+        NotificationService.shared.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
             SplashScreenView()
                 .fontDesign(.rounded)
+                .withGlobalAccessibilitySettings()
+                .environmentObject(appSession)
         }
     }
 }

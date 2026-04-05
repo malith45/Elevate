@@ -1,11 +1,12 @@
 import SwiftUI
+import LocalAuthentication
 
 struct SignInView: View {
-    @State private var orgId = ""
-    @State private var userId = ""
-    @State private var password = ""
-    @Binding var isAuthenticated: Bool
-    @State private var showFaceID = false
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = SignInViewModel()
+    @State private var showAuthError = false
+    @State private var authErrorMessage = ""
+    @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
     
     var body: some View {
         NavigationStack {
@@ -18,7 +19,7 @@ struct SignInView: View {
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.elevateDarkGreen)
                     Text("Welcome !")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .scaledFont(size: 28, weight: .bold, design: .rounded)
                 }
                 .padding(.bottom, 16)
                 
@@ -28,25 +29,25 @@ struct SignInView: View {
                         title: "ORGANIZATION ID",
                         placeholder: "ORG-000-00",
                         iconName: "building.2",
-                        text: $orgId
+                        text: $viewModel.organizationId
                     )
                     
                     CustomTextField(
                         title: "USER IDENTIFICATION",
                         placeholder: "Username or ID",
                         iconName: "person",
-                        text: $userId
+                        text: $viewModel.username
                     )
                     
                     SecureCustomTextField(
                         title: "SECURITY KEY",
                         placeholder: "••••••••",
                         iconName: "lock",
-                        text: $password,
+                        text: $viewModel.password,
                         titleAction: AnyView(
                             NavigationLink(destination: ForgotPasswordView()) {
                                 Text("FORGOT PASSWORD?")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .scaledFont(size: 11, weight: .bold)
                                     .foregroundColor(.elevateDarkGreen)
                             }
                         )
@@ -56,14 +57,13 @@ struct SignInView: View {
                 // Action Buttons
                 VStack(spacing: 16) {
                     PrimaryButton(title: "Sign In", iconName: "arrow.right") {
-                        isAuthenticated = true
+                        viewModel.signIn(appSession: appSession)
                     }
-                    
-                    SecondaryButton(title: "Sign in with Face ID", iconName: "faceid") {
-                        showFaceID = true
-                    }
-                    .fullScreenCover(isPresented: $showFaceID) {
-                        FaceIDVerificationView(isAuthenticated: $isAuthenticated)
+
+                    if biometricLoginEnabled {
+                        SecondaryButton(title: "Sign in with Face ID", iconName: "faceid") {
+                            authenticateWithBiometrics()
+                        }
                     }
                 }
                 .padding(.top, 8)
@@ -73,12 +73,12 @@ struct SignInView: View {
                 // Footer
                 VStack(spacing: 4) {
                     Text("Don't have an organization?")
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .foregroundColor(.elevateTextGray)
                     
                     NavigationLink(destination: SignUpView()) {
                         Text("Create New Organization")
-                            .font(.system(size: 14, weight: .bold))
+                            .scaledFont(size: 14, weight: .bold)
                             .foregroundColor(.elevateDarkGreen)
                     }
                 }
@@ -86,10 +86,60 @@ struct SignInView: View {
             }
             .padding(.horizontal, 24)
             .navigationBarHidden(true)
+            .alert("Authentication Failed", isPresented: $showAuthError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(authErrorMessage)
+            }
+            .alert("Sign In Error", isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { _ in viewModel.errorMessage = nil }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
+            }
         }
+    }
+
+    private func authenticateWithBiometrics() {
+        let context = LAContext()
+        var error: NSError?
+        context.localizedFallbackTitle = "Use Passcode"
+        context.localizedCancelTitle = "Cancel"
+
+        let policy: LAPolicy = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+            ? .deviceOwnerAuthenticationWithBiometrics
+            : .deviceOwnerAuthentication
+
+        guard context.canEvaluatePolicy(policy, error: &error) else {
+            showAuthError(message: error?.localizedDescription ?? "Biometric authentication is not available.")
+            return
+        }
+
+        let reason = "Use Face ID or Touch ID to sign in."
+        context.evaluatePolicy(policy, localizedReason: reason) { success, authError in
+            DispatchQueue.main.async {
+                if success {
+                    if appSession.currentUser != nil {
+                        return
+                    }
+                    showAuthError(message: "No saved session found. Please sign in with your credentials first.")
+                } else {
+                    showAuthError(message: authError?.localizedDescription ?? "Authentication failed.")
+                }
+            }
+        }
+    }
+
+    private func showAuthError(message: String) {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        authErrorMessage = trimmed.isEmpty ? "Authentication failed. Please try again." : trimmed
+        showAuthError = true
     }
 }
 
 #Preview {
-    SignInView(isAuthenticated: .constant(false))
+    SignInView()
+        .environmentObject(AppSession())
 }

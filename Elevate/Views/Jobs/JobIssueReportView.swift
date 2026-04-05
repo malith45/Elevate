@@ -1,10 +1,15 @@
 import SwiftUI
+import UIKit
 
 struct JobIssueReportView: View {
+    let jobId: String
+
+    @EnvironmentObject private var appSession: AppSession
     @Environment(\.presentationMode) var presentationMode
-    @State private var issueText: String = ""
-    @State private var priority: Int = 1 // 0: LOW, 1: MEDIUM, 2: HIGH
+    @StateObject private var viewModel = JobIssueReportViewModel()
+    @ObservedObject private var network = NetworkService.shared
     @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
+    @State private var showCamera = false
     
     var body: some View {
         ZStack {
@@ -18,24 +23,24 @@ struct JobIssueReportView: View {
                     VStack(alignment: .leading, spacing: 32) {
                         
                         Text("Report Issue")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .scaledFont(size: 32, weight: .bold, design: .rounded)
                             .foregroundColor(.elevateDarkGreen)
                         
                         // Issue Description
                         VStack(alignment: .leading, spacing: 12) {
                             Text("ISSUE DESCRIPTION")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             ZStack(alignment: .topLeading) {
-                                if issueText.isEmpty {
+                                if viewModel.issueText.isEmpty {
                                     Text("Describe the technical failure in detail...")
                                         .foregroundColor(Color.gray.opacity(0.8))
-                                        .font(.system(size: 16))
+                                        .scaledFont(size: 16)
                                         .padding(.top, 16)
                                         .padding(.leading, 16)
                                 }
-                                TextEditor(text: $issueText)
+                                TextEditor(text: $viewModel.issueText)
                                     .padding(8)
                                     .frame(height: 180)
                                     .scrollContentBackground(.hidden)
@@ -51,21 +56,33 @@ struct JobIssueReportView: View {
                         // Priority Level
                         VStack(alignment: .leading, spacing: 12) {
                             Text("PRIORITY LEVEL")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             HStack(spacing: 16) {
-                                PriorityButton(title: "LOW", isSelected: priority == 0) { priority = 0 }
-                                PriorityButton(title: "MEDIUM", isSelected: priority == 1) { priority = 1 }
-                                PriorityButton(title: "HIGH", isSelected: priority == 2) { priority = 2 }
+                                PriorityButton(title: "LOW", isSelected: viewModel.priority == "LOW") { viewModel.priority = "LOW" }
+                                PriorityButton(title: "MEDIUM", isSelected: viewModel.priority == "MEDIUM") { viewModel.priority = "MEDIUM" }
+                                PriorityButton(title: "HIGH", isSelected: viewModel.priority == "HIGH") { viewModel.priority = "HIGH" }
                             }
                         }
                         
                         // Photo Upload
                         VStack(alignment: .leading, spacing: 12) {
                             Text("PHOTO UPLOAD")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
+
+                            if !viewModel.attachmentUrls.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(viewModel.attachmentUrls, id: \.self) { url in
+                                            PhotoPreview(urlString: url)
+                                                .frame(width: 80, height: 80)
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                }
+                            }
                             
                             HStack(spacing: 16) {
                                 RoundedRectangle(cornerRadius: 8)
@@ -77,11 +94,11 @@ struct JobIssueReportView: View {
                                     .frame(width: 80, height: 80)
                                     .overlay(Image(systemName: "cpu").font(.system(size:30)).foregroundColor(.white.opacity(0.5)))
                                 
-                                Button(action: {}) {
+                                Button(action: { showCamera = true }) {
                                     VStack(spacing: 4) {
                                         Image(systemName: "camera.badge.ellipsis")
                                         Text("ADD PHOTO")
-                                            .font(.system(size: 10, weight: .bold))
+                                            .scaledFont(size: 10, weight: .bold)
                                     }
                                     .foregroundColor(.elevateTextGray)
                                     .frame(width: 80, height: 80)
@@ -91,9 +108,9 @@ struct JobIssueReportView: View {
                         }
                         
                         // Submit Button
-                        Button(action: {}) {
+                        Button(action: submitIssue) {
                             Text("SUBMIT REPORT")
-                                .font(.system(size: 16, weight: .bold))
+                                .scaledFont(size: 16, weight: .bold)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
@@ -111,6 +128,30 @@ struct JobIssueReportView: View {
             ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showCamera) {
+            CameraCaptureView(onCapture: { data in
+                let fileName = "issue_\(jobId)_\(UUID().uuidString).jpg"
+                viewModel.addAttachment(data: data, fileName: fileName)
+            }, isPresented: $showCamera)
+        }
+        .alert("Issue Report", isPresented: Binding(
+            get: { viewModel.errorMessage != nil || viewModel.didSubmit },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "Report submitted successfully.")
+        }
+        .onChange(of: viewModel.didSubmit) { didSubmit in
+            if didSubmit {
+                HapticManager.shared.playNotification(type: .success)
+            }
+        }
+    }
+
+    private func submitIssue() {
+        guard let user = appSession.currentUser else { return }
+        viewModel.submit(jobId: jobId, user: user, isOnline: network.isOnline)
     }
 }
 
@@ -122,7 +163,7 @@ struct PriorityButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 12, weight: .bold))
+                .scaledFont(size: 12, weight: .bold)
                 .foregroundColor(isSelected ? .white : .black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -138,5 +179,6 @@ struct PriorityButton: View {
 }
 
 #Preview {
-    JobIssueReportView()
+    JobIssueReportView(jobId: "sample")
+        .environmentObject(AppSession())
 }

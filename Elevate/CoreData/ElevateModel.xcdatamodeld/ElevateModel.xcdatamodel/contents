@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="2600" systemVersion="24E214" minimumToolsVersion="Xcode 12.0" language="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="UserEntity" representedClassName="UserEntity" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="organizationId" optional="NO" attributeType="String"/>
+        <attribute name="username" optional="NO" attributeType="String"/>
+        <attribute name="displayName" optional="NO" attributeType="String"/>
+        <attribute name="role" optional="NO" attributeType="String"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="phone" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="JobEntity" representedClassName="JobEntity" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="organizationId" optional="NO" attributeType="String"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="location" optional="NO" attributeType="String"/>
+        <attribute name="scheduledAt" optional="NO" attributeType="Date"/>
+        <attribute name="status" optional="NO" attributeType="String"/>
+        <attribute name="priority" optional="NO" attributeType="String"/>
+        <attribute name="assignedUserId" optional="NO" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="approvedCost" optional="YES" attributeType="Double"/>
+        <attribute name="photoUrls" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformerName"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date"/>
+    </entity>
+    <entity name="InventoryItemEntity" representedClassName="InventoryItemEntity" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="organizationId" optional="NO" attributeType="String"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="category" optional="NO" attributeType="String"/>
+        <attribute name="quantity" optional="NO" attributeType="Integer 64"/>
+        <attribute name="unitPrice" optional="NO" attributeType="Double"/>
+        <attribute name="sku" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="IssueReportEntity" representedClassName="IssueReportEntity" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="jobId" optional="NO" attributeType="String"/>
+        <attribute name="userId" optional="NO" attributeType="String"/>
+        <attribute name="organizationId" optional="NO" attributeType="String"/>
+        <attribute name="detail" optional="NO" attributeType="String"/>
+        <attribute name="priority" optional="NO" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+        <attribute name="attachmentUrls" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformerName"/>
+        <attribute name="isSynced" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+    </entity>
+    <entity name="NotificationEntity" representedClassName="NotificationEntity" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="organizationId" optional="NO" attributeType="String"/>
+        <attribute name="userId" optional="NO" attributeType="String"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="body" optional="NO" attributeType="String"/>
+        <attribute name="type" optional="NO" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+        <attribute name="isRead" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+    </entity>
+    <entity name="PendingActionEntity" representedClassName="PendingActionEntity" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="organizationId" optional="NO" attributeType="String"/>
+        <attribute name="userId" optional="NO" attributeType="String"/>
+        <attribute name="type" optional="NO" attributeType="String"/>
+        <attribute name="payload" optional="NO" attributeType="Binary"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+    </entity>
+</model>

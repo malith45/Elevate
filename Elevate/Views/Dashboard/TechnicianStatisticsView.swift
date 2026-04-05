@@ -35,11 +35,11 @@ struct TechnicianStatisticsView: View {
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
                             Text("PERFORMANCE ANALYTICS")
-                                .font(.system(size: 10, weight: .bold))
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                             
                             Text("Your Performance")
-                                .font(.system(size: 28, weight: .medium, design: .rounded))
+                                .scaledFont(size: 28, weight: .medium, design: .rounded)
                         }
                         .padding(.horizontal, 24)
                         
@@ -55,14 +55,14 @@ struct TechnicianStatisticsView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Jobs Completed")
-                                        .font(.system(size: 14, weight: .bold))
+                                        .scaledFont(size: 14, weight: .bold)
                                     Text("Last 30 Days")
-                                        .font(.system(size: 12))
+                                        .scaledFont(size: 12)
                                         .foregroundColor(.elevateTextGray)
                                 }
                                 Spacer()
                                 Text("124")
-                                    .font(.system(size: 28, weight: .bold))
+                                    .scaledFont(size: 28, weight: .bold)
                                     .foregroundColor(.elevateDarkGreen)
                             }
                             
@@ -93,7 +93,7 @@ struct TechnicianStatisticsView: View {
                                     AxisValueLabel {
                                         if let week = value.as(String.self) {
                                             Text(week)
-                                                .font(.system(size: 10, weight: .bold))
+                                                .scaledFont(size: 10, weight: .bold)
                                                 .foregroundColor(.elevateTextGray)
                                         }
                                     }
@@ -112,9 +112,9 @@ struct TechnicianStatisticsView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Efficiency Score")
-                                        .font(.system(size: 14, weight: .bold))
+                                        .scaledFont(size: 14, weight: .bold)
                                     Text("Vs. Team Average")
-                                        .font(.system(size: 12))
+                                        .scaledFont(size: 12)
                                         .foregroundColor(.elevateTextGray)
                                 }
                                 Spacer()
@@ -122,7 +122,7 @@ struct TechnicianStatisticsView: View {
                                     Image(systemName: "arrow.up.right")
                                     Text("12%")
                                 }
-                                .font(.system(size: 16, weight: .bold))
+                                .scaledFont(size: 16, weight: .bold)
                                 .foregroundColor(.elevateDarkGreen)
                             }
                             
@@ -186,9 +186,9 @@ struct StatCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
-                    .font(.system(size: 24, weight: .regular))
+                    .scaledFont(size: 24, weight: .regular)
                 Text(title)
-                    .font(.system(size: 10, weight: .bold))
+                    .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
             }
         }

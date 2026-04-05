@@ -2,41 +2,52 @@ import SwiftUI
 import MapKit
 
 struct TechnicianMapView: View {
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = MapViewModel()
+    @ObservedObject private var locationService = LocationService.shared
     
     var body: some View {
         ZStack(alignment: .top) {
             // Background Map
-            Map(coordinateRegion: $region, annotationItems: [MapPinItem(coordinate: region.center)]) { item in
-                MapAnnotation(coordinate: item.coordinate) {
-                    VStack(spacing: 4) {
-                        Text("DESTINATION")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.elevateDarkGreen)
-                            .cornerRadius(12)
-                        
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.elevateDarkGreen)
-                            .background(Circle().fill(Color.white).frame(width: 14, height: 14))
+            Map(position: .constant(.region(viewModel.region))) {
+                if let route = viewModel.route {
+                    MapPolyline(route.polyline)
+                        .stroke(Color.elevateDarkGreen, lineWidth: 5)
+                }
+
+                if let destination = viewModel.destination {
+                    Annotation("", coordinate: destination) {
+                        VStack(spacing: 4) {
+                            Text("DESTINATION")
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.elevateDarkGreen)
+                                .cornerRadius(12)
+                            
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(.elevateDarkGreen)
+                                .background(Circle().fill(Color.white).frame(width: 14, height: 14))
+                        }
+                    }
+                }
+
+                if let current = locationService.currentLocation {
+                    Annotation("", coordinate: current) {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 16, height: 16)
+                            .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                            .shadow(radius: 3)
                     }
                 }
             }
+            .mapControls {
+                MapUserLocationButton()
+            }
             .ignoresSafeArea()
-            
-            // Current Location Mock (Blue dot)
-            Circle()
-                .fill(Color.blue)
-                .frame(width: 16, height: 16)
-                .overlay(Circle().stroke(Color.white, lineWidth: 4))
-                .shadow(radius: 3)
-                .position(x: 100, y: 550) // Mock offset position to mimic image
             
             // Header
             BrandHeaderNav(showOnlineStatus: false)
@@ -48,12 +59,12 @@ struct TechnicianMapView: View {
                 // Floating Trip Info Card
                 HStack(spacing: 16) {
                     // Time Block
-                    VStack(spacing: 2) {
-                        Text("12")
-                            .font(.system(size: 20, weight: .bold))
+                    VStack(spacing: 4) {
+                        Text(routeMinutes())
+                            .scaledFont(size: 20, weight: .bold)
                             .foregroundColor(.white)
                         Text("MINS")
-                            .font(.system(size: 10, weight: .bold))
+                            .scaledFont(size: 10, weight: .bold)
                             .foregroundColor(.white)
                     }
                     .frame(width: 60, height: 60)
@@ -62,27 +73,27 @@ struct TechnicianMapView: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 8) {
-                            Text("0.8 MILES")
-                                .font(.system(size: 10, weight: .bold))
+                            Text(routeDistance())
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateDarkGreen)
                             Circle().fill(Color.gray).frame(width: 3, height: 3)
-                            Text("ARRIVAL 2:45 PM")
-                                .font(.system(size: 10, weight: .bold))
+                            Text("ARRIVAL \(arrivalTime())")
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.gray)
                         }
                         
-                        Text("HVAC Calibration")
-                            .font(.system(size: 16, weight: .bold))
+                        Text(jobTitle())
+                            .scaledFont(size: 16, weight: .bold)
                         
-                        Text("Grand Central Mall • Gate 4")
-                            .font(.system(size: 12))
+                        Text(jobLocation())
+                            .scaledFont(size: 12)
                             .foregroundColor(.gray)
                     }
                     
                     Spacer()
                     
                     // Navigate Action
-                    Button(action: {}) {
+                    Button(action: openInMaps) {
                         Image(systemName: "arrow.turn.up.right")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
@@ -103,14 +114,60 @@ struct TechnicianMapView: View {
             ReusableBottomNav(selectedTab: .constant(.map))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            locationService.requestAuthorization()
+            viewModel.updateRegionIfNeeded()
+            viewModel.setDestination(destinationCoordinate())
+            viewModel.requestRoute()
+        }
+        .onReceive(locationService.$currentLocation) { _ in
+            viewModel.updateRegionIfNeeded()
+            viewModel.requestRoute()
+        }
     }
-}
 
-struct MapPinItem: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
+    private func destinationCoordinate() -> CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+    }
+
+    private func routeMinutes() -> String {
+        guard let route = viewModel.route else { return "--" }
+        return String(Int(route.expectedTravelTime / 60))
+    }
+
+    private func routeDistance() -> String {
+        guard let route = viewModel.route else { return "--" }
+        let miles = route.distance / 1609.34
+        return String(format: "%.1f MILES", miles)
+    }
+
+    private func arrivalTime() -> String {
+        guard let route = viewModel.route else { return "--" }
+        let arrival = Date().addingTimeInterval(route.expectedTravelTime)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: arrival)
+    }
+
+    private func jobTitle() -> String {
+        "Job Site"
+    }
+
+    private func jobLocation() -> String {
+        "Destination"
+    }
+
+    private func openInMaps() {
+        guard let destination = viewModel.destination else { return }
+        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+        mapItem.name = jobTitle()
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
+    }
 }
 
 #Preview {
     TechnicianMapView()
+        .environmentObject(AppSession())
 }

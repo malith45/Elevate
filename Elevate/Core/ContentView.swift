@@ -8,8 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var isAuthenticated = false
+    
     var body: some View {
-        SignInView()
+        if isAuthenticated {
+            MainTabView()
+        } else {
+            SignInView(isAuthenticated: $isAuthenticated)
+        }
     }
 }
 

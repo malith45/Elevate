@@ -12,17 +12,17 @@ struct ManagerMainTabView: View {
                 case .dashboard:
                     NavigationStack { ManagerDashboardView(selectedTab: $selectedTab) }
                 case .jobs:
-                    NavigationStack { JobListView() }
+                    NavigationStack { Text("Manager Job List View") }
                 case .map:
-                    NavigationStack { TechnicianMapView(viewModel: mapViewModel) }
+                    NavigationStack { ManagerMapView(viewModel: mapViewModel) }
                 case .profile:
-                    NavigationStack { TechnicianProfileView() }
+                    NavigationStack { ManagerProfileView() }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
             // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab, mode: .tabs)
+            ReusableBottomNav(selectedTab: $selectedTab, mode: .tabs, isManager: true)
         }
         .navigationBarHidden(true)
     }

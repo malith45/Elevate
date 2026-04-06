@@ -4,26 +4,14 @@ struct NotificationBell: View {
     @EnvironmentObject private var appSession: AppSession
     @State private var unreadCount: Int = 0
     private let localStorage = LocalStorageService.shared
+    var isManager: Bool = false
     
     var body: some View {
-        NavigationLink(destination: TechnicianNotificationsView()) {
-            ZStack(alignment: .topTrailing) {
-                Image(systemName: "bell")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.elevateDarkGreen)
-                if unreadCount > 0 {
-                    Text("\(min(unreadCount, 99))")
-                        .scaledFont(size: 9, weight: .bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(Color.red)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule().stroke(Color.white, lineWidth: 1.5)
-                        )
-                        .offset(x: 6, y: -6)
-                }
+        Group {
+            if isManager {
+                NavigationLink(destination: ManagerNotificationsView()) { bellContent }
+            } else {
+                NavigationLink(destination: TechnicianNotificationsView()) { bellContent }
             }
         }
         .onAppear {
@@ -31,6 +19,27 @@ struct NotificationBell: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .notificationsDidChange)) { _ in
             refreshUnreadCount()
+        }
+    }
+    
+    private var bellContent: some View {
+        ZStack(alignment: .topTrailing) {
+            Image(systemName: "bell")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.elevateDarkGreen)
+            if unreadCount > 0 {
+                Text("\(min(unreadCount, 99))")
+                    .scaledFont(size: 9, weight: .bold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.red)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule().stroke(Color.white, lineWidth: 1.5)
+                    )
+                    .offset(x: 6, y: -6)
+            }
         }
     }
 
@@ -46,6 +55,7 @@ struct NotificationBell: View {
 struct BrandHeaderNav: View {
     var showOnlineStatus: Bool = false
     var isOnline: Bool = true
+    var isManager: Bool = false
     
     var body: some View {
         HStack {
@@ -70,7 +80,7 @@ struct BrandHeaderNav: View {
                     .background(Color.elevateLightGray)
                     .cornerRadius(12)
                 }
-                NotificationBell()
+                NotificationBell(isManager: isManager)
             }
         }
         .padding(.horizontal, 24)
@@ -81,6 +91,7 @@ struct BrandHeaderNav: View {
 
 struct BackHeaderNav: View {
     @Environment(\.presentationMode) var presentationMode
+    var isManager: Bool = false
     
     var body: some View {
         HStack {
@@ -94,7 +105,7 @@ struct BackHeaderNav: View {
                 .foregroundColor(.elevateDarkGreen)
             }
             Spacer()
-            NotificationBell()
+            NotificationBell(isManager: isManager)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
@@ -114,6 +125,7 @@ enum BottomNavMode {
 struct ReusableBottomNav: View {
     @Binding var selectedTab: TabItem
     var mode: BottomNavMode = .links
+    var isManager: Bool = false
     @Namespace private var selectionNamespace
     
     var body: some View {
@@ -121,10 +133,10 @@ struct ReusableBottomNav: View {
             Spacer()
             ZStack {
                 HStack(spacing: 0) {
-                    GlobalTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                    GlobalTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                    GlobalTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                    GlobalTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
+                    GlobalTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, isManager: isManager, selectionNamespace: selectionNamespace)
+                    GlobalTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, isManager: isManager, selectionNamespace: selectionNamespace)
+                    GlobalTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, isManager: isManager, selectionNamespace: selectionNamespace)
+                    GlobalTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, isManager: isManager, selectionNamespace: selectionNamespace)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
@@ -151,6 +163,7 @@ struct GlobalTabBarButton: View {
     var iconName: String
     @Binding var selectedTab: TabItem
     var mode: BottomNavMode
+    var isManager: Bool = false
     var selectionNamespace: Namespace.ID
     
     var isSelected: Bool {
@@ -216,15 +229,28 @@ struct GlobalTabBarButton: View {
     }
 
     private func destinationView(for tab: TabItem) -> AnyView {
-        switch tab {
-        case .dashboard:
-            return AnyView(TechnicianDashboardView(selectedTab: .constant(.dashboard)))
-        case .jobs:
-            return AnyView(JobListView())
-        case .map:
-            return AnyView(TechnicianMapView())
-        case .profile:
-            return AnyView(TechnicianProfileView())
+        if isManager {
+            switch tab {
+            case .dashboard:
+                return AnyView(ManagerDashboardView(selectedTab: .constant(.dashboard)))
+            case .jobs:
+                return AnyView(Text("Manager Job List View"))
+            case .map:
+                return AnyView(ManagerMapView(viewModel: MapViewModel()))
+            case .profile:
+                return AnyView(ManagerProfileView())
+            }
+        } else {
+            switch tab {
+            case .dashboard:
+                return AnyView(TechnicianDashboardView(selectedTab: .constant(.dashboard)))
+            case .jobs:
+                return AnyView(JobListView())
+            case .map:
+                return AnyView(TechnicianMapView(viewModel: MapViewModel()))
+            case .profile:
+                return AnyView(TechnicianProfileView())
+            }
         }
     }
 }

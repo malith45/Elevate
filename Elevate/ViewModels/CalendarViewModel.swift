@@ -9,7 +9,7 @@ final class CalendarViewModel: ObservableObject {
     @Published var authorizationStatus: EKAuthorizationStatus = EKEventStore.authorizationStatus(for: .event)
     @Published var errorMessage: String?
 
-    private let eventStore = EKEventStore()
+    let eventStore = EKEventStore()
 
     init() {
         let now = Date()

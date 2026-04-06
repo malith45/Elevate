@@ -19,7 +19,7 @@ struct ManagerDashboardView: View {
             
             VStack(spacing: 0) {
                 // Top Bar
-                BrandHeaderNav(showOnlineStatus: true, isOnline: network.isOnline)
+                BrandHeaderNav(showOnlineStatus: true, isOnline: network.isOnline, isManager: true)
                 
                 // Content
                 ScrollView(showsIndicators: false) {
@@ -63,7 +63,7 @@ struct ManagerDashboardView: View {
                                     .foregroundColor(.elevateDarkGreen)
                             }
                             Spacer()
-                            NavigationLink(destination: TechnicianCalendarView()) {
+                            NavigationLink(destination: ManagerCalendarView()) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.elevateLightGray)
@@ -112,51 +112,51 @@ struct ManagerDashboardView: View {
                         }
 
                         // Technician Availability Map Shortcut
-                        NavigationLink(destination: TechnicianMapView(viewModel: MapViewModel())) {
-                            ZStack(alignment: .bottomTrailing) {
-                                RoundedRectangle(cornerRadius: 24)
-                                    .fill(Color.white)
-                                    .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
-                                
-                                VStack(alignment: .leading, spacing: 0) {
-                                    // Semicircle and pin
-                                    ZStack(alignment: .bottom) {
-                                        Circle()
-                                            .trim(from: 0.5, to: 1.0)
-                                            .fill(Color.elevateDarkGreen)
-                                            .frame(width: 140, height: 140)
-                                            
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.white)
-                                                .frame(width: 48, height: 48)
-                                                .shadow(color: Color.black.opacity(0.1), radius: 5, y: 2)
-                                            Image(systemName: "mappin.and.ellipse")
-                                                .font(.system(size: 20))
-                                                .foregroundColor(.black)
-                                        }
-                                        .offset(y: 10)
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedTab = .map
+                            }
+                        }) {
+                            HStack(spacing: 16) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "map.fill")
+                                            .font(.system(size: 12))
+                                        Text("LIVE TRACKING")
+                                            .scaledFont(size: 10, weight: .heavy)
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.top, 24)
-                                    .padding(.bottom, 24)
+                                    .foregroundColor(.white.opacity(0.8))
                                     
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("TECHNICIAN AVAILABILITY")
-                                            .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
-                                        Text("12 Technicians Active")
-                                            .scaledFont(size: 16, weight: .bold)
-                                            .foregroundColor(.black)
-                                    }
-                                    .padding(24)
+                                    Text("12 Technicians Active")
+                                        .scaledFont(size: 18, weight: .bold, design: .rounded)
+                                        .foregroundColor(.white)
+                                }
+                                Spacer()
+                                
+                                // Mini radar/pulse dot visual
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.2))
+                                        .frame(width: 48, height: 48)
+                                    Circle()
+                                        .fill(Color.white.opacity(0.4))
+                                        .frame(width: 32, height: 32)
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 12, height: 12)
+                                        .shadow(color: .green, radius: 4, x: 0, y: 0)
                                 }
                                 
-                                Image(systemName: "chart.line.uptrend.xyaxis")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.elevateDarkGreen)
-                                    .padding(24)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.7))
                             }
+                            .padding(24)
+                            .background(
+                                LinearGradient(gradient: Gradient(colors: [Color.elevateDarkGreen, Color.elevateDarkGreen.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                            )
+                            .cornerRadius(24)
+                            .shadow(color: Color.elevateDarkGreen.opacity(0.3), radius: 10, x: 0, y: 6)
                         }
                         .buttonStyle(PlainButtonStyle())
                         
@@ -165,7 +165,7 @@ struct ManagerDashboardView: View {
                             ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen, dest: Text("Create Job"))
                             ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black, dest: Text("Approve"))
                             ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black, dest: Text("Inventory"))
-                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black, dest: Text("Stats"))
+                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black, dest: ManagerStatisticsView())
                         }
                         
                         // Today's Tasks
@@ -175,7 +175,7 @@ struct ManagerDashboardView: View {
                                     .scaledFont(size: 14, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
-                                NavigationLink(destination: JobListView()) {
+                                NavigationLink(destination: Text("Manager Job List View")) {
                                     Text("View All")
                                         .scaledFont(size: 12, weight: .bold)
                                         .foregroundColor(.elevateDarkGreen)
@@ -202,18 +202,27 @@ struct ManagerDashboardView: View {
                     .padding(.top, 16)
                 }
                 .refreshable {
+                    let finishSync = {
+                        isRefreshing = false
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                            showLastSynced = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                showLastSynced = false
+                            }
+                        }
+                    }
+                    
+                    isRefreshing = true
                     if let user = appSession.currentUser {
-                        isRefreshing = true
                         viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline) {
-                            isRefreshing = false
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                                showLastSynced = true
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    showLastSynced = false
-                                }
-                            }
+                            finishSync()
+                        }
+                    } else {
+                        // Mock sync for testing without login
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            finishSync()
                         }
                     }
                 }
@@ -222,12 +231,26 @@ struct ManagerDashboardView: View {
             .background(Color.white)
             
             // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab)
+            ReusableBottomNav(selectedTab: $selectedTab, isManager: true)
         }
         .navigationBarHidden(true)
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+            } else {
+                // Trigger an initial fake sync for testing without login
+                isRefreshing = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isRefreshing = false
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        showLastSynced = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showLastSynced = false
+                        }
+                    }
+                }
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
@@ -258,13 +281,11 @@ struct ManagerDashboardView: View {
 
     private func syncStatusText() -> String {
         switch syncManager.status {
-        case .idle:
-            return "Sync idle"
+        case .idle, .upToDate:
+            return lastSyncedText()
         case .syncing:
             return "Syncing"
         case .offline:
-            return lastSyncedText()
-        case .upToDate:
             return lastSyncedText()
         case .error:
             return "Sync error"
@@ -273,7 +294,7 @@ struct ManagerDashboardView: View {
 
     private var shouldShowSyncStatus: Bool {
         switch syncManager.status {
-        case .upToDate:
+        case .upToDate, .idle:
             return isRefreshing || showLastSynced
         default:
             return true
@@ -289,14 +310,12 @@ struct ManagerDashboardView: View {
 
     private func syncStatusColor() -> Color {
         switch syncManager.status {
-        case .idle:
+        case .idle, .upToDate:
             return .elevateTextGray
         case .syncing:
             return .elevateDarkGreen
         case .offline:
             return .orange
-        case .upToDate:
-            return .elevateTextGray
         case .error:
             return .red
         }

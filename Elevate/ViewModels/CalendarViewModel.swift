@@ -50,10 +50,9 @@ final class CalendarViewModel: ObservableObject {
             return
         }
 
-        switch status {
-        case .authorized:
+        if status == .authorized {
             loadEvents(for: currentMonth)
-        case .notDetermined:
+        } else if status == .notDetermined {
             eventStore.requestAccess(to: .event) { [weak self] granted, error in
                 DispatchQueue.main.async {
                     self?.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
@@ -65,7 +64,7 @@ final class CalendarViewModel: ObservableObject {
                     }
                 }
             }
-        default:
+        } else {
             errorMessage = "Calendar access is disabled."
         }
     }

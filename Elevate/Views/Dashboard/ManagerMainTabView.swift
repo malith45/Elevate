@@ -1,8 +1,6 @@
 import SwiftUI
 
-
-
-struct MainTabView: View {
+struct ManagerMainTabView: View {
     @State private var selectedTab: TabItem = .dashboard
     @StateObject private var mapViewModel = MapViewModel()
     
@@ -12,7 +10,7 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .dashboard:
-                    NavigationStack { TechnicianDashboardView(selectedTab: $selectedTab) }
+                    NavigationStack { ManagerDashboardView(selectedTab: $selectedTab) }
                 case .jobs:
                     NavigationStack { JobListView() }
                 case .map:
@@ -30,8 +28,6 @@ struct MainTabView: View {
     }
 }
 
-
-
 #Preview {
-    MainTabView()
+    ManagerMainTabView()
 }

@@ -15,9 +15,10 @@ struct SignInView: View {
                 
                 // Header
                 VStack(spacing: 8) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 40, weight: .bold))
-                        .foregroundColor(.elevateDarkGreen)
+                    Image("AppLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 72, height: 72)
                     Text("Welcome !")
                         .scaledFont(size: 28, weight: .bold, design: .rounded)
                 }
@@ -33,14 +34,14 @@ struct SignInView: View {
                     )
                     
                     CustomTextField(
-                        title: "USER IDENTIFICATION",
-                        placeholder: "Username or ID",
+                        title: "USERNAME",
+                        placeholder: "Your username",
                         iconName: "person",
                         text: $viewModel.username
                     )
                     
                     SecureCustomTextField(
-                        title: "SECURITY KEY",
+                        title: "PASSWORD",
                         placeholder: "••••••••",
                         iconName: "lock",
                         text: $viewModel.password,

@@ -49,6 +49,7 @@ struct TechnicianDashboardView: View {
                                         .foregroundColor(.elevateTextGray)
                                 }
                             }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
 
                         // Quick Stats
@@ -135,9 +136,13 @@ struct TechnicianDashboardView: View {
                         isRefreshing = true
                         viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline) {
                             isRefreshing = false
-                            showLastSynced = true
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                showLastSynced = true
+                            }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                showLastSynced = false
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    showLastSynced = false
+                                }
                             }
                         }
                     }
@@ -154,11 +159,12 @@ struct TechnicianDashboardView: View {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
             }
         }
-        .onChange(of: network.isOnline) { isOnline in
+        .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
             }
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: shouldShowSyncStatus)
     }
 
     private func timeString(from date: Date) -> String {

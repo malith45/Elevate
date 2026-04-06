@@ -1,0 +1,350 @@
+import SwiftUI
+
+struct ManagerDashboardView: View {
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = DashboardViewModel()
+    @ObservedObject private var network = NetworkService.shared
+    @ObservedObject private var syncManager = SyncManager.shared
+    @Binding var selectedTab: TabItem
+    @State private var isRefreshing = false
+    @State private var showLastSynced = false
+
+    init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
+        _selectedTab = selectedTab
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.elevateLightGray.opacity(0.1).ignoresSafeArea() // very light bg
+            
+            VStack(spacing: 0) {
+                // Top Bar
+                BrandHeaderNav(showOnlineStatus: true, isOnline: network.isOnline)
+                
+                // Content
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        
+                        // Header text
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(todayString())
+                                .scaledFont(size: 12, weight: .bold)
+                                .foregroundColor(.elevateTextGray)
+                            
+                            Text("Good morning, \(appSession.currentUser?.displayName ?? "Marcus")")
+                                .scaledFont(size: 24, weight: .bold, design: .rounded)
+                        }
+
+                        if shouldShowSyncStatus {
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(syncStatusColor())
+                                    .frame(width: 8, height: 8)
+                                Text(syncStatusText())
+                                    .scaledFont(size: 12, weight: .bold)
+                                    .foregroundColor(syncStatusColor())
+                                if syncManager.pendingCount > 0 {
+                                    Text("Pending: \(syncManager.pendingCount)")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(.elevateTextGray)
+                                }
+                            }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+
+                        // Total Jobs Today
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("TOTAL JOBS TODAY")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                                Text("28")
+                                    .scaledFont(size: 40, weight: .bold, design: .rounded)
+                                    .foregroundColor(.elevateDarkGreen)
+                            }
+                            Spacer()
+                            NavigationLink(destination: TechnicianCalendarView()) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.elevateLightGray)
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "calendar.badge.plus")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.black)
+                                }
+                            }
+                        }
+                        .padding(24)
+                        .background(Color.white)
+                        .cornerRadius(24)
+                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+                        
+                        // Pending and Urgent
+                        HStack(spacing: 16) {
+                            // Pending
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("PENDING")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                                Text("14")
+                                    .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                    .foregroundColor(.black)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(24)
+                            .background(Color.white)
+                            .cornerRadius(24)
+                            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+                            
+                            // Urgent
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("URGENT")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.red.opacity(0.8))
+                                Text("03")
+                                    .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                    .foregroundColor(.red)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(24)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(24)
+                        }
+
+                        // Technician Availability Map Shortcut
+                        NavigationLink(destination: TechnicianMapView(viewModel: MapViewModel())) {
+                            ZStack(alignment: .bottomTrailing) {
+                                RoundedRectangle(cornerRadius: 24)
+                                    .fill(Color.white)
+                                    .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+                                
+                                VStack(alignment: .leading, spacing: 0) {
+                                    // Semicircle and pin
+                                    ZStack(alignment: .bottom) {
+                                        Circle()
+                                            .trim(from: 0.5, to: 1.0)
+                                            .fill(Color.elevateDarkGreen)
+                                            .frame(width: 140, height: 140)
+                                            
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.white)
+                                                .frame(width: 48, height: 48)
+                                                .shadow(color: Color.black.opacity(0.1), radius: 5, y: 2)
+                                            Image(systemName: "mappin.and.ellipse")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(.black)
+                                        }
+                                        .offset(y: 10)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.top, 24)
+                                    .padding(.bottom, 24)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("TECHNICIAN AVAILABILITY")
+                                            .scaledFont(size: 10, weight: .bold)
+                                            .foregroundColor(.elevateDarkGreen)
+                                        Text("12 Technicians Active")
+                                            .scaledFont(size: 16, weight: .bold)
+                                            .foregroundColor(.black)
+                                    }
+                                    .padding(24)
+                                }
+                                
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.elevateDarkGreen)
+                                    .padding(24)
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        // Shortcuts
+                        HStack(spacing: 8) {
+                            ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen, dest: Text("Create Job"))
+                            ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black, dest: Text("Approve"))
+                            ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black, dest: Text("Inventory"))
+                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black, dest: Text("Stats"))
+                        }
+                        
+                        // Today's Tasks
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("TODAY'S TASKS")
+                                    .scaledFont(size: 14, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                                Spacer()
+                                NavigationLink(destination: JobListView()) {
+                                    Text("View All")
+                                        .scaledFont(size: 12, weight: .bold)
+                                        .foregroundColor(.elevateDarkGreen)
+                                }
+                            }
+                            
+                            VStack(spacing: 16) {
+                                ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                    TaskRow(
+                                        time: timeString(from: job.scheduledAt),
+                                        ampm: ampmString(from: job.scheduledAt),
+                                        title: job.title,
+                                        location: job.location,
+                                        priority: job.priority.uppercased(),
+                                        color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Spacer().frame(height: 100) // Space for bottom bar
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                }
+                .refreshable {
+                    if let user = appSession.currentUser {
+                        isRefreshing = true
+                        viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline) {
+                            isRefreshing = false
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                showLastSynced = true
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    showLastSynced = false
+                                }
+                            }
+                        }
+                    }
+                }
+                .background(Color.white) // Ensure scroll container matches aesthetic
+            }
+            .background(Color.white)
+            
+            // Bottom Navbar Floating
+            ReusableBottomNav(selectedTab: $selectedTab)
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            if let user = appSession.currentUser {
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+            }
+        }
+        .onChange(of: network.isOnline) { _, isOnline in
+            if let user = appSession.currentUser {
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+            }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: shouldShowSyncStatus)
+    }
+
+    private func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm"
+        return formatter.string(from: date)
+    }
+
+    private func todayString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter.string(from: Date()).uppercased()
+    }
+
+    private func ampmString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "a"
+        return formatter.string(from: date)
+    }
+
+    private func syncStatusText() -> String {
+        switch syncManager.status {
+        case .idle:
+            return "Sync idle"
+        case .syncing:
+            return "Syncing"
+        case .offline:
+            return lastSyncedText()
+        case .upToDate:
+            return lastSyncedText()
+        case .error:
+            return "Sync error"
+        }
+    }
+
+    private var shouldShowSyncStatus: Bool {
+        switch syncManager.status {
+        case .upToDate:
+            return isRefreshing || showLastSynced
+        default:
+            return true
+        }
+    }
+
+    private func lastSyncedText() -> String {
+        if network.isOnline {
+            return "Last synced now"
+        }
+        return "Last synced 4m ago"
+    }
+
+    private func syncStatusColor() -> Color {
+        switch syncManager.status {
+        case .idle:
+            return .elevateTextGray
+        case .syncing:
+            return .elevateDarkGreen
+        case .offline:
+            return .orange
+        case .upToDate:
+            return .elevateTextGray
+        case .error:
+            return .red
+        }
+    }
+}
+
+struct ManagerShortcutItem<Destination: View>: View {
+    var title: String
+    var icon: String
+    var color: Color
+    var iconColor: Color
+    var dest: Destination
+    
+    var body: some View {
+        NavigationLink(destination: dest) {
+            VStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white)
+                        .frame(maxWidth: .infinity, minHeight: 72)
+                        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+                    
+                    VStack(spacing: 8) {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Image(systemName: icon)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(iconColor)
+                            )
+                        
+                        Text(title)
+                            .scaledFont(size: 9, weight: .bold)
+                            .foregroundColor(.black)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(8)
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+#Preview {
+    ManagerDashboardView(selectedTab: .constant(.dashboard))
+        .environmentObject(AppSession())
+}

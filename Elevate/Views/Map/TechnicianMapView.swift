@@ -3,12 +3,15 @@ import MapKit
 
 struct TechnicianMapView: View {
     @EnvironmentObject private var appSession: AppSession
-    @StateObject private var viewModel = MapViewModel()
+    @ObservedObject var viewModel: MapViewModel
     @ObservedObject private var locationService = LocationService.shared
     @State private var mapPosition: MapCameraPosition
+    @State private var hasCenteredOnUser = false
 
-    init() {
-        _mapPosition = State(initialValue: .region(MapViewModel().region))
+    init(viewModel: MapViewModel = MapViewModel()) {
+        self.viewModel = viewModel
+        let initialPosition = MapCameraPosition.region(viewModel.savedRegion ?? viewModel.region)
+        _mapPosition = State(initialValue: initialPosition)
     }
     
     var body: some View {
@@ -164,13 +167,23 @@ struct TechnicianMapView: View {
             locationService.requestAuthorization()
             viewModel.updateRegionIfNeeded()
             viewModel.setDestination(destinationCoordinate())
-            viewModel.requestRoute()
-            mapPosition = .region(viewModel.region)
+            if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
+                viewModel.requestRoute()
+            }
+            mapPosition = MapCameraPosition.region(viewModel.savedRegion ?? viewModel.region)
         }
         .onReceive(locationService.$currentLocation) { _ in
             viewModel.updateRegionIfNeeded()
-            viewModel.requestRoute()
-            mapPosition = .region(viewModel.region)
+            if !hasCenteredOnUser, locationService.currentLocation != nil {
+                mapPosition = MapCameraPosition.region(viewModel.savedRegion ?? viewModel.region)
+                hasCenteredOnUser = true
+            }
+            if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
+                viewModel.requestRoute()
+            }
+        }
+        .onChange(of: mapPosition) { _, newValue in
+            viewModel.savedRegion = viewModel.region
         }
     }
 

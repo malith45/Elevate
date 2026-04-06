@@ -7,22 +7,21 @@ struct SignUpView: View {
     @State private var orgId = ""
     @State private var ownerUsername = ""
     @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var showValidationError = false
+    @State private var validationMessage = ""
+    @State private var navigateToManager = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer().frame(height: 40)
+        VStack(spacing: 24) {
+            Spacer().frame(height: 40)
                 
                 // Header
                 VStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.elevateLightGray)
-                            .frame(width: 64, height: 64)
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.elevateDarkGreen)
-                    }
+                    Image("AppLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 72, height: 72)
                     
                     Text("Create Organization")
                         .scaledFont(size: 24, weight: .bold, design: .rounded)
@@ -33,37 +32,44 @@ struct SignUpView: View {
                 VStack(spacing: 16) {
                     CustomTextField(
                         title: "ORGANIZATION NAME",
-                        placeholder: "e.g. Acme Corp",
+                        placeholder: "Prime Elevators",
                         iconName: "building.2",
                         text: $orgName
                     )
                     
                     CustomTextField(
                         title: "ORGANIZATION ID",
-                        placeholder: "acme-global-01",
+                        placeholder: "ORG-000-00",
                         iconName: "building.2",
                         text: $orgId
                     )
                     
                     CustomTextField(
-                        title: "OWNER USERNAME",
-                        placeholder: "admin_user",
+                        title: "USERNAME",
+                        placeholder: "Your username",
                         iconName: "person",
                         text: $ownerUsername
                     )
                     
                     SecureCustomTextField(
-                        title: "SECURE PASSWORD",
+                        title: "PASSWORD",
                         placeholder: "••••••••",
                         iconName: "lock",
                         text: $password
+                    )
+
+                    SecureCustomTextField(
+                        title: "CONFIRM PASSWORD",
+                        placeholder: "••••••••",
+                        iconName: "lock",
+                        text: $confirmPassword
                     )
                 }
                 
                 // Action Buttons
                 VStack(spacing: 16) {
                     PrimaryButton(title: "Create Account", iconName: "arrow.right") {
-                        // Create Account Action
+                        validateAndSubmit()
                     }
                 }
                 .padding(.top, 16)
@@ -85,10 +91,43 @@ struct SignUpView: View {
                     }
                 }
                 .padding(.bottom, 32)
-            }
-            .padding(.horizontal, 24)
         }
+        .padding(.horizontal, 24)
         .navigationBarHidden(true)
+        .alert("Sign Up Error", isPresented: $showValidationError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(validationMessage)
+        }
+        .navigationDestination(isPresented: $navigateToManager) {
+            ManagerMainTabView()
+        }
+    }
+
+    private func validateAndSubmit() {
+        // TEMPORARY: Bypass validation to test manager dashboard
+        navigateToManager = true
+        return
+        
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedConfirm = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard trimmedPassword.count >= 8 else {
+            showValidationError(message: "Password must be at least 8 characters.")
+            return
+        }
+
+        guard trimmedPassword == trimmedConfirm else {
+            showValidationError(message: "Passwords do not match.")
+            return
+        }
+
+        // Create Account Action
+    }
+
+    private func showValidationError(message: String) {
+        validationMessage = message
+        showValidationError = true
     }
 }
 

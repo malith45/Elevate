@@ -3,9 +3,9 @@ import SwiftUI
 struct TechnicianProfileView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ProfileViewModel()
-    @ObservedObject private var accessibilitySettings = AccessibilitySettings.shared
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
+    @State private var showLogoutConfirmation = false
     
     var body: some View {
         ZStack {
@@ -69,10 +69,6 @@ struct TechnicianProfileView: View {
                                 Divider().padding(.leading, 64)
                                 AppSettingToggleRow(title: "Notification Preferences", subtitle: "Manage push alerts", icon: "bell", isOn: $pushNotificationsEnabled)
                                 Divider().padding(.leading, 64)
-                                AppSettingToggleRow(title: "High Contrast", subtitle: "Enhance visibility", icon: "circle.lefthalf.fill", isOn: $accessibilitySettings.isHighContrast)
-                                Divider().padding(.leading, 64)
-                                AppSettingToggleRow(title: "Haptic Feedback", subtitle: "Vibration for taps", icon: "hand.tap", isOn: $accessibilitySettings.hapticFeedback)
-                                Divider().padding(.leading, 64)
                                 
                                 NavigationLink(destination: TechnicianAccessibilityView()) {
                                     HStack(spacing: 16) {
@@ -103,19 +99,14 @@ struct TechnicianProfileView: View {
                         }
                         
                         // LOGOUT
-                        Button(action: signOut) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("LOGOUT")
-                            }
-                            .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.red.opacity(0.3), lineWidth: 1))
-                            .background(Color.white)
-                            .cornerRadius(8)
+                        Button(action: { showLogoutConfirmation = true }) {
+                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+                                .scaledFont(size: 16, weight: .semibold)
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .tint(.red)
                         
                         Spacer().frame(height: 120) // Custom tab bar space
                     }
@@ -127,6 +118,14 @@ struct TechnicianProfileView: View {
             ReusableBottomNav(selectedTab: .constant(.profile))
         }
         .navigationBarHidden(true)
+        .alert("Log out?", isPresented: $showLogoutConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Log Out", role: .destructive) {
+                signOut()
+            }
+        } message: {
+            Text("You will need to sign in again to access your account.")
+        }
         .onAppear {
             loadProfile()
         }

@@ -5,7 +5,7 @@ struct JobListView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = JobsViewModel()
     @ObservedObject private var network = NetworkService.shared
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
+    @State private var selectedTab: TabItem = .jobs
     @State private var selectedFilter = 0
     
     var body: some View {
@@ -83,7 +83,7 @@ struct JobListView: View {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
             }
         }
-        .onChange(of: network.isOnline) { isOnline in
+        .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
             }

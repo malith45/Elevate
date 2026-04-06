@@ -8,7 +8,7 @@ struct JobDetailsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = JobDetailsViewModel()
     @ObservedObject private var network = NetworkService.shared
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
+    @State private var selectedTab: TabItem = .jobs
     @State private var showCamera = false
     
     var body: some View {

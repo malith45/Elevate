@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TechnicianNotificationsView: View {
     @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .dashboard
+    @State private var selectedTab: TabItem = .dashboard
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
     

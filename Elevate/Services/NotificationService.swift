@@ -4,6 +4,10 @@ import UserNotifications
 import FirebaseMessaging
 import UIKit
 
+extension Notification.Name {
+    static let notificationsDidChange = Notification.Name("notificationsDidChange")
+}
+
 final class NotificationService: NSObject, ObservableObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = NotificationService()
 

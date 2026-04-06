@@ -8,7 +8,7 @@ struct JobIssueReportView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = JobIssueReportViewModel()
     @ObservedObject private var network = NetworkService.shared
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
+    @State private var selectedTab: TabItem = .jobs
     @State private var showCamera = false
     
     var body: some View {
@@ -142,7 +142,7 @@ struct JobIssueReportView: View {
         } message: {
             Text(viewModel.errorMessage ?? "Report submitted successfully.")
         }
-        .onChange(of: viewModel.didSubmit) { didSubmit in
+        .onChange(of: viewModel.didSubmit) { _, didSubmit in
             if didSubmit {
                 HapticManager.shared.playNotification(type: .success)
             }

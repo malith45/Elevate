@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct NotificationBell: View {
-    var hasUnread: Bool = true
+    @EnvironmentObject private var appSession: AppSession
+    @State private var unreadCount: Int = 0
+    private let localStorage = LocalStorageService.shared
     
     var body: some View {
         NavigationLink(destination: TechnicianNotificationsView()) {
@@ -9,15 +11,35 @@ struct NotificationBell: View {
                 Image(systemName: "bell")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.elevateDarkGreen)
-                if hasUnread {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 8, height: 8)
-                        .offset(x: 2, y: -2)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                if unreadCount > 0 {
+                    Text("\(min(unreadCount, 99))")
+                        .scaledFont(size: 9, weight: .bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.red)
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule().stroke(Color.white, lineWidth: 1.5)
+                        )
+                        .offset(x: 6, y: -6)
                 }
             }
         }
+        .onAppear {
+            refreshUnreadCount()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .notificationsDidChange)) { _ in
+            refreshUnreadCount()
+        }
+    }
+
+    private func refreshUnreadCount() {
+        guard let user = appSession.currentUser else {
+            unreadCount = 0
+            return
+        }
+        unreadCount = localStorage.unreadNotificationCount(organizationId: user.organizationId, userId: user.id)
     }
 }
 
@@ -84,18 +106,24 @@ enum TabItem {
     case dashboard, jobs, map, profile
 }
 
+enum BottomNavMode {
+    case tabs
+    case links
+}
+
 struct ReusableBottomNav: View {
     @Binding var selectedTab: TabItem
+    var mode: BottomNavMode = .links
     
     var body: some View {
         VStack {
             Spacer()
             ZStack {
                 HStack(spacing: 0) {
-                    GlobalTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab)
-                    GlobalTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab)
-                    GlobalTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab)
-                    GlobalTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab)
+                    GlobalTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode)
+                    GlobalTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode)
+                    GlobalTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode)
+                    GlobalTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
@@ -115,17 +143,34 @@ struct GlobalTabBarButton: View {
     var title: String
     var iconName: String
     @Binding var selectedTab: TabItem
+    var mode: BottomNavMode
     
     var isSelected: Bool {
         selectedTab == tab
     }
     
     var body: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                selectedTab = tab
+        switch mode {
+        case .tabs:
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    selectedTab = tab
+                }
+            }) {
+                buttonContent
             }
-        }) {
+        case .links:
+            NavigationLink(destination: destinationView(for: tab)) {
+                buttonContent
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                selectedTab = tab
+            })
+        }
+    }
+
+    private var buttonContent: some View {
+        Group {
             if isSelected {
                 VStack(spacing: 4) {
                     Image(systemName: iconName)
@@ -150,6 +195,19 @@ struct GlobalTabBarButton: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
             }
+        }
+    }
+
+    private func destinationView(for tab: TabItem) -> AnyView {
+        switch tab {
+        case .dashboard:
+            return AnyView(TechnicianDashboardView(selectedTab: .constant(.dashboard)))
+        case .jobs:
+            return AnyView(JobListView())
+        case .map:
+            return AnyView(TechnicianMapView())
+        case .profile:
+            return AnyView(TechnicianProfileView())
         }
     }
 }

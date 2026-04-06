@@ -3,7 +3,7 @@ import Charts
 
 struct TechnicianStatisticsView: View {
     @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .dashboard
+    @State private var selectedTab: TabItem = .dashboard
     
     let weeklyJobs = [
         (week: "WEEK 1", bgValue: 80, fgValue: 50),
@@ -167,7 +167,7 @@ struct TechnicianStatisticsView: View {
             }
             
             // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.dashboard))
+            ReusableBottomNav(selectedTab: $selectedTab)
         }
         .navigationBarHidden(true)
     }

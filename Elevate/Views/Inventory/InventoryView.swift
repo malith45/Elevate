@@ -8,7 +8,7 @@ struct InventoryView: View {
     @StateObject private var viewModel = InventoryViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var searchText: String = ""
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
+    @State private var selectedTab: TabItem = .jobs
     @State private var navigateToQuotation = false
     
     var body: some View {
@@ -71,9 +71,7 @@ struct InventoryView: View {
                         }
                         .padding(.horizontal, 24)
 
-                        NavigationLink(destination: QuotationStatusView(jobId: jobId), isActive: $navigateToQuotation) {
-                            EmptyView()
-                        }
+                        EmptyView()
                         
                         Spacer().frame(height: 120)
                     }
@@ -85,12 +83,15 @@ struct InventoryView: View {
             ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
+        .navigationDestination(isPresented: $navigateToQuotation) {
+            QuotationStatusView(jobId: jobId)
+        }
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
             }
         }
-        .onChange(of: network.isOnline) { isOnline in
+        .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
                 viewModel.loadItems(organizationId: user.organizationId, isOnline: isOnline)
             }

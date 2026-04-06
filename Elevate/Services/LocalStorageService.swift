@@ -233,6 +233,9 @@ final class LocalStorageService {
                 entity.setValue(item.isRead, forKey: "isRead")
             }
             self.saveContext(context)
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .notificationsDidChange, object: nil)
+            }
         }
     }
 
@@ -262,6 +265,7 @@ final class LocalStorageService {
         guard let item = try? context.fetch(request).first else { return }
         item.setValue(true, forKey: "isRead")
         saveContext(context)
+        NotificationCenter.default.post(name: .notificationsDidChange, object: nil)
     }
 
     func clearNotifications(organizationId: String, userId: String) {
@@ -271,6 +275,13 @@ final class LocalStorageService {
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
         _ = try? context.execute(deleteRequest)
         saveContext(context)
+        NotificationCenter.default.post(name: .notificationsDidChange, object: nil)
+    }
+
+    func unreadNotificationCount(organizationId: String, userId: String) -> Int {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "NotificationEntity")
+        request.predicate = NSPredicate(format: "organizationId == %@ AND userId == %@ AND isRead == NO", organizationId, userId)
+        return (try? stack.viewContext.count(for: request)) ?? 0
     }
 
     func enqueuePendingAction(_ action: PendingAction) {

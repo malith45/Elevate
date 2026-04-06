@@ -5,7 +5,7 @@ struct QuotationStatusView: View {
 
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = QuotationStatusViewModel()
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .jobs
+    @State private var selectedTab: TabItem = .jobs
     
     var body: some View {
         ZStack {

@@ -1,27 +1,17 @@
 import SwiftUI
-import Charts
 
 struct TechnicianDashboardView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = DashboardViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject private var syncManager = SyncManager.shared
-    @State private var selectedTab: TabItem = .dashboard
-    
-    enum TabItem {
-        case dashboard, jobs, map, profile
+    @Binding var selectedTab: TabItem
+    @State private var isRefreshing = false
+    @State private var showLastSynced = false
+
+    init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
+        _selectedTab = selectedTab
     }
-    
-    // Sample Data
-    let performanceData = [
-        (day: "MON", value: 20),
-        (day: "TUE", value: 30),
-        (day: "WED", value: 25),
-        (day: "THU", value: 45),
-        (day: "FRI", value: 50),
-        (day: "SAT", value: 35),
-        (day: "SUN", value: 15)
-    ]
     
     var body: some View {
         ZStack {
@@ -45,17 +35,19 @@ struct TechnicianDashboardView: View {
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
                         }
 
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(syncStatusColor())
-                                .frame(width: 8, height: 8)
-                            Text(syncStatusText())
-                                .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(syncStatusColor())
-                            if syncManager.pendingCount > 0 {
-                                Text("Pending: \(syncManager.pendingCount)")
-                                    .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                        if shouldShowSyncStatus {
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(syncStatusColor())
+                                    .frame(width: 8, height: 8)
+                                Text(syncStatusText())
+                                    .scaledFont(size: 12, weight: .bold)
+                                    .foregroundColor(syncStatusColor())
+                                if syncManager.pendingCount > 0 {
+                                    Text("Pending: \(syncManager.pendingCount)")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(.elevateTextGray)
+                                }
                             }
                         }
 
@@ -65,92 +57,43 @@ struct TechnicianDashboardView: View {
                             StatPill(icon: "exclamationmark.triangle", value: "\(viewModel.urgentJobsToday)", title: "URGENT", isPrimary: false)
                         }
                         
-                        // Urgent Update Banner
-                        HStack(spacing: 16) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("URGENT UPDATE")
-                                    .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.white.opacity(0.8))
-                                Text("New high-priority job assigned in Soho")
-                                    .scaledFont(size: 14, weight: .medium)
+                        if let urgentMessage = urgentUpdateMessage {
+                            HStack(spacing: 16) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.system(size: 20))
                                     .foregroundColor(.white)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                        .padding()
-                        .background(Color.elevateDarkGreen)
-                        .cornerRadius(12)
-                        
-                        // Weekly Performance Card
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("WEEKLY PERFORMANCE")
-                                        .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
-                                    
-                                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                        Text("42")
-                                            .scaledFont(size: 28, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
-                                        Text("Jobs Completed")
-                                            .scaledFont(size: 14)
-                                            .foregroundColor(.elevateTextGray)
-                                    }
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("URGENT UPDATE")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(.white.opacity(0.8))
+                                    Text(urgentMessage)
+                                        .scaledFont(size: 14, weight: .medium)
+                                        .foregroundColor(.white)
                                 }
                                 Spacer()
-                                HStack(spacing: 2) {
-                                    Image(systemName: "arrow.up.right")
-                                    Text("12%")
-                                }
-                                .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(.green)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
                             }
-                            
-                            Chart(performanceData, id: \.day) { item in
-                                BarMark(
-                                    x: .value("Day", item.day),
-                                    y: .value("Value", item.value)
-                                )
-                                .foregroundStyle(item.day == "FRI" ? Color.elevateDarkGreen : Color.elevateDarkGreen.opacity(0.4))
-                                .cornerRadius(4)
-                            }
-                            .frame(height: 100)
-                            .chartXAxis {
-                                AxisMarks { value in
-                                    AxisValueLabel {
-                                        if let day = value.as(String.self) {
-                                            Text(day)
-                                                .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(.elevateTextGray)
-                                        }
-                                    }
-                                }
-                            }
-                            .chartYAxis(.hidden)
+                            .padding()
+                            .background(Color.elevateDarkGreen)
+                            .cornerRadius(12)
                         }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(16)
-                        .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         
                         // Shortcuts
                         HStack(spacing: 16) {
-                            NavigationLink(destination: JobListView()) {
-                                ShortcutBoxInternal(title: "JOB LIST", icon: "briefcase")
+                            Button(action: {
+                                selectedTab = .jobs
+                            }) {
+                                ShortcutBoxInternal(title: "START JOB", icon: "play.fill")
                             }
+                            .buttonStyle(.plain)
                             NavigationLink(destination: TechnicianCalendarView()) {
                                 ShortcutBoxInternal(title: "CALENDAR", icon: "calendar")
                             }
-                            NavigationLink(destination: TechnicianNotificationsView()) {
-                                ShortcutBoxInternal(title: "ALERTS", icon: "bell")
+                            NavigationLink(destination: TechnicianStatisticsView()) {
+                                ShortcutBoxInternal(title: "STATISTICS", icon: "chart.bar")
                             }
                         }
                         
@@ -187,11 +130,23 @@ struct TechnicianDashboardView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
                 }
+                .refreshable {
+                    if let user = appSession.currentUser {
+                        isRefreshing = true
+                        viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline) {
+                            isRefreshing = false
+                            showLastSynced = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                showLastSynced = false
+                            }
+                        }
+                    }
+                }
                 .background(Color.elevateLightGray.opacity(0.3)) // Subtly differentiate scroll background
             }
             
             // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.dashboard))
+            ReusableBottomNav(selectedTab: $selectedTab)
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -231,12 +186,28 @@ struct TechnicianDashboardView: View {
         case .syncing:
             return "Syncing"
         case .offline:
-            return "Offline"
+            return lastSyncedText()
         case .upToDate:
-            return "Up to date"
+            return lastSyncedText()
         case .error:
             return "Sync error"
         }
+    }
+
+    private var shouldShowSyncStatus: Bool {
+        switch syncManager.status {
+        case .upToDate:
+            return isRefreshing || showLastSynced
+        default:
+            return true
+        }
+    }
+
+    private func lastSyncedText() -> String {
+        if network.isOnline {
+            return "Last synced now"
+        }
+        return "Last synced 4m ago"
     }
 
     private func syncStatusColor() -> Color {
@@ -248,10 +219,24 @@ struct TechnicianDashboardView: View {
         case .offline:
             return .orange
         case .upToDate:
-            return .green
+            return .elevateTextGray
         case .error:
             return .red
         }
+    }
+
+    private var urgentUpdateMessage: String? {
+        let urgentJobs = viewModel.jobs.filter {
+            let priority = $0.priority.uppercased()
+            return priority == "HIGH" || priority == "URGENT"
+        }
+
+        guard let job = urgentJobs.first else {
+            return nil
+        }
+
+        let location = job.location.isEmpty ? "your area" : job.location
+        return "Urgent job: \(job.title) in \(location)"
     }
 }
 
@@ -334,10 +319,10 @@ struct TaskRow: View {
 // Re-adding here so we don't drop it from Overwrite operation.
 
 struct TabBarButton: View {
-    var tab: TechnicianDashboardView.TabItem
+    var tab: TabItem
     var title: String
     var iconName: String
-    @Binding var selectedTab: TechnicianDashboardView.TabItem
+    @Binding var selectedTab: TabItem
     
     var isSelected: Bool {
         selectedTab == tab
@@ -378,6 +363,6 @@ struct TabBarButton: View {
 }
 
 #Preview {
-    TechnicianDashboardView()
+    TechnicianDashboardView(selectedTab: .constant(.dashboard))
         .environmentObject(AppSession())
 }

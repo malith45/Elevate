@@ -11,7 +11,7 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .dashboard:
-                    NavigationStack { TechnicianDashboardView() }
+                    NavigationStack { TechnicianDashboardView(selectedTab: $selectedTab) }
                 case .jobs:
                     NavigationStack { JobListView() }
                 case .map:
@@ -23,7 +23,7 @@ struct MainTabView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
             // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab)
+            ReusableBottomNav(selectedTab: $selectedTab, mode: .tabs)
         }
         .navigationBarHidden(true)
     }

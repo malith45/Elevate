@@ -1,20 +1,9 @@
 import SwiftUI
+import EventKit
 
 struct TechnicianCalendarView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTab: TechnicianDashboardView.TabItem = .dashboard
-    
-    // Using a simple array for the demo grid layout
-    let days = [
-        ("30", false, false), ("1", true, false), ("2", false, false), ("3", true, false),
-        ("4", false, false), ("5", false, false), ("6", false, false), ("7", false, false),
-        ("8", false, false), ("9", true, false), ("10", false, false), ("11", false, true),
-        ("12", false, false), ("13", false, false), ("14", true, false), ("15", false, false),
-        ("16", false, false), ("17", false, false), ("18", false, false), ("19", false, false),
-        ("20", false, false), ("21", false, false), ("22", false, false), ("23", false, false),
-        ("24", false, false), ("25", false, false), ("26", false, false), ("27", false, false),
-        ("28", false, false)
-    ]
+    @StateObject private var viewModel = CalendarViewModel()
+    @State private var selectedTab: TabItem = .dashboard
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
     
@@ -31,14 +20,22 @@ struct TechnicianCalendarView: View {
                         
                         // Calendar Header
                         HStack {
-                            Text("October 2024")
+                            Text(monthTitle(from: viewModel.currentMonth))
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                            
+
                             Spacer()
-                            
+
                             HStack(spacing: 24) {
-                                Image(systemName: "chevron.left")
-                                Image(systemName: "chevron.right")
+                                Button(action: {
+                                    viewModel.changeMonth(by: -1)
+                                }) {
+                                    Image(systemName: "chevron.left")
+                                }
+                                Button(action: {
+                                    viewModel.changeMonth(by: 1)
+                                }) {
+                                    Image(systemName: "chevron.right")
+                                }
                             }
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.elevateDarkGreen)
@@ -46,15 +43,30 @@ struct TechnicianCalendarView: View {
                         .padding(.horizontal, 24)
                         
                         // Today Badge
-                        Text("Today")
-                            .scaledFont(size: 14, weight: .medium)
-                            .foregroundColor(.elevateDarkGreen)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
-                            .background(Color.elevateDarkGreen.opacity(0.1))
-                            .cornerRadius(16)
-                            .padding(.horizontal, 24)
+                        Button(action: {
+                            let today = Date()
+                            viewModel.currentMonth = today
+                            viewModel.selectedDate = today
+                            viewModel.loadEventsIfAuthorized()
+                        }) {
+                            Text("Today")
+                                .scaledFont(size: 14, weight: .medium)
+                                .foregroundColor(.elevateDarkGreen)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
+                                .background(Color.elevateDarkGreen.opacity(0.1))
+                                .cornerRadius(16)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 24)
                         
+                        if viewModel.authorizationStatus == .denied || viewModel.authorizationStatus == .restricted {
+                            Text("Enable Calendar access to see your events.")
+                                .scaledFont(size: 14)
+                                .foregroundColor(.elevateTextGray)
+                                .padding(.horizontal, 24)
+                        }
+
                         // Calendar Grid
                         VStack(spacing: 16) {
                             // Days of week
@@ -66,22 +78,31 @@ struct TechnicianCalendarView: View {
                                         .frame(maxWidth: .infinity)
                                 }
                             }
-                            
+
                             // Dates
                             LazyVGrid(columns: columns, spacing: 16) {
-                                ForEach(0..<days.count, id: \.self) { i in
-                                    let item = days[i]
-                                    VStack(spacing: 4) {
-                                        Text(item.0)
-                                            .scaledFont(size: 16)
-                                            .foregroundColor(item.0 == "30" ? .elevateTextGray : (item.2 ? .white : .black))
+                                let days = viewModel.monthGridDates()
+                                ForEach(Array(days.enumerated()), id: \.offset) { _, date in
+                                    if let date = date {
+                                        let isSelected = Calendar.current.isDate(date, inSameDayAs: viewModel.selectedDate)
+                                        VStack(spacing: 4) {
+                                            Text("\(Calendar.current.component(.day, from: date))")
+                                                .scaledFont(size: 16)
+                                                .foregroundColor(isSelected ? .white : .black)
+                                                .frame(width: 32, height: 32)
+                                                .background(isSelected ? Color.elevateDarkGreen : Color.clear)
+                                                .cornerRadius(16)
+                                                .onTapGesture {
+                                                    viewModel.selectedDate = date
+                                                }
+
+                                            Circle()
+                                                .fill(viewModel.hasEvents(on: date) ? Color.elevateDarkGreen : Color.clear)
+                                                .frame(width: 4, height: 4)
+                                        }
+                                    } else {
+                                        Color.clear
                                             .frame(width: 32, height: 32)
-                                            .background(item.2 ? Color.elevateDarkGreen : Color.clear)
-                                            .cornerRadius(16)
-                                        
-                                        Circle()
-                                            .fill(item.1 ? Color.elevateDarkGreen : Color.clear)
-                                            .frame(width: 4, height: 4)
                                     }
                                 }
                             }
@@ -90,16 +111,18 @@ struct TechnicianCalendarView: View {
                         
                         Divider().padding(.vertical, 8)
                         
-                        // Jobs List
+                        // Events List
                         VStack(alignment: .leading, spacing: 16) {
+                            let events = viewModel.events(for: viewModel.selectedDate)
+
                             HStack {
-                                Text("FRIDAY, OCT 11")
+                                Text(dayHeader(from: viewModel.selectedDate))
                                     .scaledFont(size: 12, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
-                                
+
                                 Spacer()
-                                
-                                Text("2 JOBS")
+
+                                Text("\(events.count) EVENTS")
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
@@ -107,20 +130,28 @@ struct TechnicianCalendarView: View {
                                     .foregroundColor(.elevateDarkGreen)
                                     .cornerRadius(8)
                             }
-                            
-                            VStack(spacing: 24) {
-                                JobCalendarRow(time: "09:00", ampm: "AM", title: "HVAC System Calibration", location: "Lexington Towers, Suite 405", dotColor: .elevateDarkGreen)
-                                JobCalendarRow(time: "11:30", ampm: "AM", title: "Routine Filter Change", location: "Northside Corporate Park", dotColor: .elevateLightGray)
-                            }
-                            
-                            Spacer().frame(height: 32)
-                            
-                            HStack {
-                                Spacer()
-                                Text("No more jobs scheduled for today")
-                                    .scaledFont(size: 14)
-                                    .foregroundColor(.elevateTextGray)
-                                Spacer()
+
+                            if events.isEmpty {
+                                HStack {
+                                    Spacer()
+                                    Text("No events scheduled for this day")
+                                        .scaledFont(size: 14)
+                                        .foregroundColor(.elevateTextGray)
+                                    Spacer()
+                                }
+                            } else {
+                                VStack(spacing: 24) {
+                                    ForEach(events, id: \.eventIdentifier) { event in
+                                        let timeParts = timeParts(for: event)
+                                        JobCalendarRow(
+                                            time: timeParts.time,
+                                            ampm: timeParts.ampm,
+                                            title: event.title,
+                                            location: event.location ?? "No location",
+                                            dotColor: .elevateDarkGreen
+                                        )
+                                    }
+                                }
                             }
                         }
                         .padding(.horizontal, 24)
@@ -131,9 +162,15 @@ struct TechnicianCalendarView: View {
             }
             
             // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.dashboard))
+            ReusableBottomNav(selectedTab: $selectedTab)
         }
         .navigationBarHidden(true)
+        .onAppear {
+            viewModel.requestAccessIfNeeded()
+        }
+        .onChange(of: viewModel.currentMonth) { _, _ in
+            viewModel.loadEventsIfAuthorized()
+        }
     }
 }
 
@@ -179,4 +216,30 @@ struct JobCalendarRow: View {
 
 #Preview {
     TechnicianCalendarView()
+}
+
+private extension TechnicianCalendarView {
+    func monthTitle(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date)
+    }
+
+    func dayHeader(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter.string(from: date).uppercased()
+    }
+
+    func timeParts(for event: EKEvent) -> (time: String, ampm: String) {
+        if event.isAllDay {
+            return ("All", "Day")
+        }
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "h:mm"
+        let ampmFormatter = DateFormatter()
+        ampmFormatter.dateFormat = "a"
+        return (timeFormatter.string(from: event.startDate), ampmFormatter.string(from: event.startDate))
+    }
 }

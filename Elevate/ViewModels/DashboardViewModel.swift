@@ -8,16 +8,20 @@ final class DashboardViewModel: ObservableObject {
 
     private let localStorage = LocalStorageService.shared
 
-    func loadJobs(organizationId: String, userId: String, isOnline: Bool) {
+    func loadJobs(organizationId: String, userId: String, isOnline: Bool, completion: (() -> Void)? = nil) {
         let localJobs = localStorage.fetchJobs(organizationId: organizationId)
         applyJobs(localJobs)
 
-        if isOnline {
-            SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
-                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId) ?? []
-                DispatchQueue.main.async {
-                    self?.applyJobs(refreshed)
-                }
+        guard isOnline else {
+            completion?()
+            return
+        }
+
+        SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
+            let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId) ?? []
+            DispatchQueue.main.async {
+                self?.applyJobs(refreshed)
+                completion?()
             }
         }
     }

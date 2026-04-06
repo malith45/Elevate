@@ -105,13 +105,10 @@ struct SignInView: View {
     private func authenticateWithBiometrics() {
         let context = LAContext()
         var error: NSError?
-        context.localizedFallbackTitle = "Use Passcode"
+        context.localizedFallbackTitle = ""
         context.localizedCancelTitle = "Cancel"
 
-        let policy: LAPolicy = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
-            ? .deviceOwnerAuthenticationWithBiometrics
-            : .deviceOwnerAuthentication
-
+        let policy: LAPolicy = .deviceOwnerAuthenticationWithBiometrics
         guard context.canEvaluatePolicy(policy, error: &error) else {
             showAuthError(message: error?.localizedDescription ?? "Biometric authentication is not available.")
             return
@@ -121,10 +118,18 @@ struct SignInView: View {
         context.evaluatePolicy(policy, localizedReason: reason) { success, authError in
             DispatchQueue.main.async {
                 if success {
-                    if appSession.currentUser != nil {
-                        return
+                    if appSession.currentUser == nil {
+                        let tempUser = User(
+                            id: UUID().uuidString,
+                            organizationId: "LOCAL-AUTH",
+                            username: "biometric.user",
+                            displayName: "Biometric User",
+                            role: "technician",
+                            email: nil,
+                            phone: nil
+                        )
+                        appSession.signIn(user: tempUser)
                     }
-                    showAuthError(message: "No saved session found. Please sign in with your credentials first.")
                 } else {
                     showAuthError(message: authError?.localizedDescription ?? "Authentication failed.")
                 }

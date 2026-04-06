@@ -5,11 +5,16 @@ struct TechnicianMapView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = MapViewModel()
     @ObservedObject private var locationService = LocationService.shared
+    @State private var mapPosition: MapCameraPosition
+
+    init() {
+        _mapPosition = State(initialValue: .region(MapViewModel().region))
+    }
     
     var body: some View {
         ZStack(alignment: .top) {
             // Background Map
-            Map(position: .constant(.region(viewModel.region))) {
+            Map(position: $mapPosition) {
                 if let route = viewModel.route {
                     MapPolyline(route.polyline)
                         .stroke(Color.elevateDarkGreen, lineWidth: 5)
@@ -26,8 +31,8 @@ struct TechnicianMapView: View {
                                 .background(Color.elevateDarkGreen)
                                 .cornerRadius(12)
                             
-                            Image(systemName: "mappin.circle.fill")
-                                .font(.system(size: 28))
+                            Image(systemName: "mappin.and.ellipse")
+                                .font(.system(size: 26, weight: .bold))
                                 .foregroundColor(.elevateDarkGreen)
                                 .background(Circle().fill(Color.white).frame(width: 14, height: 14))
                         }
@@ -56,58 +61,99 @@ struct TechnicianMapView: View {
             VStack {
                 Spacer()
                 
-                // Floating Trip Info Card
-                HStack(spacing: 16) {
-                    // Time Block
-                    VStack(spacing: 4) {
-                        Text(routeMinutes())
-                            .scaledFont(size: 20, weight: .bold)
-                            .foregroundColor(.white)
-                        Text("MINS")
-                            .scaledFont(size: 10, weight: .bold)
-                            .foregroundColor(.white)
-                    }
-                    .frame(width: 60, height: 60)
-                    .background(Color.elevateDarkGreen)
-                    .cornerRadius(10)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            Text(routeDistance())
+                if shouldShowTripCard {
+                    HStack(spacing: 16) {
+                        VStack(spacing: 4) {
+                            Text(routeMinutes())
+                                .scaledFont(size: 20, weight: .bold)
+                                .foregroundColor(.white)
+                            Text("MINS")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateDarkGreen)
-                            Circle().fill(Color.gray).frame(width: 3, height: 3)
-                            Text("ARRIVAL \(arrivalTime())")
-                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 60, height: 60)
+                        .background(Color.elevateDarkGreen)
+                        .cornerRadius(10)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 8) {
+                                Text(routeDistance())
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.elevateDarkGreen)
+                                Circle().fill(Color.gray).frame(width: 3, height: 3)
+                                Text("ARRIVAL \(arrivalTime())")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.gray)
+                            }
+
+                            Text(jobTitle())
+                                .scaledFont(size: 16, weight: .bold)
+
+                            Text(jobLocation())
+                                .scaledFont(size: 12)
                                 .foregroundColor(.gray)
                         }
-                        
-                        Text(jobTitle())
-                            .scaledFont(size: 16, weight: .bold)
-                        
-                        Text(jobLocation())
-                            .scaledFont(size: 12)
-                            .foregroundColor(.gray)
+
+                        Spacer()
+
+                        Button(action: openInMaps) {
+                            Image(systemName: "arrow.turn.up.right")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.elevateDarkGreen)
+                                .cornerRadius(8)
+                        }
                     }
-                    
-                    Spacer()
-                    
-                    // Navigate Action
-                    Button(action: openInMaps) {
-                        Image(systemName: "arrow.turn.up.right")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.elevateDarkGreen)
-                            .cornerRadius(8)
-                    }
+                    .padding(16)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 120)
                 }
-                .padding(16)
-                .background(Color.white)
-                .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 120) // Give space for custom tab bar below it
+            }
+
+            VStack {
+                Spacer()
+
+                HStack {
+                    Spacer()
+
+                    VStack(spacing: 10) {
+                        Button(action: zoomIn) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.elevateDarkGreen)
+                                .frame(width: 40, height: 40)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+                        }
+
+                        Button(action: zoomOut) {
+                            Image(systemName: "minus")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.elevateDarkGreen)
+                                .frame(width: 40, height: 40)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+                        }
+
+                        Button(action: centerOnUser) {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.elevateDarkGreen)
+                                .frame(width: 40, height: 40)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+                        }
+                    }
+                    .padding(.bottom, 260)
+                    .padding(.trailing, 20)
+                }
             }
             
             // Bottom Navbar Floating
@@ -119,10 +165,12 @@ struct TechnicianMapView: View {
             viewModel.updateRegionIfNeeded()
             viewModel.setDestination(destinationCoordinate())
             viewModel.requestRoute()
+            mapPosition = .region(viewModel.region)
         }
         .onReceive(locationService.$currentLocation) { _ in
             viewModel.updateRegionIfNeeded()
             viewModel.requestRoute()
+            mapPosition = .region(viewModel.region)
         }
     }
 
@@ -150,16 +198,55 @@ struct TechnicianMapView: View {
     }
 
     private func jobTitle() -> String {
-        "Job Site"
+        guard viewModel.destination != nil else { return "No destination" }
+        return "Destination"
     }
 
     private func jobLocation() -> String {
-        "Destination"
+        guard let destination = viewModel.destination else { return "" }
+        return String(format: "%.4f, %.4f", destination.latitude, destination.longitude)
+    }
+
+    private var shouldShowTripCard: Bool {
+        viewModel.destination != nil || viewModel.route != nil
+    }
+
+    private func zoomIn() {
+        adjustZoom(multiplier: 0.7)
+    }
+
+    private func zoomOut() {
+        adjustZoom(multiplier: 1.3)
+    }
+
+    private func adjustZoom(multiplier: CLLocationDegrees) {
+        var region = viewModel.region
+        let minDelta: CLLocationDegrees = 0.002
+        let maxDelta: CLLocationDegrees = 2.0
+        region.span.latitudeDelta = min(max(region.span.latitudeDelta * multiplier, minDelta), maxDelta)
+        region.span.longitudeDelta = min(max(region.span.longitudeDelta * multiplier, minDelta), maxDelta)
+        viewModel.region = region
+        mapPosition = .region(region)
+    }
+
+    private func centerOnUser() {
+        if let current = locationService.currentLocation {
+            var region = viewModel.region
+            region.center = current
+            viewModel.region = region
+            mapPosition = .region(region)
+        }
     }
 
     private func openInMaps() {
         guard let destination = viewModel.destination else { return }
-        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+        let mapItem: MKMapItem
+        if #available(iOS 26.0, *) {
+            let location = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+            mapItem = MKMapItem(location: location, address: nil)
+        } else {
+            mapItem = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+        }
         mapItem.name = jobTitle()
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving

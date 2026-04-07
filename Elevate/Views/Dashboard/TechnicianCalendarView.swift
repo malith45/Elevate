@@ -3,7 +3,6 @@ import EventKit
 
 struct TechnicianCalendarView: View {
     @StateObject private var viewModel = CalendarViewModel()
-    @State private var selectedTab: TabItem = .dashboard
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
     
@@ -156,13 +155,10 @@ struct TechnicianCalendarView: View {
                         }
                         .padding(.horizontal, 24)
                         
-                        Spacer().frame(height: 100)
                     }
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab)
         }
         .navigationBarHidden(true)
         .onAppear {

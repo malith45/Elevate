@@ -11,8 +11,12 @@ struct ContentView: View {
     @EnvironmentObject private var appSession: AppSession
     
     var body: some View {
-        if appSession.currentUser != nil {
-            MainTabView()
+        if let user = appSession.currentUser {
+            if user.role.lowercased() == "manager" {
+                ManagerMainTabView()
+            } else {
+                MainTabView()
+            }
         } else {
             SignInView()
         }

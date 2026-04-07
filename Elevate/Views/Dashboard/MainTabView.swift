@@ -7,26 +7,26 @@ struct MainTabView: View {
     @StateObject private var mapViewModel = MapViewModel()
     
     var body: some View {
-        ZStack {
-            // Main content based on selected tab
+        NavigationStack {
             Group {
                 switch selectedTab {
                 case .dashboard:
-                    NavigationStack { TechnicianDashboardView(selectedTab: $selectedTab) }
+                    TechnicianDashboardView(selectedTab: $selectedTab)
                 case .jobs:
-                    NavigationStack { JobListView() }
+                    JobListView()
                 case .map:
-                    NavigationStack { TechnicianMapView(viewModel: mapViewModel) }
+                    TechnicianMapView(viewModel: mapViewModel)
                 case .profile:
-                    NavigationStack { TechnicianProfileView() }
+                    TechnicianProfileView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab, mode: .tabs)
         }
-        .navigationBarHidden(true)
+        .safeAreaInset(edge: .bottom) {
+            TechnicianBottomNav(selectedTab: $selectedTab, mode: .tabs)
+                .ignoresSafeArea(.keyboard)
+                .padding(.bottom, 8) // Add small buffer for home indicator
+        }
     }
 }
 

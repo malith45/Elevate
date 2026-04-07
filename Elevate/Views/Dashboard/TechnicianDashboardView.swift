@@ -126,7 +126,6 @@ struct TechnicianDashboardView: View {
                             }
                         }
                         
-                        Spacer().frame(height: 100) // Space for bottom bar
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
@@ -149,9 +148,6 @@ struct TechnicianDashboardView: View {
                 }
                 .background(Color.elevateLightGray.opacity(0.3)) // Subtly differentiate scroll background
             }
-            
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab)
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -246,18 +242,6 @@ struct TechnicianDashboardView: View {
     }
 }
 
-struct ShortcutBox<Destination: View>: View {
-    var title: String
-    var icon: String
-    var dest: Destination
-    
-    var body: some View {
-        NavigationLink(destination: dest) {
-            ShortcutBoxInternal(title: title, icon: icon)
-        }
-    }
-}
-
 struct ShortcutBoxInternal: View {
     var title: String
     var icon: String
@@ -315,55 +299,6 @@ struct TaskRow: View {
             Image(systemName: "ellipsis")
                 .foregroundColor(.elevateTextGray)
                 .rotationEffect(.degrees(90))
-        }
-    }
-}
-
-// Ensure these exist if missing in the same file
-// struct TabBarButton: View { ... } (Is included previously, keeping to ensure standalone works if not split)
-// Actually, I redefined the TabBarButton to make sure it's accessible within TechnicianDashboardView.swift
-// Re-adding here so we don't drop it from Overwrite operation.
-
-struct TabBarButton: View {
-    var tab: TabItem
-    var title: String
-    var iconName: String
-    @Binding var selectedTab: TabItem
-    
-    var isSelected: Bool {
-        selectedTab == tab
-    }
-    
-    var body: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                selectedTab = tab
-            }
-        }) {
-            if isSelected {
-                VStack(spacing: 4) {
-                    Image(systemName: iconName)
-                        .font(.system(size: 20))
-                        .environment(\.symbolVariants, .fill)
-                    Text(title)
-                        .scaledFont(size: 10, weight: .bold)
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.elevateDarkGreen)
-                .cornerRadius(30)
-            } else {
-                VStack(spacing: 4) {
-                    Image(systemName: iconName)
-                        .font(.system(size: 20))
-                    Text(title)
-                        .scaledFont(size: 10, weight: .bold)
-                }
-                .foregroundColor(.elevateTextGray)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-            }
         }
     }
 }

@@ -105,10 +105,10 @@ struct SignUpView: View {
     }
 
     private func validateAndSubmit() {
+        #if DEBUG
         // TEMPORARY: Bypass validation to test manager dashboard
         navigateToManager = true
-        return
-        
+        #else
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedConfirm = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -123,6 +123,7 @@ struct SignUpView: View {
         }
 
         // Create Account Action
+        #endif
     }
 
     private func showValidationError(message: String) {

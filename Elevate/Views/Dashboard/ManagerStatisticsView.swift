@@ -2,8 +2,8 @@ import SwiftUI
 import Charts
 
 struct ManagerStatisticsView: View {
+    @Environment(\.managerTabRouter) private var router
     @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTab: TabItem = .dashboard
     
     @State private var selectedTechnician = "All Team"
     let technicians = ["All Team", "Marcus", "Emily", "Alex", "Jordan"]
@@ -30,7 +30,10 @@ struct ManagerStatisticsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav(isManager: true)
+                BackHeaderNav(isManager: true, onBack: {
+                    router.currentScreen = .dashboard
+                    router.selectedTab = .dashboard
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
@@ -222,13 +225,10 @@ struct ManagerStatisticsView: View {
                         .padding(.horizontal, 24)
                         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         
-                        Spacer().frame(height: 120)
                     }
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab, isManager: true)
         }
         .navigationBarHidden(true)
     }

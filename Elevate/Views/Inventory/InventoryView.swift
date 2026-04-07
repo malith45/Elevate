@@ -79,8 +79,6 @@ struct InventoryView: View {
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToQuotation) {

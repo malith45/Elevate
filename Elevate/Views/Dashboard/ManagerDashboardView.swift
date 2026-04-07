@@ -6,6 +6,7 @@ struct ManagerDashboardView: View {
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject private var syncManager = SyncManager.shared
     @Binding var selectedTab: TabItem
+    @Environment(\.managerTabRouter) private var router
     @State private var isRefreshing = false
     @State private var showLastSynced = false
 
@@ -63,7 +64,10 @@ struct ManagerDashboardView: View {
                                     .foregroundColor(.elevateDarkGreen)
                             }
                             Spacer()
-                            NavigationLink(destination: ManagerCalendarView()) {
+                            Button(action: {
+                                router.currentScreen = .calendar
+                                router.selectedTab = .dashboard
+                            }) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.elevateLightGray)
@@ -73,6 +77,7 @@ struct ManagerDashboardView: View {
                                         .foregroundColor(.black)
                                 }
                             }
+                            .buttonStyle(.plain)
                         }
                         .padding(24)
                         .background(Color.white)
@@ -162,10 +167,22 @@ struct ManagerDashboardView: View {
                         
                         // Shortcuts
                         HStack(spacing: 8) {
-                            ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen, dest: Text("Create Job"))
-                            ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black, dest: Text("Approve"))
-                            ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black, dest: Text("Inventory"))
-                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black, dest: ManagerStatisticsView())
+                            ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
+                                router.currentScreen = .createJob
+                                router.selectedTab = .dashboard
+                            }
+                            ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black) {
+                                router.currentScreen = .jobs
+                                router.selectedTab = .jobs
+                            }
+                            ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black) {
+                                router.currentScreen = .inventoryManager
+                                router.selectedTab = .dashboard
+                            }
+                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
+                                router.currentScreen = .statistics
+                                router.selectedTab = .dashboard
+                            }
                         }
                         
                         // Today's Tasks
@@ -175,11 +192,15 @@ struct ManagerDashboardView: View {
                                     .scaledFont(size: 14, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
                                 Spacer()
-                                NavigationLink(destination: Text("Manager Job List View")) {
+                                Button(action: {
+                                    router.currentScreen = .jobs
+                                    router.selectedTab = .jobs
+                                }) {
                                     Text("View All")
                                         .scaledFont(size: 12, weight: .bold)
                                         .foregroundColor(.elevateDarkGreen)
                                 }
+                                .buttonStyle(.plain)
                             }
                             
                             VStack(spacing: 16) {
@@ -196,7 +217,6 @@ struct ManagerDashboardView: View {
                             }
                         }
                         
-                        Spacer().frame(height: 100) // Space for bottom bar
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
@@ -230,8 +250,6 @@ struct ManagerDashboardView: View {
             }
             .background(Color.white)
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab, isManager: true)
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -322,15 +340,15 @@ struct ManagerDashboardView: View {
     }
 }
 
-struct ManagerShortcutItem<Destination: View>: View {
+struct ManagerShortcutItem: View {
     var title: String
     var icon: String
     var color: Color
     var iconColor: Color
-    var dest: Destination
+    var action: () -> Void
     
     var body: some View {
-        NavigationLink(destination: dest) {
+        Button(action: action) {
             VStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)

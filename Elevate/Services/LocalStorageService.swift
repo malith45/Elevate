@@ -207,6 +207,25 @@ final class LocalStorageService {
         }
     }
 
+    func fetchIssueReports(jobId: String) -> [IssueReport] {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "IssueReportEntity")
+        request.predicate = NSPredicate(format: "jobId == %@", jobId)
+        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+        let results = (try? stack.viewContext.fetch(request)) ?? []
+        return results.map { item in
+            IssueReport(
+                id: item.value(forKey: "id") as? String ?? "",
+                jobId: item.value(forKey: "jobId") as? String ?? "",
+                userId: item.value(forKey: "userId") as? String ?? "",
+                organizationId: item.value(forKey: "organizationId") as? String ?? "",
+                description: item.value(forKey: "detail") as? String ?? "",
+                priority: item.value(forKey: "priority") as? String ?? "",
+                createdAt: item.value(forKey: "createdAt") as? Date ?? Date(),
+                attachmentUrls: item.value(forKey: "attachmentUrls") as? [String] ?? []
+            )
+        }
+    }
+
     func markIssueReportSynced(id: String) {
         let context = stack.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "IssueReportEntity")

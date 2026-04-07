@@ -108,14 +108,11 @@ struct TechnicianProfileView: View {
                         .controlSize(.large)
                         .tint(.red)
                         
-                        Spacer().frame(height: 120) // Custom tab bar space
                     }
                     .padding(.horizontal, 24)
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.profile))
         }
         .navigationBarHidden(true)
         .alert("Log out?", isPresented: $showLogoutConfirmation) {

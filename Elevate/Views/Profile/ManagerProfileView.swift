@@ -3,6 +3,7 @@ import SwiftUI
 struct ManagerProfileView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ProfileViewModel()
+    @Environment(\.managerTabRouter) private var router
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var showLogoutConfirmation = false
@@ -32,9 +33,12 @@ struct ManagerProfileView: View {
                             Text(displayName)
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
                             
-                            Button(action: { /* Edit Profile */ }) {
+                            Button(action: {
+                                router.currentScreen = .editProfile
+                                router.selectedTab = .profile
+                            }) {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "pencil")
+                                    Image(systemName: "square.and.pencil")
                                         .font(.system(size: 10, weight: .black))
                                     Text("EDIT PROFILE")
                                 }
@@ -49,44 +53,69 @@ struct ManagerProfileView: View {
                         .padding(.top, 32)
                         
                         // ORGANIZATION DETAILS CARD
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("ORGANIZATION DETAILS")
-                                    .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
-                                Spacer()
-                                Image(systemName: "building.2")
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(organizationName)
-                                    .scaledFont(size: 18, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
-                                Text(organizationCode)
-                                    .scaledFont(size: 12)
-                            }
-                            
-                            Divider().padding(.vertical, 4)
-                            
-                            HStack {
-                                Spacer()
-                                HStack(spacing: 8) {
-                                    Image(systemName: "person.text.rectangle")
-                                    Text("ORGANIZATION MANAGER")
+                        Button(action: {
+                            router.currentScreen = .organization
+                            router.selectedTab = .profile
+                        }) {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("ORGANIZATION DETAILS")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(.elevateTextGray)
+                                    Spacer()
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "building.2")
+                                            .foregroundColor(.gray)
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.gray)
+                                    }
                                 }
-                                .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(Color(red: 25/255, green: 99/255, blue: 150/255))
-                                .padding(.vertical, 12)
-                                Spacer()
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(organizationName)
+                                        .scaledFont(size: 18, weight: .bold)
+                                        .foregroundColor(.elevateDarkGreen)
+                                    Text(organizationCode)
+                                        .scaledFont(size: 12)
+                                }
+                                
+                                Divider().padding(.vertical, 4)
+                                
+                                HStack {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "person.text.rectangle")
+                                            .foregroundColor(.elevateDarkGreen)
+                                        Text("ORGANIZATION MANAGER")
+                                            .foregroundColor(.elevateDarkGreen)
+                                    }
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color.elevateLightGray)
+                                    .cornerRadius(10)
+
+                                    Spacer()
+
+                                    Text("MANAGE")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(.elevateDarkGreen)
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 10)
+                                        .background(Color.elevateLightGray)
+                                        .cornerRadius(10)
+                                }
                             }
-                            .background(Color(red: 25/255, green: 99/255, blue: 150/255).opacity(0.1))
-                            .cornerRadius(8)
+                            .padding(20)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.elevateLightGray, lineWidth: 1)
+                            )
                         }
-                        .padding(20)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+                        .buttonStyle(.plain)
                         
                         // APP SETTINGS
                         VStack(alignment: .leading, spacing: 12) {
@@ -100,7 +129,10 @@ struct ManagerProfileView: View {
                                 AppSettingToggleRow(title: "Notification Preferences", subtitle: "Manage push alerts", icon: "bell", isOn: $pushNotificationsEnabled)
                                 Divider().padding(.leading, 64)
                                 
-                                NavigationLink(destination: ManagerAccessibilityView()) {
+                                Button(action: {
+                                    router.currentScreen = .accessibility
+                                    router.selectedTab = .profile
+                                }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "figure.arms.open")
                                             .font(.system(size: 20))
@@ -122,6 +154,7 @@ struct ManagerProfileView: View {
                                     .padding(.vertical, 16)
                                     .padding(.horizontal, 20)
                                 }
+                                .buttonStyle(.plain)
                             }
                             .background(Color.white)
                             .cornerRadius(12)
@@ -138,14 +171,13 @@ struct ManagerProfileView: View {
                         .controlSize(.large)
                         .tint(.red)
                         
-                        Spacer().frame(height: 120) // Custom tab bar space
                     }
                     .padding(.horizontal, 24)
+                    .padding(.bottom, 120)
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.profile), isManager: true)
         }
         .navigationBarHidden(true)
         .alert("Log out?", isPresented: $showLogoutConfirmation) {
@@ -197,7 +229,10 @@ struct ManagerProfileView: View {
     }
 
     private func signOut() {
-        appSession.signOut()
+        HapticManager.shared.playImpact(style: .medium)
+        withAnimation(.easeOut(duration: 0.3)) {
+            appSession.signOut()
+        }
     }
 }
 

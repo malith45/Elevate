@@ -106,14 +106,11 @@ struct TechnicianAccessibilityView: View {
                             .cornerRadius(12)
                         }
                         
-                        Spacer().frame(height: 120)
                     }
                     .padding(.horizontal, 24)
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.profile))
         }
         .navigationBarHidden(true)
     }

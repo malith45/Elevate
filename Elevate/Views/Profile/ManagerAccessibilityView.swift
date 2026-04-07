@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ManagerAccessibilityView: View {
+    @Environment(\.managerTabRouter) private var router
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
@@ -8,7 +9,10 @@ struct ManagerAccessibilityView: View {
             Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
             
             VStack(spacing: 0) {
-                BackHeaderNav(isManager: true)
+                BackHeaderNav(isManager: true, onBack: {
+                    router.currentScreen = .profile
+                    router.selectedTab = .profile
+                })
                     .background(Color.white)
                 
                 ScrollView(showsIndicators: false) {
@@ -106,14 +110,11 @@ struct ManagerAccessibilityView: View {
                             .cornerRadius(12)
                         }
                         
-                        Spacer().frame(height: 120)
                     }
                     .padding(.horizontal, 24)
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.profile), isManager: true)
         }
         .navigationBarHidden(true)
     }

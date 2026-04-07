@@ -8,7 +8,6 @@ struct JobDetailsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = JobDetailsViewModel()
     @ObservedObject private var network = NetworkService.shared
-    @State private var selectedTab: TabItem = .jobs
     @State private var showCamera = false
     
     var body: some View {
@@ -199,7 +198,6 @@ struct JobDetailsView: View {
                             }
                         }
                         
-                        Spacer().frame(height: 120)
                         } else {
                             Text("Loading job details...")
                                 .scaledFont(size: 14)
@@ -209,8 +207,6 @@ struct JobDetailsView: View {
                     .padding(.horizontal, 24)
                 }
             }
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
         .onAppear { viewModel.load(jobId: jobId) }

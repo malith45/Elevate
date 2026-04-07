@@ -124,8 +124,6 @@ struct JobIssueReportView: View {
                     .padding(.horizontal, 24)
                 }
             }
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showCamera) {

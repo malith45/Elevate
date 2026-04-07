@@ -2,8 +2,8 @@ import SwiftUI
 import EventKit
 
 struct ManagerCalendarView: View {
+    @Environment(\.managerTabRouter) private var router
     @StateObject private var viewModel = CalendarViewModel()
-    @State private var selectedTab: TabItem = .dashboard
     @State private var isShowingEventEditor = false
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -14,7 +14,10 @@ struct ManagerCalendarView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav(isManager: true)
+                BackHeaderNav(isManager: true, onBack: {
+                    router.currentScreen = .dashboard
+                    router.selectedTab = .dashboard
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
@@ -171,13 +174,10 @@ struct ManagerCalendarView: View {
                         }
                         .padding(.horizontal, 24)
                         
-                        Spacer().frame(height: 100)
                     }
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab, isManager: true)
         }
         .navigationBarHidden(true)
         .onAppear {

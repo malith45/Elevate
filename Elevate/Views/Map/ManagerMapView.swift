@@ -159,8 +159,6 @@ struct ManagerMapView: View {
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.map), isManager: true)
         }
         .navigationBarHidden(true)
         .onAppear {

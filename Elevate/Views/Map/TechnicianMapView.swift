@@ -159,8 +159,6 @@ struct TechnicianMapView: View {
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.map))
         }
         .navigationBarHidden(true)
         .onAppear {

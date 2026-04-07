@@ -1,20 +1,20 @@
 import SwiftUI
 
-struct JobListView: View {
+struct ManagerJobListView: View {
     @EnvironmentObject private var appSession: AppSession
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.managerTabRouter) private var router
     @StateObject private var viewModel = JobsViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var selectedFilter = 0
-    
+
     var body: some View {
         ZStack {
             Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Top Nav
-                BrandHeaderNav(showOnlineStatus: false)
-                
+                BrandHeaderNav(showOnlineStatus: false, isManager: true)
+
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
                         // Search
@@ -29,7 +29,7 @@ struct JobListView: View {
                         .cornerRadius(10)
                         .padding(.horizontal, 24)
                         .padding(.top, 12)
-                        
+
                         // Filters Segment
                         HStack(spacing: 0) {
                             FilterButton(title: "Today", isSelected: selectedFilter == 0) { selectedFilter = 0; viewModel.selectedFilter = .today }
@@ -41,34 +41,44 @@ struct JobListView: View {
                         .cornerRadius(8)
                         .padding(.horizontal, 24)
                         .padding(.top, 4)
-                        
+
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
                                 .textCase(.uppercase)
-                            
+
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
                                 .foregroundColor(.elevateDarkGreen)
                         }
                         .padding(.horizontal, 24)
-                        
+
                         // Job Cards
+                        let jobsToShow = viewModel.filteredJobs.isEmpty ? demoJobs : viewModel.filteredJobs
+
                         VStack(spacing: 16) {
-                            ForEach(viewModel.filteredJobs, id: \.id) { job in
-                                JobCard(job: job)
+                            ForEach(jobsToShow, id: \.id) { job in
+                                Button(action: {
+                                    router.selectedJobId = job.id
+                                    router.currentScreen = .jobDetails
+                                    router.selectedTab = .jobs
+                                }) {
+                                    ManagerJobCard(job: job)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
-                        
+
                         // Bottom Stats
                         HStack(spacing: 16) {
-                            StatPill(icon: "checkmark.circle", value: "\(viewModel.jobs.filter { $0.status.uppercased() == "COMPLETED" }.count)", title: "JOBS COMPLETED", isPrimary: true)
-                            StatPill(icon: "clock", value: "\(viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" }.count)", title: "PENDING JOBS", isPrimary: false)
+                            let completedCount = viewModel.jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+                            let pendingCount = viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" }.count
+                            StatPill(icon: "checkmark.circle", value: "\(completedCount)", title: "JOBS COMPLETED", isPrimary: true)
+                            StatPill(icon: "clock", value: "\(pendingCount)", title: "PENDING JOBS", isPrimary: false)
                         }
                         .padding(.horizontal, 24)
-                        
                     }
                 }
             }
@@ -91,65 +101,65 @@ struct JobListView: View {
         formatter.dateFormat = "EEEE, MMM d"
         return formatter.string(from: Date())
     }
-}
 
-struct FilterButton: View {
-    var title: String
-    var isSelected: Bool
-    var action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .scaledFont(size: 14, weight: .bold)
-                .foregroundColor(isSelected ? .elevateDarkGreen : .elevateTextGray)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(isSelected ? Color.white : Color.clear)
-                .cornerRadius(6)
-                .shadow(color: isSelected ? Color.black.opacity(0.05) : Color.clear, radius: 2, x: 0, y: 1)
-        }
+    private var demoJobs: [Job] {
+        let now = Date()
+        return [
+            Job(
+                id: "demo-job-001",
+                organizationId: appSession.currentUser?.organizationId ?? "demo-org",
+                title: "Inspect Elevator Panel",
+                location: "Skyline Corp HQ",
+                scheduledAt: now.addingTimeInterval(3600),
+                status: "IN_PROGRESS",
+                priority: "HIGH",
+                assignedUserId: "TECH-3029",
+                notes: "Main panel alarm triggered.",
+                approvedCost: 12500,
+                photoUrls: [],
+                updatedAt: now
+            )
+        ]
     }
 }
 
-struct JobCard: View {
-    var job: Job
-    
+private struct ManagerJobCard: View {
+    let job: Job
+
     var body: some View {
-        NavigationLink(destination: JobDetailsView(jobId: job.id)) {
-            VStack(spacing: 16) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(job.status.uppercased())
-                            .scaledFont(size: 10, weight: .bold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.elevateLightGray)
-                            .foregroundColor(.elevateTextGray)
-                            .cornerRadius(12)
-                        
-                        Text(job.title)
-                            .scaledFont(size: 18, weight: .bold)
-                    }
-                    Spacer()
-                    Text(timeString(from: job.scheduledAt))
-                        .scaledFont(size: 14, weight: .bold)
-                }
-                
-                HStack(spacing: 12) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .frame(width: 32, height: 32)
+        VStack(spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(job.status.uppercased())
+                        .scaledFont(size: 10, weight: .bold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .background(Color.elevateLightGray)
-                        .cornerRadius(8)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(job.location)
-                            .scaledFont(size: 14, weight: .bold)
-                        Text(job.notes ?? "")
-                            .scaledFont(size: 12)
-                            .foregroundColor(.elevateTextGray)
-                    }
-                    Spacer()
+                        .foregroundColor(.elevateTextGray)
+                        .cornerRadius(12)
+
+                    Text(job.title)
+                        .scaledFont(size: 18, weight: .bold)
                 }
+                Spacer()
+                Text(timeString(from: job.scheduledAt))
+                    .scaledFont(size: 14, weight: .bold)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "mappin.and.ellipse")
+                    .frame(width: 32, height: 32)
+                    .background(Color.elevateLightGray)
+                    .cornerRadius(8)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(job.location)
+                        .scaledFont(size: 14, weight: .bold)
+                    Text(job.notes ?? "")
+                        .scaledFont(size: 12)
+                        .foregroundColor(.elevateTextGray)
+                }
+                Spacer()
             }
         }
         .padding(20)
@@ -166,35 +176,7 @@ struct JobCard: View {
     }
 }
 
-struct StatPill: View {
-    var icon: String
-    var value: String
-    var title: String
-    var isPrimary: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(isPrimary ? .white : .black)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .scaledFont(size: 28, weight: .bold)
-                    .foregroundColor(isPrimary ? .white : .black)
-                Text(title)
-                    .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(isPrimary ? .white.opacity(0.8) : .elevateTextGray)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(isPrimary ? Color.elevateDarkGreen : Color.elevateLightGray)
-        .cornerRadius(12)
-    }
-}
-
 #Preview {
-    JobListView()
+    ManagerJobListView()
         .environmentObject(AppSession())
 }

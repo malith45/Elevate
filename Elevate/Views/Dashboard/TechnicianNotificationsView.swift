@@ -44,8 +44,6 @@ struct TechnicianNotificationsView: View {
                 }
             }
             
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.dashboard))
         }
         .navigationBarHidden(true)
         .onAppear {

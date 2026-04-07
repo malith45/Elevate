@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct ManagerNotificationsView: View {
+    @Environment(\.managerTabRouter) private var router
     @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTab: TabItem = .dashboard
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
     
@@ -12,7 +12,10 @@ struct ManagerNotificationsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav(isManager: true)
+                BackHeaderNav(isManager: true, onBack: {
+                    router.currentScreen = .dashboard
+                    router.selectedTab = .dashboard
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {

@@ -20,8 +20,9 @@ final class CalendarViewModel: ObservableObject {
     var isAuthorized: Bool {
         if #available(iOS 17.0, *) {
             return authorizationStatus == .fullAccess
+        } else {
+            return legacyIsAuthorized(authorizationStatus)
         }
-        return authorizationStatus == .authorized
     }
 
     func requestAccessIfNeeded() {
@@ -47,25 +48,24 @@ final class CalendarViewModel: ObservableObject {
             default:
                 errorMessage = "Calendar access is disabled."
             }
-            return
-        }
-
-        if status == .authorized {
-            loadEvents(for: currentMonth)
-        } else if status == .notDetermined {
-            eventStore.requestAccess(to: .event) { [weak self] granted, error in
-                DispatchQueue.main.async {
-                    self?.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
-                    if let error = error {
-                        self?.errorMessage = error.localizedDescription
-                    }
-                    if granted {
-                        self?.loadEvents(for: self?.currentMonth ?? Date())
+        } else {
+            if legacyIsAuthorized(status) {
+                loadEvents(for: currentMonth)
+            } else if status == .notDetermined {
+                requestLegacyAccess { [weak self] granted, error in
+                    DispatchQueue.main.async {
+                        self?.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
+                        if let error = error {
+                            self?.errorMessage = error.localizedDescription
+                        }
+                        if granted {
+                            self?.loadEvents(for: self?.currentMonth ?? Date())
+                        }
                     }
                 }
+            } else {
+                errorMessage = "Calendar access is disabled."
             }
-        } else {
-            errorMessage = "Calendar access is disabled."
         }
     }
 
@@ -133,5 +133,16 @@ final class CalendarViewModel: ObservableObject {
         if let updated = Calendar.current.date(byAdding: .month, value: value, to: currentMonth) {
             currentMonth = updated
         }
+    }
+
+    @available(iOS, introduced: 13.0, deprecated: 17.0)
+    private func legacyIsAuthorized(_ status: EKAuthorizationStatus) -> Bool {
+        let legacyAuthorizedRawValue = 3
+        return status.rawValue == legacyAuthorizedRawValue
+    }
+
+    @available(iOS, introduced: 13.0, deprecated: 17.0)
+    private func requestLegacyAccess(completion: @escaping (Bool, Error?) -> Void) {
+        eventStore.requestAccess(to: .event, completion: completion)
     }
 }

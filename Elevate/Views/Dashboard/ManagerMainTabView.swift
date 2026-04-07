@@ -1,30 +1,74 @@
 import SwiftUI
 
 struct ManagerMainTabView: View {
-    @State private var selectedTab: TabItem = .dashboard
+    @StateObject private var router = ManagerTabRouter.shared
     @StateObject private var mapViewModel = MapViewModel()
     
     var body: some View {
-        ZStack {
-            // Main content based on selected tab
+        ZStack(alignment: .bottom) {
             Group {
-                switch selectedTab {
+                switch router.currentScreen {
                 case .dashboard:
-                    NavigationStack { ManagerDashboardView(selectedTab: $selectedTab) }
+                    ManagerDashboardView(selectedTab: $router.selectedTab)
+                case .calendar:
+                    ManagerCalendarView()
+                case .statistics:
+                    ManagerStatisticsView()
+                case .notifications:
+                    ManagerNotificationsView()
                 case .jobs:
-                    NavigationStack { Text("Manager Job List View") }
+                    ManagerJobListView()
                 case .map:
-                    NavigationStack { ManagerMapView(viewModel: mapViewModel) }
+                    ManagerMapView(viewModel: mapViewModel)
                 case .profile:
-                    NavigationStack { ManagerProfileView() }
+                    ManagerProfileView()
+                case .accessibility:
+                    ManagerAccessibilityView()
+                case .organization:
+                    ManagerOrganizationView()
+                case .members:
+                    ManagerMembersView()
+                case .editProfile:
+                    ManagerEditProfileView()
+                case .addMember:
+                    ManagerAddMemberView()
+                case .jobDetails:
+                    if let jobId = router.selectedJobId {
+                        ManagerJobDetailsView(jobId: jobId)
+                    } else {
+                        ManagerJobListView()
+                    }
+                case .jobIssueReport:
+                    if let jobId = router.selectedJobId {
+                        ManagerJobIssueReportView(jobId: jobId)
+                    } else {
+                        ManagerJobListView()
+                    }
+                case .inventoryManager:
+                    ManagerInventoryView()
+                case .createJob:
+                    ManagerCreateJobView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: $selectedTab, mode: .tabs, isManager: true)
+            .environment(\.managerTabRouter, router)
+            .onChange(of: router.selectedTab) { _, _ in
+                switch router.selectedTab {
+                case .dashboard:
+                    router.currentScreen = .dashboard
+                case .jobs:
+                    router.currentScreen = .jobs
+                case .map:
+                    router.currentScreen = .map
+                case .profile:
+                    router.currentScreen = .profile
+                }
+            }
+
+            ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+                .padding(.bottom, 8) // Buffer for home indicator
+                .zIndex(1)
         }
-        .navigationBarHidden(true)
     }
 }
 

@@ -139,8 +139,6 @@ struct QuotationStatusView: View {
                     .padding(.horizontal, 24)
                 }
             }
-            // Bottom Navbar Floating
-            ReusableBottomNav(selectedTab: .constant(.jobs))
         }
         .navigationBarHidden(true)
         .onAppear { viewModel.load(jobId: jobId) }

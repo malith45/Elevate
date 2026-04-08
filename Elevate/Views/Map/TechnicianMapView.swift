@@ -7,6 +7,8 @@ struct TechnicianMapView: View {
     @ObservedObject private var locationService = LocationService.shared
     @State private var mapPosition: MapCameraPosition
     @State private var hasCenteredOnUser = false
+    @State private var activeJob: Job?
+    private let localStorage = LocalStorageService.shared
 
     init(viewModel: MapViewModel = MapViewModel()) {
         self.viewModel = viewModel
@@ -164,7 +166,7 @@ struct TechnicianMapView: View {
         .onAppear {
             locationService.requestAuthorization()
             viewModel.updateRegionIfNeeded()
-            viewModel.setDestination(destinationCoordinate())
+            selectActiveJob()
             if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
                 viewModel.requestRoute()
             }
@@ -183,10 +185,6 @@ struct TechnicianMapView: View {
         .onChange(of: mapPosition) { _, newValue in
             viewModel.savedRegion = viewModel.region
         }
-    }
-
-    private func destinationCoordinate() -> CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
     }
 
     private func routeMinutes() -> String {
@@ -209,11 +207,14 @@ struct TechnicianMapView: View {
     }
 
     private func jobTitle() -> String {
-        guard viewModel.destination != nil else { return "No destination" }
-        return "Destination"
+        guard let job = activeJob else { return "No destination" }
+        return job.title
     }
 
     private func jobLocation() -> String {
+        if let job = activeJob {
+            return job.location
+        }
         guard let destination = viewModel.destination else { return "" }
         return String(format: "%.4f, %.4f", destination.latitude, destination.longitude)
     }
@@ -262,6 +263,22 @@ struct TechnicianMapView: View {
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
+    }
+
+    private func selectActiveJob() {
+        guard let user = appSession.currentUser else { return }
+        let jobs = localStorage.fetchJobs(organizationId: user.organizationId)
+            .filter { $0.assignedUserId == user.id && $0.status.uppercased() != "COMPLETED" && $0.status.uppercased() != "CANCELLED" }
+            .sorted { $0.scheduledAt < $1.scheduledAt }
+
+        activeJob = jobs.first
+        if let job = activeJob,
+           let latitude = job.siteLatitude,
+           let longitude = job.siteLongitude {
+            viewModel.setDestination(CLLocationCoordinate2D(latitude: latitude, longitude: longitude))
+        } else {
+            viewModel.setDestination(nil)
+        }
     }
 }
 

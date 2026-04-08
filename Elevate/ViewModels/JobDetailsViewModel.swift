@@ -12,19 +12,58 @@ final class JobDetailsViewModel: ObservableObject {
     }
 
     func updateStatus(jobId: String, status: String, user: User, isOnline: Bool) {
+        guard let current = localStorage.fetchJob(id: jobId) else { return }
+
         let updatedAt = Date()
-        localStorage.updateJobStatus(id: jobId, status: status, updatedAt: updatedAt)
-        job = localStorage.fetchJob(id: jobId)
+        let normalized = status.uppercased()
+        let isOnHold = normalized == "HOLD"
+        let holdReason = isOnHold ? (current.holdReason ?? "On hold") : nil
+        let cancelledAt = normalized == "CANCELLED" ? updatedAt : current.cancelledAt
+
+        let updatedJob = Job(
+            id: current.id,
+            organizationId: current.organizationId,
+            title: current.title,
+            location: current.location,
+            siteLatitude: current.siteLatitude,
+            siteLongitude: current.siteLongitude,
+            scheduledAt: current.scheduledAt,
+            status: status,
+            priority: current.priority,
+            isUrgent: current.isUrgent,
+            isOnHold: isOnHold,
+            holdReason: holdReason,
+            cancelledAt: cancelledAt,
+            assignedUserId: current.assignedUserId,
+            notes: current.notes,
+            quotationItems: current.quotationItems,
+            approvedCost: current.approvedCost,
+            photoUrls: current.photoUrls,
+            updatedAt: updatedAt
+        )
+
+        localStorage.saveJobs([updatedJob])
+        job = updatedJob
+
+        var fields: [String: Any] = [
+            "status": status,
+            "isOnHold": isOnHold
+        ]
+        if let holdReason = holdReason {
+            fields["holdReason"] = holdReason
+        }
+        if let cancelledAt = cancelledAt {
+            fields["cancelledAt"] = cancelledAt
+        }
 
         if isOnline {
-            firebase.updateJobStatus(jobId: jobId, status: status, updatedAt: updatedAt) { _ in }
+            firebase.updateJobFields(jobId: jobId, fields: fields) { _ in }
         } else {
-            SyncManager.shared.enqueueJobStatusUpdate(
+            SyncManager.shared.enqueueJobFieldsUpdate(
                 jobId: jobId,
-                status: status,
+                fields: fields,
                 organizationId: user.organizationId,
-                userId: user.id,
-                updatedAt: updatedAt
+                userId: user.id
             )
         }
     }

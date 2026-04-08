@@ -11,7 +11,9 @@ final class LocalStorageService {
 
     func saveUser(_ user: User) {
         let context = stack.viewContext
-        let entity = NSEntityDescription.insertNewObject(forEntityName: "UserEntity", into: context)
+        let request = NSFetchRequest<NSManagedObject>(entityName: "UserEntity")
+        request.predicate = NSPredicate(format: "id == %@", user.id)
+        let entity = (try? context.fetch(request).first) ?? NSEntityDescription.insertNewObject(forEntityName: "UserEntity", into: context)
         entity.setValue(user.id, forKey: "id")
         entity.setValue(user.organizationId, forKey: "organizationId")
         entity.setValue(user.username, forKey: "username")
@@ -20,6 +22,25 @@ final class LocalStorageService {
         entity.setValue(user.email, forKey: "email")
         entity.setValue(user.phone, forKey: "phone")
         saveContext(context)
+    }
+
+    func saveUsers(_ users: [User]) {
+        let context = stack.newBackgroundContext()
+        context.perform {
+            users.forEach { user in
+                let request = NSFetchRequest<NSManagedObject>(entityName: "UserEntity")
+                request.predicate = NSPredicate(format: "id == %@", user.id)
+                let entity = (try? context.fetch(request).first) ?? NSEntityDescription.insertNewObject(forEntityName: "UserEntity", into: context)
+                entity.setValue(user.id, forKey: "id")
+                entity.setValue(user.organizationId, forKey: "organizationId")
+                entity.setValue(user.username, forKey: "username")
+                entity.setValue(user.displayName, forKey: "displayName")
+                entity.setValue(user.role, forKey: "role")
+                entity.setValue(user.email, forKey: "email")
+                entity.setValue(user.phone, forKey: "phone")
+            }
+            self.saveContext(context)
+        }
     }
 
     func fetchUser(id: String) -> User? {
@@ -37,6 +58,23 @@ final class LocalStorageService {
         )
     }
 
+    func fetchUsers(organizationId: String) -> [User] {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "UserEntity")
+        request.predicate = NSPredicate(format: "organizationId == %@", organizationId)
+        let results = (try? stack.viewContext.fetch(request)) ?? []
+        return results.map { result in
+            User(
+                id: result.value(forKey: "id") as? String ?? "",
+                organizationId: result.value(forKey: "organizationId") as? String ?? "",
+                username: result.value(forKey: "username") as? String ?? "",
+                displayName: result.value(forKey: "displayName") as? String ?? "",
+                role: result.value(forKey: "role") as? String ?? "",
+                email: result.value(forKey: "email") as? String,
+                phone: result.value(forKey: "phone") as? String
+            )
+        }
+    }
+
     func saveJobs(_ jobs: [Job]) {
         let context = stack.newBackgroundContext()
         context.perform {
@@ -51,11 +89,18 @@ final class LocalStorageService {
                 entity.setValue(job.organizationId, forKey: "organizationId")
                 entity.setValue(job.title, forKey: "title")
                 entity.setValue(job.location, forKey: "location")
+                entity.setValue(job.siteLatitude, forKey: "siteLatitude")
+                entity.setValue(job.siteLongitude, forKey: "siteLongitude")
                 entity.setValue(job.scheduledAt, forKey: "scheduledAt")
                 entity.setValue(job.status, forKey: "status")
                 entity.setValue(job.priority, forKey: "priority")
+                entity.setValue(job.isUrgent, forKey: "isUrgent")
+                entity.setValue(job.isOnHold, forKey: "isOnHold")
+                entity.setValue(job.holdReason, forKey: "holdReason")
+                entity.setValue(job.cancelledAt, forKey: "cancelledAt")
                 entity.setValue(job.assignedUserId, forKey: "assignedUserId")
                 entity.setValue(job.notes, forKey: "notes")
+                entity.setValue(self.encodeQuotationItems(job.quotationItems), forKey: "quotationItems")
                 entity.setValue(job.approvedCost, forKey: "approvedCost")
                 entity.setValue(job.photoUrls, forKey: "photoUrls")
                 entity.setValue(job.updatedAt, forKey: "updatedAt")
@@ -74,11 +119,18 @@ final class LocalStorageService {
                 organizationId: item.value(forKey: "organizationId") as? String ?? "",
                 title: item.value(forKey: "title") as? String ?? "",
                 location: item.value(forKey: "location") as? String ?? "",
+                siteLatitude: item.value(forKey: "siteLatitude") as? Double,
+                siteLongitude: item.value(forKey: "siteLongitude") as? Double,
                 scheduledAt: item.value(forKey: "scheduledAt") as? Date ?? Date(),
                 status: item.value(forKey: "status") as? String ?? "",
                 priority: item.value(forKey: "priority") as? String ?? "",
+                isUrgent: item.value(forKey: "isUrgent") as? Bool ?? false,
+                isOnHold: item.value(forKey: "isOnHold") as? Bool ?? false,
+                holdReason: item.value(forKey: "holdReason") as? String,
+                cancelledAt: item.value(forKey: "cancelledAt") as? Date,
                 assignedUserId: item.value(forKey: "assignedUserId") as? String ?? "",
                 notes: item.value(forKey: "notes") as? String,
+                quotationItems: decodeQuotationItems(item.value(forKey: "quotationItems") as? Data),
                 approvedCost: item.value(forKey: "approvedCost") as? Double,
                 photoUrls: item.value(forKey: "photoUrls") as? [String] ?? [],
                 updatedAt: item.value(forKey: "updatedAt") as? Date ?? (item.value(forKey: "scheduledAt") as? Date ?? Date())
@@ -95,11 +147,18 @@ final class LocalStorageService {
             organizationId: item.value(forKey: "organizationId") as? String ?? "",
             title: item.value(forKey: "title") as? String ?? "",
             location: item.value(forKey: "location") as? String ?? "",
+            siteLatitude: item.value(forKey: "siteLatitude") as? Double,
+            siteLongitude: item.value(forKey: "siteLongitude") as? Double,
             scheduledAt: item.value(forKey: "scheduledAt") as? Date ?? Date(),
             status: item.value(forKey: "status") as? String ?? "",
             priority: item.value(forKey: "priority") as? String ?? "",
+            isUrgent: item.value(forKey: "isUrgent") as? Bool ?? false,
+            isOnHold: item.value(forKey: "isOnHold") as? Bool ?? false,
+            holdReason: item.value(forKey: "holdReason") as? String,
+            cancelledAt: item.value(forKey: "cancelledAt") as? Date,
             assignedUserId: item.value(forKey: "assignedUserId") as? String ?? "",
             notes: item.value(forKey: "notes") as? String,
+            quotationItems: decodeQuotationItems(item.value(forKey: "quotationItems") as? Data),
             approvedCost: item.value(forKey: "approvedCost") as? Double,
             photoUrls: item.value(forKey: "photoUrls") as? [String] ?? [],
             updatedAt: item.value(forKey: "updatedAt") as? Date ?? (item.value(forKey: "scheduledAt") as? Date ?? Date())
@@ -112,6 +171,16 @@ final class LocalStorageService {
         request.predicate = NSPredicate(format: "id == %@", id)
         guard let item = try? context.fetch(request).first else { return }
         item.setValue(status, forKey: "status")
+        item.setValue(updatedAt, forKey: "updatedAt")
+        saveContext(context)
+    }
+
+    func updateJobQuotationItems(id: String, items: [QuotationItem], updatedAt: Date) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        guard let item = try? context.fetch(request).first else { return }
+        item.setValue(encodeQuotationItems(items), forKey: "quotationItems")
         item.setValue(updatedAt, forKey: "updatedAt")
         saveContext(context)
     }
@@ -176,7 +245,9 @@ final class LocalStorageService {
 
     func saveIssueReport(_ report: IssueReport, isSynced: Bool) {
         let context = stack.viewContext
-        let entity = NSEntityDescription.insertNewObject(forEntityName: "IssueReportEntity", into: context)
+        let request = NSFetchRequest<NSManagedObject>(entityName: "IssueReportEntity")
+        request.predicate = NSPredicate(format: "id == %@", report.id)
+        let entity = (try? context.fetch(request).first) ?? NSEntityDescription.insertNewObject(forEntityName: "IssueReportEntity", into: context)
         entity.setValue(report.id, forKey: "id")
         entity.setValue(report.jobId, forKey: "jobId")
         entity.setValue(report.userId, forKey: "userId")
@@ -185,6 +256,8 @@ final class LocalStorageService {
         entity.setValue(report.priority, forKey: "priority")
         entity.setValue(report.createdAt, forKey: "createdAt")
         entity.setValue(report.attachmentUrls, forKey: "attachmentUrls")
+        entity.setValue(report.managerResponse, forKey: "managerResponse")
+        entity.setValue(report.resolvedAt, forKey: "resolvedAt")
         entity.setValue(isSynced, forKey: "isSynced")
         saveContext(context)
     }
@@ -202,7 +275,9 @@ final class LocalStorageService {
                 description: item.value(forKey: "detail") as? String ?? "",
                 priority: item.value(forKey: "priority") as? String ?? "",
                 createdAt: item.value(forKey: "createdAt") as? Date ?? Date(),
-                attachmentUrls: item.value(forKey: "attachmentUrls") as? [String] ?? []
+                attachmentUrls: item.value(forKey: "attachmentUrls") as? [String] ?? [],
+                managerResponse: item.value(forKey: "managerResponse") as? String,
+                resolvedAt: item.value(forKey: "resolvedAt") as? Date
             )
         }
     }
@@ -221,7 +296,9 @@ final class LocalStorageService {
                 description: item.value(forKey: "detail") as? String ?? "",
                 priority: item.value(forKey: "priority") as? String ?? "",
                 createdAt: item.value(forKey: "createdAt") as? Date ?? Date(),
-                attachmentUrls: item.value(forKey: "attachmentUrls") as? [String] ?? []
+                attachmentUrls: item.value(forKey: "attachmentUrls") as? [String] ?? [],
+                managerResponse: item.value(forKey: "managerResponse") as? String,
+                resolvedAt: item.value(forKey: "resolvedAt") as? Date
             )
         }
     }
@@ -248,6 +325,7 @@ final class LocalStorageService {
                 entity.setValue(item.title, forKey: "title")
                 entity.setValue(item.body, forKey: "body")
                 entity.setValue(item.type, forKey: "type")
+                entity.setValue(item.targetId, forKey: "targetId")
                 entity.setValue(item.createdAt, forKey: "createdAt")
                 entity.setValue(item.isRead, forKey: "isRead")
             }
@@ -271,6 +349,7 @@ final class LocalStorageService {
                 title: item.value(forKey: "title") as? String ?? "",
                 body: item.value(forKey: "body") as? String ?? "",
                 type: item.value(forKey: "type") as? String ?? "",
+                targetId: item.value(forKey: "targetId") as? String,
                 createdAt: item.value(forKey: "createdAt") as? Date ?? Date(),
                 isRead: item.value(forKey: "isRead") as? Bool ?? false
             )
@@ -367,6 +446,15 @@ final class LocalStorageService {
         } catch {
             return nil
         }
+    }
+
+    private func encodeQuotationItems(_ items: [QuotationItem]) -> Data? {
+        try? JSONEncoder().encode(items)
+    }
+
+    private func decodeQuotationItems(_ data: Data?) -> [QuotationItem] {
+        guard let data = data else { return [] }
+        return (try? JSONDecoder().decode([QuotationItem].self, from: data)) ?? []
     }
 
     func saveContext(_ context: NSManagedObjectContext) {

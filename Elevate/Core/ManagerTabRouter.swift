@@ -16,6 +16,7 @@ enum ManagerScreen {
     case addMember
     case jobDetails
     case jobIssueReport
+    case quotationApproval
     case inventoryManager
     case createJob
 }

@@ -2,7 +2,9 @@ import SwiftUI
 import EventKit
 
 struct TechnicianCalendarView: View {
+    @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = CalendarViewModel()
+    private let localStorage = LocalStorageService.shared
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
     
@@ -163,9 +165,11 @@ struct TechnicianCalendarView: View {
         .navigationBarHidden(true)
         .onAppear {
             viewModel.requestAccessIfNeeded()
+            syncJobs()
         }
         .onChange(of: viewModel.currentMonth) { _, _ in
             viewModel.loadEventsIfAuthorized()
+            syncJobs()
         }
     }
 }
@@ -237,5 +241,13 @@ private extension TechnicianCalendarView {
         let ampmFormatter = DateFormatter()
         ampmFormatter.dateFormat = "a"
         return (timeFormatter.string(from: event.startDate), ampmFormatter.string(from: event.startDate))
+    }
+
+    func syncJobs() {
+        guard let user = appSession.currentUser else { return }
+        let jobs = localStorage.fetchJobs(organizationId: user.organizationId)
+            .filter { $0.assignedUserId == user.id }
+        viewModel.syncJobsIfAuthorized(jobs)
+        viewModel.loadEventsIfAuthorized()
     }
 }

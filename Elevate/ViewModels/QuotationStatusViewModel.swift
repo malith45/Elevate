@@ -6,6 +6,8 @@ final class QuotationStatusViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let firebase = FirebaseService.shared
+    private let localStorage = LocalStorageService.shared
+    private let network = NetworkService.shared
 
     var approvedItems: [QuotationItem] {
         items.filter { $0.status.uppercased() == "APPROVED" }
@@ -20,6 +22,12 @@ final class QuotationStatusViewModel: ObservableObject {
     }
 
     func load(jobId: String) {
+        if let cached = localStorage.fetchJob(id: jobId)?.quotationItems {
+            items = cached
+        }
+
+        guard network.isOnline else { return }
+
         firebase.fetchQuotationItems(jobId: jobId) { result in
             DispatchQueue.main.async {
                 switch result {

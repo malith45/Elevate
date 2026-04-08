@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import MapKit
 
 struct JobDetailsView: View {
     let jobId: String
@@ -93,7 +94,7 @@ struct JobDetailsView: View {
                                 )
                                 .position(x: 180, y: 70) // roughly center
                             
-                            Button(action: {}) {
+                            Button(action: { openInMaps(job) }) {
                                 Text("VIEW IN MAPS")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.elevateDarkGreen)
@@ -228,6 +229,21 @@ struct JobDetailsView: View {
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
         return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+    }
+
+    private func openInMaps(_ job: Job) {
+        if let latitude = job.siteLatitude, let longitude = job.siteLongitude {
+            let location = CLLocation(latitude: latitude, longitude: longitude)
+            let item = MKMapItem(location: location, address: nil)
+            item.name = job.title
+            item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+            return
+        }
+
+        let encoded = job.location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? job.location
+        if let url = URL(string: "http://maps.apple.com/?q=\(encoded)") {
+            UIApplication.shared.open(url)
+        }
     }
 }
 

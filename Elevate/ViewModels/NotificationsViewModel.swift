@@ -6,6 +6,7 @@ final class NotificationsViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let localStorage = LocalStorageService.shared
+    private let firebase = FirebaseService.shared
 
     var todayItems: [NotificationItem] {
         notifications.filter { Calendar.current.isDateInToday($0.createdAt) }
@@ -37,5 +38,29 @@ final class NotificationsViewModel: ObservableObject {
     func clearAll(organizationId: String, userId: String) {
         localStorage.clearNotifications(organizationId: organizationId, userId: userId)
         notifications = []
+    }
+
+    func markRead(_ item: NotificationItem, isOnline: Bool) {
+        guard !item.isRead else { return }
+        localStorage.markNotificationRead(id: item.id)
+        notifications = notifications.map { current in
+            if current.id == item.id {
+                return NotificationItem(
+                    id: current.id,
+                    organizationId: current.organizationId,
+                    userId: current.userId,
+                    title: current.title,
+                    body: current.body,
+                    type: current.type,
+                    targetId: current.targetId,
+                    createdAt: current.createdAt,
+                    isRead: true
+                )
+            }
+            return current
+        }
+
+        guard isOnline else { return }
+        firebase.updateNotificationRead(notificationId: item.id, isRead: true) { _ in }
     }
 }

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ManagerEditProfileView: View {
     @Environment(\.managerTabRouter) private var router
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = ManagerEditProfileViewModel()
     @State private var username = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -56,7 +58,7 @@ struct ManagerEditProfileView: View {
                         .padding(.horizontal, 24)
 
                         PrimaryButton(title: "Save Changes", iconName: "checkmark") {
-                            // TODO: Persist profile edits.
+                            saveChanges()
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
@@ -66,6 +68,19 @@ struct ManagerEditProfileView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            if let user = appSession.currentUser {
+                username = user.username
+            }
+        }
+        .alert("Profile", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
 
     private var profilePhotoCard: some View {
@@ -103,8 +118,27 @@ struct ManagerEditProfileView: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
     }
+
+    private func saveChanges() {
+        guard let user = appSession.currentUser else { return }
+        if !password.isEmpty || !confirmPassword.isEmpty {
+            guard password == confirmPassword else {
+                viewModel.errorMessage = "Passwords do not match."
+                return
+            }
+        }
+
+        viewModel.updateProfile(user: user, username: username, password: password.isEmpty ? nil : password) { updated in
+            if let updated = updated {
+                appSession.updateCurrentUser(updated)
+                router.currentScreen = .profile
+                router.selectedTab = .profile
+            }
+        }
+    }
 }
 
 #Preview {
     ManagerEditProfileView()
+        .environmentObject(AppSession())
 }

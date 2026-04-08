@@ -2,14 +2,14 @@ import SwiftUI
 
 struct SignUpView: View {
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = SignUpViewModel()
     
     @State private var orgName = ""
     @State private var orgId = ""
     @State private var ownerUsername = ""
     @State private var password = ""
     @State private var confirmPassword = ""
-    @State private var showValidationError = false
-    @State private var validationMessage = ""
     @State private var navigateToManager = false
     
     var body: some View {
@@ -94,44 +94,44 @@ struct SignUpView: View {
         }
         .padding(.horizontal, 24)
         .navigationBarHidden(true)
-        .alert("Sign Up Error", isPresented: $showValidationError) {
+        .alert("Sign Up", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(validationMessage)
+            Text(viewModel.errorMessage ?? "")
         }
         .navigationDestination(isPresented: $navigateToManager) {
             ManagerMainTabView()
+                .environmentObject(appSession)
         }
     }
 
     private func validateAndSubmit() {
-        #if DEBUG
-        // TEMPORARY: Bypass validation to test manager dashboard
-        navigateToManager = true
-        #else
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedConfirm = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard trimmedPassword.count >= 8 else {
-            showValidationError(message: "Password must be at least 8 characters.")
-            return
-        }
-
         guard trimmedPassword == trimmedConfirm else {
-            showValidationError(message: "Passwords do not match.")
+            viewModel.errorMessage = "Passwords do not match."
             return
         }
 
-        // Create Account Action
-        #endif
-    }
-
-    private func showValidationError(message: String) {
-        validationMessage = message
-        showValidationError = true
+        viewModel.signUp(
+            organizationName: orgName,
+            organizationId: orgId,
+            username: ownerUsername,
+            password: trimmedPassword
+        ) { user in
+            if let user = user {
+                appSession.signIn(user: user)
+                navigateToManager = true
+            }
+        }
     }
 }
 
 #Preview {
     SignUpView()
+        .environmentObject(AppSession())
 }

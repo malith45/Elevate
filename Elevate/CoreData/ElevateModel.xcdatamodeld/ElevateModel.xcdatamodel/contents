@@ -14,11 +14,18 @@
         <attribute name="organizationId" optional="NO" attributeType="String"/>
         <attribute name="title" optional="NO" attributeType="String"/>
         <attribute name="location" optional="NO" attributeType="String"/>
+        <attribute name="siteLatitude" optional="YES" attributeType="Double"/>
+        <attribute name="siteLongitude" optional="YES" attributeType="Double"/>
         <attribute name="scheduledAt" optional="NO" attributeType="Date"/>
         <attribute name="status" optional="NO" attributeType="String"/>
         <attribute name="priority" optional="NO" attributeType="String"/>
+        <attribute name="isUrgent" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="isOnHold" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="holdReason" optional="YES" attributeType="String"/>
+        <attribute name="cancelledAt" optional="YES" attributeType="Date"/>
         <attribute name="assignedUserId" optional="NO" attributeType="String"/>
         <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="quotationItems" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformerName"/>
         <attribute name="approvedCost" optional="YES" attributeType="Double"/>
         <attribute name="photoUrls" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformerName"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date"/>
@@ -41,6 +48,8 @@
         <attribute name="priority" optional="NO" attributeType="String"/>
         <attribute name="createdAt" optional="NO" attributeType="Date"/>
         <attribute name="attachmentUrls" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformerName"/>
+        <attribute name="managerResponse" optional="YES" attributeType="String"/>
+        <attribute name="resolvedAt" optional="YES" attributeType="Date"/>
         <attribute name="isSynced" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
     </entity>
     <entity name="NotificationEntity" representedClassName="NotificationEntity" syncable="YES">
@@ -50,6 +59,7 @@
         <attribute name="title" optional="NO" attributeType="String"/>
         <attribute name="body" optional="NO" attributeType="String"/>
         <attribute name="type" optional="NO" attributeType="String"/>
+        <attribute name="targetId" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="NO" attributeType="Date"/>
         <attribute name="isRead" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
     </entity>

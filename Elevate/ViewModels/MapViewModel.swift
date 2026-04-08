@@ -17,7 +17,7 @@ final class MapViewModel: ObservableObject {
 
     private let locationService = LocationService.shared
 
-    func setDestination(_ coordinate: CLLocationCoordinate2D) {
+    func setDestination(_ coordinate: CLLocationCoordinate2D?) {
         destination = coordinate
     }
 

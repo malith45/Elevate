@@ -6,6 +6,8 @@ struct ManagerInventoryView: View {
     @StateObject private var viewModel = InventoryViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var searchText = ""
+    @State private var isEditorPresented = false
+    @State private var editingItem: InventoryItem?
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -53,7 +55,8 @@ struct ManagerInventoryView: View {
             }
 
             Button(action: {
-                // TODO: Add inventory item flow.
+                editingItem = nil
+                isEditorPresented = true
             }) {
                 Image(systemName: "plus")
                     .font(.system(size: 20, weight: .bold))
@@ -76,6 +79,40 @@ struct ManagerInventoryView: View {
             if let user = appSession.currentUser {
                 viewModel.loadItems(organizationId: user.organizationId, isOnline: isOnline)
             }
+        }
+        .sheet(isPresented: $isEditorPresented) {
+            InventoryEditorView(item: editingItem) { draft in
+                guard let user = appSession.currentUser else { return }
+                if let item = editingItem {
+                    viewModel.updateItem(
+                        item,
+                        name: draft.name,
+                        category: draft.category,
+                        quantity: draft.quantity,
+                        unitPrice: draft.unitPrice,
+                        sku: draft.sku,
+                        isOnline: network.isOnline
+                    ) { _ in }
+                } else {
+                    viewModel.createItem(
+                        organizationId: user.organizationId,
+                        name: draft.name,
+                        category: draft.category,
+                        quantity: draft.quantity,
+                        unitPrice: draft.unitPrice,
+                        sku: draft.sku,
+                        isOnline: network.isOnline
+                    ) { _ in }
+                }
+            }
+        }
+        .alert("Inventory", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
     }
 
@@ -145,7 +182,8 @@ struct ManagerInventoryView: View {
                 .cornerRadius(10)
 
             Button(action: {
-                // TODO: Edit inventory item.
+                editingItem = item
+                isEditorPresented = true
             }) {
                 Image(systemName: "square.and.pencil")
                     .foregroundColor(.elevateTextGray)
@@ -179,6 +217,78 @@ struct ManagerInventoryView: View {
             return ("LOW STOCK", Color.red.opacity(0.1), .red)
         }
         return ("IN STOCK", Color.elevateLightGray, .elevateDarkGreen)
+    }
+}
+
+private struct InventoryEditorDraft {
+    var name: String
+    var category: String
+    var quantity: Int
+    var unitPrice: Double
+    var sku: String?
+}
+
+private struct InventoryEditorView: View {
+    let item: InventoryItem?
+    var onSave: (InventoryEditorDraft) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String
+    @State private var category: String
+    @State private var quantityText: String
+    @State private var unitPriceText: String
+    @State private var sku: String
+
+    init(item: InventoryItem?, onSave: @escaping (InventoryEditorDraft) -> Void) {
+        self.item = item
+        self.onSave = onSave
+        _name = State(initialValue: item?.name ?? "")
+        _category = State(initialValue: item?.category ?? "")
+        _quantityText = State(initialValue: item.map { String($0.quantity) } ?? "0")
+        _unitPriceText = State(initialValue: item.map { String(format: "%.2f", $0.unitPrice) } ?? "0")
+        _sku = State(initialValue: item?.sku ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("DETAILS")) {
+                    TextField("Name", text: $name)
+                    TextField("Category", text: $category)
+                    TextField("SKU", text: $sku)
+                }
+
+                Section(header: Text("STOCK")) {
+                    TextField("Quantity", text: $quantityText)
+                        .keyboardType(.numberPad)
+                    TextField("Unit Price", text: $unitPriceText)
+                        .keyboardType(.decimalPad)
+                }
+            }
+            .navigationTitle(item == nil ? "Add Item" : "Edit Item")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let quantity = Int(quantityText) ?? 0
+        let unitPrice = Double(unitPriceText) ?? 0
+        let draft = InventoryEditorDraft(
+            name: name,
+            category: category,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            sku: sku.isEmpty ? nil : sku
+        )
+        onSave(draft)
+        dismiss()
     }
 }
 

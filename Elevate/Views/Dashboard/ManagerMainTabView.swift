@@ -44,6 +44,12 @@ struct ManagerMainTabView: View {
                     } else {
                         ManagerJobListView()
                     }
+                case .quotationApproval:
+                    if let jobId = router.selectedJobId {
+                        ManagerQuotationApprovalView(jobId: jobId)
+                    } else {
+                        ManagerJobListView()
+                    }
                 case .inventoryManager:
                     ManagerInventoryView()
                 case .createJob:

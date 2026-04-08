@@ -173,7 +173,11 @@ struct ManagerProfileView: View {
                         
                     }
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 120)
+                    .padding(.bottom, 24)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear
+                        .frame(height: 120)
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }

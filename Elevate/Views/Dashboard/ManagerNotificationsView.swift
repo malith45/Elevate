@@ -36,9 +36,9 @@ struct ManagerNotificationsView: View {
                         if viewModel.notifications.isEmpty {
                             EmptyStateCard()
                         } else {
-                            NotificationSection(title: "TODAY", items: viewModel.todayItems)
-                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems)
-                            NotificationSection(title: "EARLIER", items: viewModel.olderItems)
+                            NotificationSection(title: "TODAY", items: viewModel.todayItems, onTap: handleTap)
+                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems, onTap: handleTap)
+                            NotificationSection(title: "EARLIER", items: viewModel.olderItems, onTap: handleTap)
                         }
                         
                         Spacer().frame(height: 100)
@@ -63,6 +63,24 @@ struct ManagerNotificationsView: View {
     private func clearNotifications() {
         guard let user = appSession.currentUser else { return }
         viewModel.clearAll(organizationId: user.organizationId, userId: user.id)
+    }
+
+    private func handleTap(_ item: NotificationItem) {
+        guard appSession.currentUser != nil else { return }
+        viewModel.markRead(item, isOnline: NetworkService.shared.isOnline)
+        guard let targetId = item.targetId else { return }
+
+        router.selectedJobId = targetId
+        router.selectedTab = .jobs
+
+        let type = item.type.uppercased()
+        if type.contains("ISSUE") {
+            router.currentScreen = .jobIssueReport
+        } else if type.contains("QUOTATION") || type.contains("QUOTE") {
+            router.currentScreen = .quotationApproval
+        } else {
+            router.currentScreen = .jobDetails
+        }
     }
 }
 

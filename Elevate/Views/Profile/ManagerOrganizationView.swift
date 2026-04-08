@@ -3,6 +3,7 @@ import SwiftUI
 struct ManagerOrganizationView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = ManagerOrganizationViewModel()
     @State private var organizationNameDraft = ""
     @State private var introductionDraft = ""
     @State private var isEditingName = false
@@ -136,31 +137,53 @@ struct ManagerOrganizationView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            guard let user = appSession.currentUser else { return }
+            if viewModel.organizationName.isEmpty {
+                viewModel.organizationName = user.organizationId
+            }
+            viewModel.load(organizationId: user.organizationId, isOnline: NetworkService.shared.isOnline)
+        }
         .alert("Edit Organization Name", isPresented: $isEditingName) {
             TextField("Organization Name", text: $organizationNameDraft)
             Button("Cancel", role: .cancel) {}
             Button("Save") {
-                // TODO: Persist organization name update.
+                guard let user = appSession.currentUser else { return }
+                viewModel.organizationName = organizationNameDraft
+                viewModel.save(organizationId: user.organizationId, name: organizationNameDraft, introduction: nil)
             }
         }
         .alert("Edit Introduction", isPresented: $isEditingIntroduction) {
             TextField("Introduction", text: $introductionDraft)
             Button("Cancel", role: .cancel) {}
             Button("Save") {
-                // TODO: Persist introduction update.
+                guard let user = appSession.currentUser else { return }
+                viewModel.introduction = introductionDraft
+                viewModel.save(organizationId: user.organizationId, name: nil, introduction: introductionDraft)
             }
+        }
+        .alert("Organization", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
     }
 
     private var organizationName: String {
-        if let user = appSession.currentUser {
-            return user.organizationId
+        if !viewModel.organizationName.isEmpty {
+            return viewModel.organizationName
         }
-        return "Skyline Corp"
+        return appSession.currentUser?.organizationId ?? "Skyline Corp"
     }
 
     private var introductionText: String {
-        "Manage your organization profile, members, and permissions from this hub."
+        if !viewModel.introduction.isEmpty {
+            return viewModel.introduction
+        }
+        return "Manage your organization profile, members, and permissions from this hub."
     }
 
     private var organizationCode: String {

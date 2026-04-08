@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ForgotPasswordView: View {
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var viewModel = ForgotPasswordViewModel()
+    @State private var organizationId = ""
     @State private var identification = ""
     
     var body: some View {
@@ -32,6 +34,13 @@ struct ForgotPasswordView: View {
             // Form Fields
             VStack(spacing: 16) {
                 CustomTextField(
+                    title: "ORGANIZATION ID",
+                    placeholder: "ORG-000-00",
+                    iconName: "building.2",
+                    text: $organizationId
+                )
+
+                CustomTextField(
                     title: "IDENTIFICATION",
                     placeholder: "Email or User ID",
                     iconName: "person",
@@ -42,7 +51,9 @@ struct ForgotPasswordView: View {
             // Action Buttons
             VStack(spacing: 24) {
                 PrimaryButton(title: "Send Recovery Link", iconName: nil) {
-                    // Send Recovery Action
+                    let orgId = organizationId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let orgValue = orgId.isEmpty ? nil : orgId
+                    viewModel.sendReset(organizationId: orgValue, identification: identification)
                 }
                 
                 Button(action: {
@@ -63,6 +74,17 @@ struct ForgotPasswordView: View {
         }
         .padding(.horizontal, 24)
         .navigationBarHidden(true)
+        .alert("Recovery", isPresented: Binding(
+            get: { viewModel.errorMessage != nil || viewModel.successMessage != nil },
+            set: { _ in
+                viewModel.errorMessage = nil
+                viewModel.successMessage = nil
+            }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? viewModel.successMessage ?? "")
+        }
     }
 }
 

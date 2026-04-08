@@ -49,6 +49,93 @@ final class FirebaseService {
         }
     }
 
+    func isOrganizationIdAvailable(_ organizationId: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+        db.collection("organizations").document(organizationId).getDocument { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            completion(.success(snapshot?.exists == false))
+        }
+    }
+
+    func isUsernameAvailable(organizationId: String, username: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+        db.collection("users")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .whereField("username", isEqualTo: username)
+            .limit(to: 1)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                completion(.success(snapshot?.documents.isEmpty ?? true))
+            }
+    }
+
+    func createOrganization(organizationId: String, name: String, completion: @escaping (Result<OrganizationDetails, Error>) -> Void) {
+        let data: [String: Any] = [
+            "name": name,
+            "createdAt": Timestamp(date: Date())
+        ]
+        db.collection("organizations").document(organizationId).setData(data) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(OrganizationDetails(id: organizationId, name: name, introduction: nil)))
+            }
+        }
+    }
+
+    func requestPasswordReset(organizationId: String?, identification: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        let trimmed = identification.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            completion(.failure(NSError(domain: "Auth", code: 400, userInfo: [NSLocalizedDescriptionKey: "Enter your email or user ID."])))
+            return
+        }
+
+        if trimmed.contains("@") {
+            auth.sendPasswordReset(withEmail: trimmed) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+            return
+        }
+
+        guard let organizationId = organizationId, !organizationId.isEmpty else {
+            completion(.failure(NSError(domain: "Auth", code: 400, userInfo: [NSLocalizedDescriptionKey: "Organization ID is required for user ID reset."])))
+            return
+        }
+
+        db.collection("users")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .whereField("username", isEqualTo: trimmed)
+            .limit(to: 1)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                guard let doc = snapshot?.documents.first else {
+                    completion(.failure(NSError(domain: "Auth", code: 404, userInfo: [NSLocalizedDescriptionKey: "User not found."])))
+                    return
+                }
+
+                doc.reference.updateData([
+                    "passwordResetRequestedAt": Timestamp(date: Date())
+                ]) { updateError in
+                    if let updateError = updateError {
+                        completion(.failure(updateError))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
+            }
+    }
+
     func fetchUser(userId: String, completion: @escaping (Result<User, Error>) -> Void) {
         db.collection("users").document(userId).getDocument { snapshot, error in
             if let error = error {
@@ -74,6 +161,75 @@ final class FirebaseService {
         }
     }
 
+    func fetchUsers(organizationId: String, completion: @escaping (Result<[User], Error>) -> Void) {
+        db.collection("users")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                let users = snapshot?.documents.compactMap { doc -> User? in
+                    let data = doc.data()
+                    return User(
+                        id: doc.documentID,
+                        organizationId: data["organizationId"] as? String ?? "",
+                        username: data["username"] as? String ?? "",
+                        displayName: data["displayName"] as? String ?? "",
+                        role: data["role"] as? String ?? "",
+                        email: data["email"] as? String,
+                        phone: data["phone"] as? String
+                    )
+                } ?? []
+
+                completion(.success(users))
+            }
+    }
+
+    func createUser(organizationId: String, username: String, displayName: String, role: String, password: String?, completion: @escaping (Result<User, Error>) -> Void) {
+        let doc = db.collection("users").document()
+        var data: [String: Any] = [
+            "organizationId": organizationId,
+            "username": username,
+            "displayName": displayName,
+            "role": role,
+            "createdAt": Timestamp(date: Date())
+        ]
+        if let password = password {
+            data["password"] = password
+        }
+
+        doc.setData(data) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                let user = User(
+                    id: doc.documentID,
+                    organizationId: organizationId,
+                    username: username,
+                    displayName: displayName,
+                    role: role,
+                    email: nil,
+                    phone: nil
+                )
+                completion(.success(user))
+            }
+        }
+    }
+
+    func updateUserProfile(userId: String, fields: [String: Any], completion: @escaping (Result<Void, Error>) -> Void) {
+        var payload = fields
+        payload["updatedAt"] = Timestamp(date: Date())
+        db.collection("users").document(userId).updateData(payload) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
     func fetchOrganization(organizationId: String, completion: @escaping (Result<OrganizationDetails, Error>) -> Void) {
         db.collection("organizations").document(organizationId).getDocument { snapshot, error in
             if let error = error {
@@ -88,9 +244,28 @@ final class FirebaseService {
 
             let org = OrganizationDetails(
                 id: snapshot?.documentID ?? organizationId,
-                name: data["name"] as? String ?? ""
+                name: data["name"] as? String ?? "",
+                introduction: data["introduction"] as? String
             )
             completion(.success(org))
+        }
+    }
+
+    func updateOrganization(organizationId: String, name: String?, introduction: String?, completion: @escaping (Result<Void, Error>) -> Void) {
+        var payload: [String: Any] = ["updatedAt": Timestamp(date: Date())]
+        if let name = name {
+            payload["name"] = name
+        }
+        if let introduction = introduction {
+            payload["introduction"] = introduction
+        }
+
+        db.collection("organizations").document(organizationId).setData(payload, merge: true) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
         }
     }
 
@@ -114,17 +289,25 @@ final class FirebaseService {
                     else { return nil }
 
                     let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? timestamp.dateValue()
+                    let quotationItems = self.mapQuotationItems(data["quotationItems"] as? [[String: Any]])
 
                     return Job(
                         id: doc.documentID,
                         organizationId: data["organizationId"] as? String ?? "",
                         title: title,
                         location: location,
+                        siteLatitude: data["siteLatitude"] as? Double,
+                        siteLongitude: data["siteLongitude"] as? Double,
                         scheduledAt: timestamp.dateValue(),
                         status: status,
                         priority: priority,
+                        isUrgent: data["isUrgent"] as? Bool ?? false,
+                        isOnHold: data["isOnHold"] as? Bool ?? false,
+                        holdReason: data["holdReason"] as? String,
+                        cancelledAt: (data["cancelledAt"] as? Timestamp)?.dateValue(),
                         assignedUserId: assignedUserId,
                         notes: data["notes"] as? String,
+                        quotationItems: quotationItems,
                         approvedCost: data["approvedCost"] as? Double,
                         photoUrls: data["photoUrls"] as? [String] ?? [],
                         updatedAt: updatedAt
@@ -155,22 +338,70 @@ final class FirebaseService {
             }
 
             let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? timestamp.dateValue()
+            let quotationItems = self.mapQuotationItems(data["quotationItems"] as? [[String: Any]])
 
             let job = Job(
                 id: snapshot?.documentID ?? jobId,
                 organizationId: data["organizationId"] as? String ?? "",
                 title: title,
                 location: location,
+                siteLatitude: data["siteLatitude"] as? Double,
+                siteLongitude: data["siteLongitude"] as? Double,
                 scheduledAt: timestamp.dateValue(),
                 status: status,
                 priority: priority,
+                isUrgent: data["isUrgent"] as? Bool ?? false,
+                isOnHold: data["isOnHold"] as? Bool ?? false,
+                holdReason: data["holdReason"] as? String,
+                cancelledAt: (data["cancelledAt"] as? Timestamp)?.dateValue(),
                 assignedUserId: assignedUserId,
                 notes: data["notes"] as? String,
+                quotationItems: quotationItems,
                 approvedCost: data["approvedCost"] as? Double,
                 photoUrls: data["photoUrls"] as? [String] ?? [],
                 updatedAt: updatedAt
             )
             completion(.success(job))
+        }
+    }
+
+    func createJob(_ job: Job, completion: @escaping (Result<Void, Error>) -> Void) {
+        var data: [String: Any] = [
+            "organizationId": job.organizationId,
+            "title": job.title,
+            "location": job.location,
+            "scheduledAt": Timestamp(date: job.scheduledAt),
+            "status": job.status,
+            "priority": job.priority,
+            "isUrgent": job.isUrgent,
+            "isOnHold": job.isOnHold,
+            "assignedUserId": job.assignedUserId,
+            "notes": job.notes as Any,
+            "approvedCost": job.approvedCost as Any,
+            "photoUrls": job.photoUrls,
+            "updatedAt": Timestamp(date: job.updatedAt),
+            "quotationItems": quotationItemsData(job.quotationItems)
+        ]
+
+        if let siteLatitude = job.siteLatitude {
+            data["siteLatitude"] = siteLatitude
+        }
+        if let siteLongitude = job.siteLongitude {
+            data["siteLongitude"] = siteLongitude
+        }
+        if let holdReason = job.holdReason {
+            data["holdReason"] = holdReason
+        }
+        if let cancelledAt = job.cancelledAt {
+            data["cancelledAt"] = Timestamp(date: cancelledAt)
+        }
+
+        db.collection("jobs").document(job.id).setData(data) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
         }
     }
 
@@ -248,23 +479,18 @@ final class FirebaseService {
             }
     }
 
-    func submitQuotationRequest(jobId: String, userId: String, items: [QuotationItem], completion: @escaping (Result<Void, Error>) -> Void) {
-        let data: [[String: Any]] = items.map { item in
-            [
-                "id": item.id,
-                "name": item.name,
-                "unitPrice": item.unitPrice,
-                "quantity": item.quantity,
-                "status": item.status
-            ]
-        }
-
-        db.collection("quotationRequests").document(jobId).setData([
-            "jobId": jobId,
-            "userId": userId,
-            "items": data,
+    func createInventoryItem(_ item: InventoryItem, completion: @escaping (Result<Void, Error>) -> Void) {
+        let data: [String: Any] = [
+            "organizationId": item.organizationId,
+            "name": item.name,
+            "category": item.category,
+            "quantity": item.quantity,
+            "unitPrice": item.unitPrice,
+            "sku": item.sku as Any,
             "updatedAt": Timestamp(date: Date())
-        ], merge: true) { error in
+        ]
+
+        db.collection("inventory").document(item.id).setData(data) { error in
             if let error = error {
                 completion(.failure(error))
             } else {
@@ -273,28 +499,58 @@ final class FirebaseService {
         }
     }
 
-    func fetchQuotationItems(jobId: String, completion: @escaping (Result<[QuotationItem], Error>) -> Void) {
-        db.collection("quotationRequests").document(jobId).getDocument { snapshot, error in
+    func updateInventoryItem(itemId: String, fields: [String: Any], completion: @escaping (Result<Void, Error>) -> Void) {
+        var payload = fields
+        payload["updatedAt"] = Timestamp(date: Date())
+        db.collection("inventory").document(itemId).updateData(payload) { error in
             if let error = error {
                 completion(.failure(error))
-                return
+            } else {
+                completion(.success(()))
             }
-            guard let data = snapshot?.data(), let items = data["items"] as? [[String: Any]] else {
-                completion(.success([]))
-                return
-            }
+        }
+    }
 
-            let mapped: [QuotationItem] = items.compactMap { item in
-                guard let id = item["id"] as? String,
-                      let name = item["name"] as? String,
-                      let unitPrice = item["unitPrice"] as? Double,
-                      let quantity = item["quantity"] as? Int,
-                      let status = item["status"] as? String
-                else { return nil }
-                return QuotationItem(id: id, name: name, unitPrice: unitPrice, quantity: quantity, status: status)
+    func submitQuotationRequest(jobId: String, userId: String, items: [QuotationItem], completion: @escaping (Result<Void, Error>) -> Void) {
+        fetchJob(jobId: jobId) { result in
+            switch result {
+            case .success(let job):
+                let merged = self.mergeQuotationItems(existing: job.quotationItems, new: items)
+                let payload: [String: Any] = [
+                    "quotationItems": self.quotationItemsData(merged),
+                    "updatedAt": Timestamp(date: Date())
+                ]
+                self.db.collection("jobs").document(jobId).updateData(payload) { error in
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
+            case .failure:
+                let payload: [String: Any] = [
+                    "quotationItems": FieldValue.arrayUnion(self.quotationItemsData(items)),
+                    "updatedAt": Timestamp(date: Date())
+                ]
+                self.db.collection("jobs").document(jobId).updateData(payload) { error in
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
             }
+        }
+    }
 
-            completion(.success(mapped))
+    func fetchQuotationItems(jobId: String, completion: @escaping (Result<[QuotationItem], Error>) -> Void) {
+        fetchJob(jobId: jobId) { result in
+            switch result {
+            case .success(let job):
+                completion(.success(job.quotationItems))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
     }
 
@@ -306,10 +562,68 @@ final class FirebaseService {
             "description": report.description,
             "priority": report.priority,
             "createdAt": Timestamp(date: report.createdAt),
-            "attachmentUrls": report.attachmentUrls
+            "attachmentUrls": report.attachmentUrls,
+            "managerResponse": report.managerResponse as Any,
+            "resolvedAt": report.resolvedAt.map { Timestamp(date: $0) } as Any
         ]
 
         db.collection("issueReports").document(report.id).setData(data) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    func fetchIssueReports(jobId: String, completion: @escaping (Result<[IssueReport], Error>) -> Void) {
+        db.collection("issueReports")
+            .whereField("jobId", isEqualTo: jobId)
+            .order(by: "createdAt", descending: true)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                let reports = snapshot?.documents.compactMap { doc -> IssueReport? in
+                    let data = doc.data()
+                    guard let jobId = data["jobId"] as? String,
+                          let userId = data["userId"] as? String,
+                          let organizationId = data["organizationId"] as? String,
+                          let description = data["description"] as? String,
+                          let priority = data["priority"] as? String,
+                          let createdAt = data["createdAt"] as? Timestamp
+                    else { return nil }
+
+                    return IssueReport(
+                        id: doc.documentID,
+                        jobId: jobId,
+                        userId: userId,
+                        organizationId: organizationId,
+                        description: description,
+                        priority: priority,
+                        createdAt: createdAt.dateValue(),
+                        attachmentUrls: data["attachmentUrls"] as? [String] ?? [],
+                        managerResponse: data["managerResponse"] as? String,
+                        resolvedAt: (data["resolvedAt"] as? Timestamp)?.dateValue()
+                    )
+                } ?? []
+
+                completion(.success(reports))
+            }
+    }
+
+    func updateIssueReportResponse(reportId: String, response: String, resolvedAt: Date?, completion: @escaping (Result<Void, Error>) -> Void) {
+        var payload: [String: Any] = [
+            "managerResponse": response,
+            "respondedAt": Timestamp(date: Date())
+        ]
+        if let resolvedAt = resolvedAt {
+            payload["resolvedAt"] = Timestamp(date: resolvedAt)
+        }
+
+        db.collection("issueReports").document(reportId).updateData(payload) { error in
             if let error = error {
                 completion(.failure(error))
             } else {
@@ -329,6 +643,73 @@ final class FirebaseService {
                 completion(.success(()))
             }
         }
+    }
+
+    func updateJobFields(jobId: String, fields: [String: Any], completion: @escaping (Result<Void, Error>) -> Void) {
+        var payload = fields
+        payload["updatedAt"] = Timestamp(date: Date())
+        db.collection("jobs").document(jobId).updateData(payload) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    func updateQuotationItems(jobId: String, items: [QuotationItem], approvedCost: Double?, completion: @escaping (Result<Void, Error>) -> Void) {
+        var payload: [String: Any] = [
+            "quotationItems": quotationItemsData(items),
+            "updatedAt": Timestamp(date: Date())
+        ]
+        if let approvedCost = approvedCost {
+            payload["approvedCost"] = approvedCost
+        }
+
+        db.collection("jobs").document(jobId).updateData(payload) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    private func mapQuotationItems(_ items: [[String: Any]]?) -> [QuotationItem] {
+        guard let items = items else { return [] }
+        return items.compactMap { item in
+            guard let id = item["id"] as? String,
+                  let name = item["name"] as? String,
+                  let unitPrice = item["unitPrice"] as? Double,
+                  let quantity = item["quantity"] as? Int,
+                  let status = item["status"] as? String
+            else { return nil }
+            return QuotationItem(id: id, name: name, unitPrice: unitPrice, quantity: quantity, status: status)
+        }
+    }
+
+    private func quotationItemsData(_ items: [QuotationItem]) -> [[String: Any]] {
+        items.map { item in
+            [
+                "id": item.id,
+                "name": item.name,
+                "unitPrice": item.unitPrice,
+                "quantity": item.quantity,
+                "status": item.status
+            ]
+        }
+    }
+
+    private func mergeQuotationItems(existing: [QuotationItem], new: [QuotationItem]) -> [QuotationItem] {
+        var merged = existing
+        new.forEach { item in
+            if let index = merged.firstIndex(where: { $0.id == item.id }) {
+                merged[index] = item
+            } else {
+                merged.append(item)
+            }
+        }
+        return merged
     }
 
     func fetchNotifications(organizationId: String, userId: String, completion: @escaping (Result<[NotificationItem], Error>) -> Void) {
@@ -358,6 +739,7 @@ final class FirebaseService {
                         title: title,
                         body: body,
                         type: type,
+                        targetId: data["targetId"] as? String,
                         createdAt: timestamp.dateValue(),
                         isRead: data["isRead"] as? Bool ?? false
                     )
@@ -365,6 +747,19 @@ final class FirebaseService {
 
                 completion(.success(items))
             }
+    }
+
+    func updateNotificationRead(notificationId: String, isRead: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("notifications").document(notificationId).updateData([
+            "isRead": isRead,
+            "readAt": Timestamp(date: Date())
+        ]) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
     }
 
     func saveFcmToken(userId: String, token: String) {

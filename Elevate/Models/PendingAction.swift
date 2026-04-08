@@ -3,6 +3,7 @@ import Combine
 
 enum PendingActionType: String, Codable {
     case updateJobStatus
+    case updateJobFields
     case submitQuotationRequest
 }
 

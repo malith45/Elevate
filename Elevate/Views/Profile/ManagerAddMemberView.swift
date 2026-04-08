@@ -2,12 +2,14 @@ import SwiftUI
 
 struct ManagerAddMemberView: View {
     @Environment(\.managerTabRouter) private var router
-    @State private var selectedRole = "Member"
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = ManagerAddMemberViewModel()
+    @State private var selectedRole = "Technician"
     @State private var username = ""
     @State private var password = ""
     @State private var confirmPassword = ""
 
-    private let roles = ["Member", "Manager"]
+    private let roles = ["Technician", "Manager"]
 
     var body: some View {
         ZStack {
@@ -61,7 +63,7 @@ struct ManagerAddMemberView: View {
                         .padding(.horizontal, 24)
 
                         PrimaryButton(title: "Create Member", iconName: "checkmark") {
-                            // TODO: Persist new member.
+                            createMember()
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
@@ -71,6 +73,14 @@ struct ManagerAddMemberView: View {
             }
         }
         .navigationBarHidden(true)
+        .alert("Add Member", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
 
     private var rolePicker: some View {
@@ -140,8 +150,30 @@ struct ManagerAddMemberView: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
     }
+
+    private func createMember() {
+        guard let user = appSession.currentUser else { return }
+        guard password == confirmPassword else {
+            viewModel.errorMessage = "Passwords do not match."
+            return
+        }
+
+        let roleKey = selectedRole.uppercased() == "MANAGER" ? "MANAGER" : "TECHNICIAN"
+        viewModel.createMember(
+            organizationId: user.organizationId,
+            username: username,
+            role: roleKey,
+            password: password
+        ) { created in
+            if created != nil {
+                router.currentScreen = .members
+                router.selectedTab = .profile
+            }
+        }
+    }
 }
 
 #Preview {
     ManagerAddMemberView()
+        .environmentObject(AppSession())
 }

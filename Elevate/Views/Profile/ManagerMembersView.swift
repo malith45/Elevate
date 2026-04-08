@@ -2,13 +2,8 @@ import SwiftUI
 
 struct ManagerMembersView: View {
     @Environment(\.managerTabRouter) private var router
-
-    private let members: [MemberItem] = [
-        MemberItem(name: "Marcus V.", role: "3 Jobs Assigned", badge: "TECH-4092", isActive: true),
-        MemberItem(name: "Elena R.", role: "1 Job Assigned", badge: "TECH-1102", isActive: true),
-        MemberItem(name: "James D.", role: "Off Duty", badge: "TECH-8821", isActive: false),
-        MemberItem(name: "Sarah K.", role: "5 Jobs Assigned", badge: "TECH-3029", isActive: true)
-    ]
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = ManagerMembersViewModel()
 
     var body: some View {
         ZStack {
@@ -29,7 +24,7 @@ struct ManagerMembersView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Members")
                                     .scaledFont(size: 22, weight: .bold, design: .rounded)
-                                Text("12 Active")
+                                Text("\(viewModel.members.count) Active")
                                     .scaledFont(size: 12)
                                     .foregroundColor(.elevateTextGray)
                             }
@@ -57,7 +52,7 @@ struct ManagerMembersView: View {
                         .padding(.horizontal, 24)
 
                         VStack(spacing: 12) {
-                            ForEach(members) { member in
+                            ForEach(viewModel.members) { member in
                                 memberRow(member)
                             }
                         }
@@ -69,6 +64,18 @@ struct ManagerMembersView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            guard let user = appSession.currentUser else { return }
+            viewModel.load(organizationId: user.organizationId, isOnline: NetworkService.shared.isOnline)
+        }
+        .alert("Members", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
 
     private var searchBar: some View {
@@ -88,8 +95,10 @@ struct ManagerMembersView: View {
         .padding(.horizontal, 24)
     }
 
-    private func memberRow(_ member: MemberItem) -> some View {
-        HStack(spacing: 12) {
+    private func memberRow(_ member: User) -> some View {
+        let name = member.displayName.isEmpty ? member.username : member.displayName
+        let role = member.role.isEmpty ? "Member" : member.role.capitalized
+        return HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.elevateLightGray)
@@ -100,20 +109,20 @@ struct ManagerMembersView: View {
             }
             .overlay(alignment: .bottomTrailing) {
                 Circle()
-                    .fill(member.isActive ? Color.elevateDarkGreen : Color.elevateTextGray)
+                    .fill(Color.elevateDarkGreen)
                     .frame(width: 10, height: 10)
                     .offset(x: 2, y: 2)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(member.name)
+                Text(name)
                     .scaledFont(size: 14, weight: .bold)
                     .foregroundColor(.black)
                 HStack(spacing: 6) {
-                    Image(systemName: member.isActive ? "briefcase" : "minus.circle")
+                    Image(systemName: "briefcase")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.elevateTextGray)
-                    Text(member.role)
+                    Text(role)
                         .scaledFont(size: 10, weight: .medium)
                         .foregroundColor(.elevateTextGray)
                 }
@@ -121,7 +130,7 @@ struct ManagerMembersView: View {
 
             Spacer()
 
-            Text(member.badge)
+            Text(member.id)
                 .scaledFont(size: 9, weight: .bold)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -130,7 +139,6 @@ struct ManagerMembersView: View {
                 .foregroundColor(.elevateTextGray)
 
             Button(action: {
-                // TODO: Edit member flow.
             }) {
                 Image(systemName: "pencil")
                     .font(.system(size: 12, weight: .bold))
@@ -149,14 +157,7 @@ struct ManagerMembersView: View {
     }
 }
 
-private struct MemberItem: Identifiable {
-    let id = UUID()
-    let name: String
-    let role: String
-    let badge: String
-    let isActive: Bool
-}
-
 #Preview {
     ManagerMembersView()
+        .environmentObject(AppSession())
 }

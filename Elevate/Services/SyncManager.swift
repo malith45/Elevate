@@ -64,6 +64,39 @@ final class SyncManager: ObservableObject {
         }
     }
 
+    func enqueueJobFieldsUpdate(jobId: String, fields: [String: Any], organizationId: String, userId: String) {
+        var payload: [String: Any] = [
+            "jobId": jobId,
+            "updatedAt": Date().timeIntervalSince1970
+        ]
+
+        if let status = fields["status"] as? String {
+            payload["status"] = status
+        }
+        if let isOnHold = fields["isOnHold"] as? Bool {
+            payload["isOnHold"] = isOnHold
+        }
+        if let holdReason = fields["holdReason"] as? String {
+            payload["holdReason"] = holdReason
+        }
+        if let cancelledAt = fields["cancelledAt"] as? Date {
+            payload["cancelledAt"] = cancelledAt.timeIntervalSince1970
+        }
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .updateJobFields,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
     func enqueueQuotationRequest(jobId: String, userId: String, organizationId: String, items: [QuotationItem]) {
         let itemsPayload: [[String: Any]] = items.map {
             [
@@ -178,6 +211,47 @@ final class SyncManager: ObservableObject {
                     }
                     group.leave()
                 }
+            case .updateJobFields:
+                guard let payload = decodePayload(action.payload),
+                      let jobId = payload["jobId"] as? String,
+                      let updatedAtValue = payload["updatedAt"] as? TimeInterval
+                else { return }
+
+                var fields: [String: Any] = [:]
+                if let status = payload["status"] as? String {
+                    fields["status"] = status
+                }
+                if let isOnHold = payload["isOnHold"] as? Bool {
+                    fields["isOnHold"] = isOnHold
+                }
+                if let holdReason = payload["holdReason"] as? String {
+                    fields["holdReason"] = holdReason
+                }
+                if let cancelledAtValue = payload["cancelledAt"] as? TimeInterval {
+                    fields["cancelledAt"] = Date(timeIntervalSince1970: cancelledAtValue)
+                }
+
+                let localUpdatedAt = Date(timeIntervalSince1970: updatedAtValue)
+                group.enter()
+                firebase.fetchJob(jobId: jobId) { result in
+                    switch result {
+                    case .success(let remoteJob):
+                        if remoteJob.updatedAt > localUpdatedAt {
+                            self.local.saveJobs([remoteJob])
+                            self.local.deletePendingAction(id: action.id)
+                            group.leave()
+                        } else {
+                            self.firebase.updateJobFields(jobId: jobId, fields: fields) { updateResult in
+                                if case .success = updateResult {
+                                    self.local.deletePendingAction(id: action.id)
+                                }
+                                group.leave()
+                            }
+                        }
+                    case .failure:
+                        group.leave()
+                    }
+                }
             }
         }
 
@@ -257,7 +331,9 @@ final class SyncManager: ObservableObject {
                 description: report.description,
                 priority: report.priority,
                 createdAt: report.createdAt,
-                attachmentUrls: mergedUrls
+                attachmentUrls: mergedUrls,
+                managerResponse: report.managerResponse,
+                resolvedAt: report.resolvedAt
             )
             self.firebase.createIssueReport(updated) { result in
                 if case .success = result {

@@ -138,7 +138,8 @@ struct ManagerJobDetailsView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.elevateLightGray, lineWidth: 1))
 
                                 Button(action: {
-                                    // TODO: Approve quotation flow.
+                                    router.currentScreen = .quotationApproval
+                                    router.selectedTab = .jobs
                                 }) {
                                     VStack(spacing: 6) {
                                         Image(systemName: "doc.text.fill")

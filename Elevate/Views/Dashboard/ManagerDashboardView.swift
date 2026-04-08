@@ -9,6 +9,10 @@ struct ManagerDashboardView: View {
     @Environment(\.managerTabRouter) private var router
     @State private var isRefreshing = false
     @State private var showLastSynced = false
+    @State private var technicianCount = 0
+
+    private let localStorage = LocalStorageService.shared
+    private let firebase = FirebaseService.shared
 
     init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
         _selectedTab = selectedTab
@@ -59,7 +63,7 @@ struct ManagerDashboardView: View {
                                 Text("TOTAL JOBS TODAY")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
-                                Text("28")
+                                Text("\(viewModel.totalJobsToday)")
                                     .scaledFont(size: 40, weight: .bold, design: .rounded)
                                     .foregroundColor(.elevateDarkGreen)
                             }
@@ -91,7 +95,7 @@ struct ManagerDashboardView: View {
                                 Text("PENDING")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
-                                Text("14")
+                                Text("\(pendingJobsCount())")
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
                                     .foregroundColor(.black)
                             }
@@ -106,7 +110,7 @@ struct ManagerDashboardView: View {
                                 Text("URGENT")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.red.opacity(0.8))
-                                Text("03")
+                                Text(String(format: "%02d", viewModel.urgentJobsToday))
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
                                     .foregroundColor(.red)
                             }
@@ -132,7 +136,7 @@ struct ManagerDashboardView: View {
                                     }
                                     .foregroundColor(.white.opacity(0.8))
                                     
-                                    Text("12 Technicians Active")
+                                    Text("\(technicianCount) Technicians Active")
                                         .scaledFont(size: 18, weight: .bold, design: .rounded)
                                         .foregroundColor(.white)
                                 }
@@ -255,6 +259,7 @@ struct ManagerDashboardView: View {
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+                loadTechnicians(organizationId: user.organizationId)
             } else {
                 // Trigger an initial fake sync for testing without login
                 isRefreshing = true
@@ -274,6 +279,7 @@ struct ManagerDashboardView: View {
         .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+                loadTechnicians(organizationId: user.organizationId)
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: shouldShowSyncStatus)
@@ -295,6 +301,26 @@ struct ManagerDashboardView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "a"
         return formatter.string(from: date)
+    }
+
+    private func pendingJobsCount() -> Int {
+        viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" && $0.status.uppercased() != "CANCELLED" }.count
+    }
+
+    private func loadTechnicians(organizationId: String) {
+        let localTechs = localStorage.fetchUsers(organizationId: organizationId)
+            .filter { $0.role.uppercased() == "TECHNICIAN" }
+        technicianCount = localTechs.count
+
+        guard network.isOnline else { return }
+        firebase.fetchUsers(organizationId: organizationId) { result in
+            if case .success(let users) = result {
+                self.localStorage.saveUsers(users)
+                DispatchQueue.main.async {
+                    self.technicianCount = users.filter { $0.role.uppercased() == "TECHNICIAN" }.count
+                }
+            }
+        }
     }
 
     private func syncStatusText() -> String {

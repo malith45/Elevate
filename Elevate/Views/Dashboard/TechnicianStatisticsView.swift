@@ -3,22 +3,9 @@ import Charts
 
 struct TechnicianStatisticsView: View {
     @Environment(\.presentationMode) var presentationMode
-    
-    let weeklyJobs = [
-        (week: "WEEK 1", bgValue: 80, fgValue: 50),
-        (week: "WEEK 2", bgValue: 60, fgValue: 60),
-        (week: "WEEK 3", bgValue: 90, fgValue: 90),
-        (week: "WEEK 4", bgValue: 70, fgValue: 65)
-    ]
-    
-    let efficiencyData = [
-        (day: 1, val: 50),
-        (day: 2, val: 55),
-        (day: 3, val: 52),
-        (day: 4, val: 68),
-        (day: 5, val: 60),
-        (day: 6, val: 80)
-    ]
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = StatisticsViewModel()
+    @ObservedObject private var network = NetworkService.shared
     
     var body: some View {
         ZStack {
@@ -44,8 +31,8 @@ struct TechnicianStatisticsView: View {
                         
                         // Top Stats Row
                         HStack(spacing: 16) {
-                            StatCard(icon: "star.fill", value: "4.9", title: "AVG. RATING")
-                            StatCard(icon: "clock.fill", value: "98%", title: "ON-TIME RATE")
+                            StatCard(icon: "star.fill", value: ratingString(), title: "AVG. RATING")
+                            StatCard(icon: "clock.fill", value: percentString(viewModel.onScheduleRate), title: "ON-TIME RATE")
                         }
                         .padding(.horizontal, 24)
                         
@@ -60,17 +47,17 @@ struct TechnicianStatisticsView: View {
                                         .foregroundColor(.elevateTextGray)
                                 }
                                 Spacer()
-                                Text("124")
+                                Text("\(viewModel.weeklyStats.reduce(0) { $0 + $1.completed })")
                                     .scaledFont(size: 28, weight: .bold)
                                     .foregroundColor(.elevateDarkGreen)
                             }
                             
                             Chart {
-                                ForEach(weeklyJobs, id: \.week) { item in
+                                ForEach(viewModel.weeklyStats) { item in
                                     // Background light grey bar
                                     BarMark(
-                                        x: .value("Week", item.week),
-                                        y: .value("Total", item.bgValue),
+                                        x: .value("Week", item.label),
+                                        y: .value("Total", item.total),
                                         width: .ratio(0.8)
                                     )
                                     .foregroundStyle(Color.elevateLightGray)
@@ -78,8 +65,8 @@ struct TechnicianStatisticsView: View {
                                     
                                     // Foreground dark green bar
                                     BarMark(
-                                        x: .value("Week", item.week),
-                                        y: .value("Completed", item.fgValue),
+                                        x: .value("Week", item.label),
+                                        y: .value("Completed", item.completed),
                                         width: .ratio(0.4)
                                     )
                                     .foregroundStyle(Color.elevateDarkGreen)
@@ -126,18 +113,18 @@ struct TechnicianStatisticsView: View {
                             }
                             
                             Chart {
-                                ForEach(efficiencyData, id: \.day) { item in
+                                ForEach(viewModel.efficiencyStats) { item in
                                     LineMark(
-                                        x: .value("Day", item.day),
-                                        y: .value("Value", item.val)
+                                        x: .value("Day", item.dayIndex),
+                                        y: .value("Value", item.value)
                                     )
                                     .interpolationMethod(.catmullRom)
                                     .foregroundStyle(Color.elevateDarkGreen)
                                     .lineStyle(StrokeStyle(lineWidth: 3))
                                     
                                     AreaMark(
-                                        x: .value("Day", item.day),
-                                        y: .value("Value", item.val)
+                                        x: .value("Day", item.dayIndex),
+                                        y: .value("Value", item.value)
                                     )
                                     .interpolationMethod(.catmullRom)
                                     .foregroundStyle(
@@ -166,6 +153,32 @@ struct TechnicianStatisticsView: View {
             
         }
         .navigationBarHidden(true)
+        .onAppear {
+            loadStats()
+        }
+        .onChange(of: network.isOnline) { _, _ in
+            loadStats()
+        }
+    }
+
+    private func loadStats() {
+        guard let user = appSession.currentUser else { return }
+        viewModel.load(
+            organizationId: user.organizationId,
+            userId: user.id,
+            isOnline: network.isOnline,
+            technicianId: user.id
+        )
+    }
+
+    private func percentString(_ value: Double) -> String {
+        let percent = Int((value * 100).rounded())
+        return "\(percent)%"
+    }
+
+    private func ratingString() -> String {
+        let rating = max(3.0, min(5.0, 5.0 * viewModel.completionRate))
+        return String(format: "%.1f", rating)
     }
 }
 

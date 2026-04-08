@@ -56,6 +56,10 @@ final class InventoryViewModel: ObservableObject {
             errorMessage = "Select at least one item."
             return
         }
+
+        let mergedItems = mergeQuotationItems(jobId: jobId, newItems: selected)
+        localStorage.updateJobQuotationItems(id: jobId, items: mergedItems, updatedAt: Date())
+
         if isOnline {
             firebase.submitQuotationRequest(jobId: jobId, userId: userId, items: selected) { result in
                 if case .failure(let error) = result {
@@ -71,6 +75,118 @@ final class InventoryViewModel: ObservableObject {
                 organizationId: organizationId,
                 items: selected
             )
+        }
+    }
+
+    private func mergeQuotationItems(jobId: String, newItems: [QuotationItem]) -> [QuotationItem] {
+        guard var existing = localStorage.fetchJob(id: jobId)?.quotationItems else {
+            return newItems
+        }
+
+        newItems.forEach { newItem in
+            if let index = existing.firstIndex(where: { $0.id == newItem.id }) {
+                existing[index] = newItem
+            } else {
+                existing.append(newItem)
+            }
+        }
+
+        return existing
+    }
+
+    func createItem(organizationId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            errorMessage = "Item name is required."
+            completion(nil)
+            return
+        }
+        guard !trimmedCategory.isEmpty else {
+            errorMessage = "Category is required."
+            completion(nil)
+            return
+        }
+
+        let item = InventoryItem(
+            id: UUID().uuidString,
+            organizationId: organizationId,
+            name: trimmedName,
+            category: trimmedCategory,
+            quantity: max(0, quantity),
+            unitPrice: max(0, unitPrice),
+            sku: sku?.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+
+        localStorage.saveInventoryItems([item])
+        items = localStorage.fetchInventoryItems(organizationId: organizationId)
+
+        guard isOnline else {
+            completion(item)
+            return
+        }
+
+        firebase.createInventoryItem(item) { result in
+            DispatchQueue.main.async {
+                if case .failure(let error) = result {
+                    self.errorMessage = error.localizedDescription
+                    completion(nil)
+                } else {
+                    completion(item)
+                }
+            }
+        }
+    }
+
+    func updateItem(_ item: InventoryItem, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            errorMessage = "Item name is required."
+            completion(nil)
+            return
+        }
+        guard !trimmedCategory.isEmpty else {
+            errorMessage = "Category is required."
+            completion(nil)
+            return
+        }
+
+        let updated = InventoryItem(
+            id: item.id,
+            organizationId: item.organizationId,
+            name: trimmedName,
+            category: trimmedCategory,
+            quantity: max(0, quantity),
+            unitPrice: max(0, unitPrice),
+            sku: sku?.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+
+        localStorage.saveInventoryItems([updated])
+        items = localStorage.fetchInventoryItems(organizationId: item.organizationId)
+
+        guard isOnline else {
+            completion(updated)
+            return
+        }
+
+        let fields: [String: Any] = [
+            "name": updated.name,
+            "category": updated.category,
+            "quantity": updated.quantity,
+            "unitPrice": updated.unitPrice,
+            "sku": updated.sku as Any
+        ]
+
+        firebase.updateInventoryItem(itemId: item.id, fields: fields) { result in
+            DispatchQueue.main.async {
+                if case .failure(let error) = result {
+                    self.errorMessage = error.localizedDescription
+                    completion(nil)
+                } else {
+                    completion(updated)
+                }
+            }
         }
     }
 }

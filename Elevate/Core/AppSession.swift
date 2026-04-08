@@ -24,6 +24,12 @@ final class AppSession: ObservableObject {
         }
     }
 
+    func updateCurrentUser(_ user: User) {
+        localStorage.saveUser(user)
+        currentUser = user
+    }
+
+    @MainActor
     func signOut() {
         sessionStore.clear()
         currentUser = nil

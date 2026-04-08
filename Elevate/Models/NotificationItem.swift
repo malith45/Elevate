@@ -8,6 +8,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
     let title: String
     let body: String
     let type: String
+    let targetId: String?
     let createdAt: Date
     let isRead: Bool
 }

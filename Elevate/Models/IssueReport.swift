@@ -10,4 +10,6 @@ struct IssueReport: Identifiable, Codable, Equatable {
     let priority: String
     let createdAt: Date
     let attachmentUrls: [String]
+    let managerResponse: String?
+    let resolvedAt: Date?
 }

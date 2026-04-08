@@ -34,7 +34,9 @@ final class JobIssueReportViewModel: ObservableObject {
             description: issueText,
             priority: priority,
             createdAt: Date(),
-            attachmentUrls: attachmentUrls
+            attachmentUrls: attachmentUrls,
+            managerResponse: nil,
+            resolvedAt: nil
         )
 
         if isOnline {
@@ -86,7 +88,9 @@ final class JobIssueReportViewModel: ObservableObject {
                 description: report.description,
                 priority: report.priority,
                 createdAt: report.createdAt,
-                attachmentUrls: mergedUrls
+                attachmentUrls: mergedUrls,
+                managerResponse: report.managerResponse,
+                resolvedAt: report.resolvedAt
             )
             self.firebase.createIssueReport(updated) { [weak self] result in
                 DispatchQueue.main.async {

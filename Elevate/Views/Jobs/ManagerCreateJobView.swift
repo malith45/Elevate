@@ -2,13 +2,15 @@ import SwiftUI
 
 struct ManagerCreateJobView: View {
     @Environment(\.managerTabRouter) private var router
-    @State private var selectedTechnician = "Select Technician"
+    @EnvironmentObject private var appSession: AppSession
+    @StateObject private var viewModel = ManagerCreateJobViewModel()
+    @ObservedObject private var network = NetworkService.shared
+    @State private var selectedTechnicianId: String?
+    @State private var jobTitle = ""
     @State private var location = ""
-    @State private var dateText = ""
-    @State private var timeText = ""
+    @State private var scheduledAt = Date()
     @State private var descriptionText = ""
-
-    private let technicians = ["Select Technician", "Marcus V.", "Elena R.", "James D."]
+    @State private var isUrgent = false
 
     var body: some View {
         ZStack {
@@ -31,16 +33,16 @@ struct ManagerCreateJobView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             labeledSection(title: "ASSIGN TECHNICIAN") {
                                 Menu {
-                                    Picker("Technician", selection: $selectedTechnician) {
-                                        ForEach(technicians, id: \.self) { tech in
-                                            Text(tech).tag(tech)
+                                    Picker("Technician", selection: $selectedTechnicianId) {
+                                        ForEach(viewModel.technicians, id: \.id) { tech in
+                                            Text(displayName(for: tech)).tag(Optional(tech.id))
                                         }
                                     }
                                 } label: {
                                     HStack {
-                                        Text(selectedTechnician)
+                                        Text(selectedTechnicianLabel())
                                             .scaledFont(size: 14)
-                                            .foregroundColor(selectedTechnician == "Select Technician" ? .elevateTextGray : .black)
+                                            .foregroundColor(selectedTechnicianId == nil ? .elevateTextGray : .black)
                                         Spacer()
                                         Image(systemName: "chevron.down")
                                             .foregroundColor(.elevateTextGray)
@@ -53,6 +55,18 @@ struct ManagerCreateJobView: View {
                                             .stroke(Color.elevateLightGray, lineWidth: 1)
                                     )
                                 }
+                            }
+
+                            labeledSection(title: "JOB TITLE") {
+                                TextField("Enter job title", text: $jobTitle)
+                                    .scaledFont(size: 14)
+                                    .padding(12)
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.elevateLightGray, lineWidth: 1)
+                                    )
                             }
 
                             labeledSection(title: "SET SITE") {
@@ -74,8 +88,10 @@ struct ManagerCreateJobView: View {
 
                             HStack(spacing: 16) {
                                 labeledSection(title: "DATE") {
-                                    TextField("mm/dd/yyyy", text: $dateText)
-                                        .scaledFont(size: 14)
+                                    DatePicker("", selection: $scheduledAt, displayedComponents: .date)
+                                        .labelsHidden()
+                                        .datePickerStyle(.compact)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(12)
                                         .background(Color.white)
                                         .cornerRadius(10)
@@ -86,8 +102,10 @@ struct ManagerCreateJobView: View {
                                 }
 
                                 labeledSection(title: "TIME") {
-                                    TextField("--:--", text: $timeText)
-                                        .scaledFont(size: 14)
+                                    DatePicker("", selection: $scheduledAt, displayedComponents: .hourAndMinute)
+                                        .labelsHidden()
+                                        .datePickerStyle(.compact)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(12)
                                         .background(Color.white)
                                         .cornerRadius(10)
@@ -97,6 +115,13 @@ struct ManagerCreateJobView: View {
                                         )
                                 }
                             }
+
+                            Toggle(isOn: $isUrgent) {
+                                Text("Mark as urgent")
+                                    .scaledFont(size: 12, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: .elevateDarkGreen))
 
                             labeledSection(title: "DESCRIPTION") {
                                 TextEditor(text: $descriptionText)
@@ -124,7 +149,7 @@ struct ManagerCreateJobView: View {
                         .padding(.horizontal, 24)
 
                         PrimaryButton(title: "Create Job", iconName: "checkmark") {
-                            // TODO: Save job.
+                            createJob()
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
@@ -133,6 +158,18 @@ struct ManagerCreateJobView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            guard let user = appSession.currentUser else { return }
+            viewModel.loadTechnicians(organizationId: user.organizationId, isOnline: network.isOnline)
+        }
+        .alert("Create Job", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
 
     private func labeledSection<Content: View>(title: String, content: () -> Content) -> some View {
@@ -143,8 +180,40 @@ struct ManagerCreateJobView: View {
             content()
         }
     }
+
+    private func displayName(for user: User) -> String {
+        user.displayName.isEmpty ? user.username : user.displayName
+    }
+
+    private func selectedTechnicianLabel() -> String {
+        guard let selectedId = selectedTechnicianId,
+              let tech = viewModel.technicians.first(where: { $0.id == selectedId })
+        else { return "Select Technician" }
+        return displayName(for: tech)
+    }
+
+    private func createJob() {
+        guard let user = appSession.currentUser else { return }
+        let assignedId = selectedTechnicianId ?? ""
+        viewModel.createJob(
+            organizationId: user.organizationId,
+            assignedUserId: assignedId,
+            title: jobTitle,
+            location: location,
+            scheduledAt: scheduledAt,
+            notes: descriptionText,
+            isUrgent: isUrgent,
+            isOnline: network.isOnline
+        ) { job in
+            if job != nil {
+                router.currentScreen = .jobs
+                router.selectedTab = .jobs
+            }
+        }
+    }
 }
 
 #Preview {
     ManagerCreateJobView()
+        .environmentObject(AppSession())
 }

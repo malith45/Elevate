@@ -33,9 +33,9 @@ struct TechnicianNotificationsView: View {
                         if viewModel.notifications.isEmpty {
                             EmptyStateCard()
                         } else {
-                            NotificationSection(title: "TODAY", items: viewModel.todayItems)
-                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems)
-                            NotificationSection(title: "EARLIER", items: viewModel.olderItems)
+                            NotificationSection(title: "TODAY", items: viewModel.todayItems, onTap: handleTap, destinationProvider: notificationDestination)
+                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems, onTap: handleTap, destinationProvider: notificationDestination)
+                            NotificationSection(title: "EARLIER", items: viewModel.olderItems, onTap: handleTap, destinationProvider: notificationDestination)
                         }
                         
                         Spacer().frame(height: 100)
@@ -61,10 +61,15 @@ struct TechnicianNotificationsView: View {
         guard let user = appSession.currentUser else { return }
         viewModel.clearAll(organizationId: user.organizationId, userId: user.id)
     }
+
+    private func handleTap(_ item: NotificationItem) {
+        viewModel.markRead(item, isOnline: NetworkService.shared.isOnline)
+    }
 }
 
 struct NotificationCard: View {
     var item: NotificationItem
+    var onTap: (() -> Void)?
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -108,6 +113,9 @@ struct NotificationCard: View {
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
+        .onTapGesture {
+            onTap?()
+        }
     }
 
     private func timeAgo(from date: Date) -> String {
@@ -127,6 +135,8 @@ struct NotificationCard: View {
 struct NotificationSection: View {
     let title: String
     let items: [NotificationItem]
+    var onTap: ((NotificationItem) -> Void)?
+    var destinationProvider: ((NotificationItem) -> AnyView?)? = nil
 
     var body: some View {
         if !items.isEmpty {
@@ -137,11 +147,37 @@ struct NotificationSection: View {
                     .padding(.horizontal, 24)
 
                 ForEach(items) { item in
-                    NotificationCard(item: item)
+                    if let destination = destinationProvider?(item) {
+                        NavigationLink(destination: destination) {
+                            NotificationCard(item: item, onTap: {
+                                onTap?(item)
+                            })
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        NotificationCard(item: item, onTap: {
+                            onTap?(item)
+                        })
+                    }
                 }
             }
         }
     }
+}
+
+private func notificationDestination(for item: NotificationItem) -> AnyView? {
+    guard let targetId = item.targetId else { return nil }
+    let type = item.type.uppercased()
+    if type.contains("ISSUE") {
+        return AnyView(JobIssueReportView(jobId: targetId))
+    }
+    if type.contains("QUOTATION") || type.contains("QUOTE") {
+        return AnyView(QuotationStatusView(jobId: targetId))
+    }
+    if type.contains("JOB") {
+        return AnyView(JobDetailsView(jobId: targetId))
+    }
+    return nil
 }
 
 struct EmptyStateCard: View {

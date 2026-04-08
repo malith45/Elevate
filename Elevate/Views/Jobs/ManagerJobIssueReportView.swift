@@ -24,6 +24,10 @@ struct ManagerJobIssueReportView: View {
                             .foregroundColor(.elevateDarkGreen)
 
                         if let report = viewModel.report {
+                            if viewModel.reports.count > 1 {
+                                reportPicker
+                            }
+
                             technicianCard
 
                             VStack(alignment: .leading, spacing: 8) {
@@ -82,7 +86,7 @@ struct ManagerJobIssueReportView: View {
 
                             HStack(spacing: 12) {
                                 Button(action: {
-                                    // TODO: Send response.
+                                    viewModel.sendResponse(text: responseText)
                                 }) {
                                     Text("Send")
                                         .scaledFont(size: 14, weight: .bold)
@@ -94,7 +98,7 @@ struct ManagerJobIssueReportView: View {
                                 }
 
                                 Button(action: {
-                                    // TODO: Mark report resolved.
+                                    viewModel.markResolved(responseText: responseText)
                                 }) {
                                     Text("Mark Resolved")
                                         .scaledFont(size: 14, weight: .bold)
@@ -118,6 +122,52 @@ struct ManagerJobIssueReportView: View {
         }
         .navigationBarHidden(true)
         .onAppear { viewModel.load(jobId: jobId) }
+        .onChange(of: viewModel.report?.managerResponse) { _, newValue in
+            if let newValue = newValue, responseText.isEmpty {
+                responseText = newValue
+            }
+        }
+        .alert("Issue Report", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+    }
+
+    private var reportPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("REPORT HISTORY")
+                .scaledFont(size: 10, weight: .bold)
+                .foregroundColor(.elevateTextGray)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(viewModel.reports) { report in
+                        let isSelected = report.id == viewModel.report?.id
+                        Button(action: {
+                            viewModel.selectReport(report)
+                            responseText = report.managerResponse ?? ""
+                        }) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(report.priority)
+                                    .scaledFont(size: 9, weight: .bold)
+                                Text(shortDate(report.createdAt))
+                                    .scaledFont(size: 10, weight: .bold)
+                            }
+                            .foregroundColor(isSelected ? .white : .elevateDarkGreen)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(isSelected ? Color.elevateDarkGreen : Color.elevateLightGray)
+                            .cornerRadius(10)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
     }
 
     private var technicianCard: some View {
@@ -158,6 +208,12 @@ struct ManagerJobIssueReportView: View {
             .background(priority == "HIGH" ? Color.red.opacity(0.15) : Color.elevateLightGray)
             .foregroundColor(priority == "HIGH" ? .red : .elevateDarkGreen)
             .cornerRadius(10)
+    }
+
+    private func shortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
     }
 }
 

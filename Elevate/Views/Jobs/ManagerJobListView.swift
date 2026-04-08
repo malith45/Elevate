@@ -56,18 +56,20 @@ struct ManagerJobListView: View {
                         .padding(.horizontal, 24)
 
                         // Job Cards
-                        let jobsToShow = viewModel.filteredJobs.isEmpty ? demoJobs : viewModel.filteredJobs
-
-                        VStack(spacing: 16) {
-                            ForEach(jobsToShow, id: \.id) { job in
-                                Button(action: {
-                                    router.selectedJobId = job.id
-                                    router.currentScreen = .jobDetails
-                                    router.selectedTab = .jobs
-                                }) {
-                                    ManagerJobCard(job: job)
+                        if viewModel.filteredJobs.isEmpty {
+                            EmptyStateCard()
+                        } else {
+                            VStack(spacing: 16) {
+                                ForEach(viewModel.filteredJobs, id: \.id) { job in
+                                    Button(action: {
+                                        router.selectedJobId = job.id
+                                        router.currentScreen = .jobDetails
+                                        router.selectedTab = .jobs
+                                    }) {
+                                        ManagerJobCard(job: job)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
 
@@ -102,77 +104,18 @@ struct ManagerJobListView: View {
         return formatter.string(from: Date())
     }
 
-    private var demoJobs: [Job] {
-        let now = Date()
-        return [
-            Job(
-                id: "demo-job-001",
-                organizationId: appSession.currentUser?.organizationId ?? "demo-org",
-                title: "Inspect Elevator Panel",
-                location: "Skyline Corp HQ",
-                scheduledAt: now.addingTimeInterval(3600),
-                status: "IN_PROGRESS",
-                priority: "HIGH",
-                assignedUserId: "TECH-3029",
-                notes: "Main panel alarm triggered.",
-                approvedCost: 12500,
-                photoUrls: [],
-                updatedAt: now
-            )
-        ]
-    }
 }
 
 private struct ManagerJobCard: View {
     let job: Job
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(job.status.uppercased())
-                        .scaledFont(size: 10, weight: .bold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.elevateLightGray)
-                        .foregroundColor(.elevateTextGray)
-                        .cornerRadius(12)
-
-                    Text(job.title)
-                        .scaledFont(size: 18, weight: .bold)
-                }
-                Spacer()
-                Text(timeString(from: job.scheduledAt))
-                    .scaledFont(size: 14, weight: .bold)
-            }
-
-            HStack(spacing: 12) {
-                Image(systemName: "mappin.and.ellipse")
-                    .frame(width: 32, height: 32)
-                    .background(Color.elevateLightGray)
-                    .cornerRadius(8)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(job.location)
-                        .scaledFont(size: 14, weight: .bold)
-                    Text(job.notes ?? "")
-                        .scaledFont(size: 12)
-                        .foregroundColor(.elevateTextGray)
-                }
-                Spacer()
-            }
-        }
+        JobCardContent(job: job)
         .padding(20)
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
         .padding(.horizontal, 24)
-    }
-
-    private func timeString(from date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
     }
 }
 

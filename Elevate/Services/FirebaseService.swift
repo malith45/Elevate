@@ -3,14 +3,13 @@ import Combine
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseMessaging
-import FirebaseStorage
 
 final class FirebaseService {
     static let shared = FirebaseService()
 
     private let auth = Auth.auth()
     private let db = Firestore.firestore()
-    private let storage = Storage.storage()
+    private let supabaseStorage = SupabaseStorageService.shared
 
     private init() {}
 
@@ -406,35 +405,15 @@ final class FirebaseService {
     }
 
     func uploadIssueAttachment(data: Data, fileName: String, completion: @escaping (Result<String, Error>) -> Void) {
-        let ref = storage.reference().child("issueAttachments/\(fileName)")
-        ref.putData(data, metadata: nil) { _, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            ref.downloadURL { url, error in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
-                completion(.success(url?.absoluteString ?? ""))
-            }
+        supabaseStorage.uploadPublicFile(data: data, path: "issueAttachments/\(fileName)") { result in
+            completion(result)
         }
     }
 
     func uploadJobPhoto(data: Data, fileName: String, jobId: String, completion: @escaping (Result<String, Error>) -> Void) {
-        let ref = storage.reference().child("jobPhotos/\(jobId)/\(fileName)")
-        ref.putData(data, metadata: nil) { _, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            ref.downloadURL { url, error in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
-                let urlString = url?.absoluteString ?? ""
+        supabaseStorage.uploadPublicFile(data: data, path: "jobPhotos/\(jobId)/\(fileName)") { result in
+            switch result {
+            case .success(let urlString):
                 self.db.collection("jobs").document(jobId).updateData([
                     "photoUrls": FieldValue.arrayUnion([urlString])
                 ]) { updateError in
@@ -444,6 +423,8 @@ final class FirebaseService {
                         completion(.success(urlString))
                     }
                 }
+            case .failure(let error):
+                completion(.failure(error))
             }
         }
     }

@@ -21,6 +21,7 @@ final class ProfileViewModel: ObservableObject {
                     self?.user = user
                     self?.organizationCode = user.organizationId
                 }
+                ProfileImageSync.shared.syncProfilePhotoUrl(userId: user.id)
                 self?.loadOrganization(organizationId: user.organizationId)
             case .failure(let error):
                 DispatchQueue.main.async {

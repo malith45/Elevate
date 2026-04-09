@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ManagerProfileView: View {
     @EnvironmentObject private var appSession: AppSession
@@ -21,14 +22,19 @@ struct ManagerProfileView: View {
                         
                         // User Details
                         VStack(spacing: 12) {
-                            Circle()
-                                .fill(Color.elevateDarkGreen)
-                                .frame(width: 100, height: 100)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .font(.system(size: 44))
-                                        .foregroundColor(.white)
-                                )
+                            if let user = appSession.currentUser {
+                                ProfilePhotoView(userId: user.id, size: 100)
+                            } else {
+                                Circle()
+                                    .fill(Color.elevateDarkGreen)
+                                    .frame(width: 100, height: 100)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .font(.system(size: 44))
+                                            .foregroundColor(.white)
+                                    )
+                                    .clipShape(Circle())
+                            }
                             
                             Text(displayName)
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
@@ -206,6 +212,7 @@ struct ManagerProfileView: View {
         }
         return "Manager"
     }
+
 
     private var organizationName: String {
         if !viewModel.organizationName.isEmpty {

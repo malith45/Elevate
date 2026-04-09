@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct TechnicianProfileView: View {
     @EnvironmentObject private var appSession: AppSession
@@ -6,6 +8,7 @@ struct TechnicianProfileView: View {
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var showLogoutConfirmation = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
     
     var body: some View {
         ZStack {
@@ -20,17 +23,36 @@ struct TechnicianProfileView: View {
                         
                         // User Details
                         VStack(spacing: 12) {
-                            Circle()
-                                .fill(Color.elevateDarkGreen)
-                                .frame(width: 100, height: 100)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .font(.system(size: 44))
-                                        .foregroundColor(.white)
-                                )
+                            if let user = appSession.currentUser {
+                                ProfilePhotoView(userId: user.id, size: 100)
+                            } else {
+                                Circle()
+                                    .fill(Color.elevateDarkGreen)
+                                    .frame(width: 100, height: 100)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .font(.system(size: 44))
+                                            .foregroundColor(.white)
+                                    )
+                                    .clipShape(Circle())
+                            }
                             
                             Text(displayName)
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
+
+                            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.system(size: 10, weight: .bold))
+                                    Text("CHANGE PHOTO")
+                                }
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.elevateDarkGreen)
+                                .cornerRadius(16)
+                            }
                         }
                         .padding(.top, 32)
                         
@@ -111,6 +133,9 @@ struct TechnicianProfileView: View {
                     }
                     .padding(.horizontal, 24)
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
+                }
             }
             
         }
@@ -125,6 +150,20 @@ struct TechnicianProfileView: View {
         }
         .onAppear {
             loadProfile()
+        }
+        .onChange(of: selectedPhotoItem) { _, newValue in
+            guard let newValue, let user = appSession.currentUser else { return }
+            Task {
+                if let data = try? await newValue.loadTransferable(type: Data.self),
+                   let _ = UIImage(data: data) {
+                    ProfilePhotoService.shared.uploadProfilePhoto(data: data, userId: user.id) { result in
+                        if case .success(let url) = result {
+                            ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
+                        }
+                        _ = ProfileImageStore.shared.saveImage(data, for: user.id)
+                    }
+                }
+            }
         }
     }
 
@@ -156,6 +195,11 @@ struct TechnicianProfileView: View {
             return user.organizationId
         }
         return ""
+    }
+
+    private var profileImage: UIImage? {
+        guard let user = appSession.currentUser else { return nil }
+        return ProfileImageStore.shared.loadImage(for: user.id)
     }
 
     private func loadProfile() {

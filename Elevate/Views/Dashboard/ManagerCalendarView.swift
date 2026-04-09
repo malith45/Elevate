@@ -6,6 +6,7 @@ struct ManagerCalendarView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = CalendarViewModel()
     @State private var isShowingEventEditor = false
+    @State private var shouldOpenEventEditor = false
     private let localStorage = LocalStorageService.shared
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -48,6 +49,7 @@ struct ManagerCalendarView: View {
                                     if viewModel.isAuthorized {
                                         isShowingEventEditor = true
                                     } else {
+                                        shouldOpenEventEditor = true
                                         viewModel.requestAccessIfNeeded()
                                     }
                                 }) {
@@ -178,6 +180,9 @@ struct ManagerCalendarView: View {
                         
                     }
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
+                }
             }
             
         }
@@ -189,6 +194,12 @@ struct ManagerCalendarView: View {
         .onChange(of: viewModel.currentMonth) { _, _ in
             viewModel.loadEventsIfAuthorized()
             syncJobs()
+        }
+        .onChange(of: viewModel.authorizationStatus) { _, _ in
+            if shouldOpenEventEditor, viewModel.isAuthorized {
+                shouldOpenEventEditor = false
+                isShowingEventEditor = true
+            }
         }
         .sheet(isPresented: $isShowingEventEditor) {
             EventEditViewController(eventStore: viewModel.eventStore) {

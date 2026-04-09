@@ -1,4 +1,6 @@
 import SwiftUI
+import MapKit
+import CoreLocation
 
 struct ManagerCreateJobView: View {
     @Environment(\.managerTabRouter) private var router
@@ -11,6 +13,13 @@ struct ManagerCreateJobView: View {
     @State private var scheduledAt = Date()
     @State private var descriptionText = ""
     @State private var isUrgent = false
+    @State private var siteCoordinate: CLLocationCoordinate2D?
+    @State private var mapPosition = MapCameraPosition.region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
+    )
 
     var body: some View {
         ZStack {
@@ -136,19 +145,39 @@ struct ManagerCreateJobView: View {
                             }
 
                             labeledSection(title: "SITE PREVIEW") {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.elevateLightGray.opacity(0.6))
-                                    .frame(height: 160)
+                                MapReader { proxy in
+                                    Map(position: $mapPosition) {
+                                        if let siteCoordinate {
+                                            Marker("Site", coordinate: siteCoordinate)
+                                        }
+                                    }
+                                    .frame(height: 180)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                                     .overlay(
-                                        Image(systemName: "mappin.circle.fill")
-                                            .font(.system(size: 48))
-                                            .foregroundColor(.elevateDarkGreen.opacity(0.5))
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.elevateLightGray, lineWidth: 1)
                                     )
+                                    .gesture(
+                                        SpatialTapGesture()
+                                            .onEnded { value in
+                                                if let coordinate = proxy.convert(value.location, from: .local) {
+                                                    siteCoordinate = coordinate
+                                                    mapPosition = MapCameraPosition.region(
+                                                        MKCoordinateRegion(
+                                                            center: coordinate,
+                                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                                        )
+                                                    )
+                                                    updateLocation(from: coordinate)
+                                                }
+                                            }
+                                    )
+                                }
                             }
                         }
                         .padding(.horizontal, 24)
 
-                        PrimaryButton(title: "Create Job", iconName: "checkmark") {
+                        PrimaryButton(title: "Create Job", iconName: nil) {
                             createJob()
                         }
                         .padding(.horizontal, 24)
@@ -206,11 +235,34 @@ struct ManagerCreateJobView: View {
             scheduledAt: scheduledAt,
             notes: descriptionText,
             isUrgent: isUrgent,
+            siteLatitude: siteCoordinate?.latitude,
+            siteLongitude: siteCoordinate?.longitude,
             isOnline: network.isOnline
         ) { job in
             if job != nil {
                 router.currentScreen = .jobs
                 router.selectedTab = .jobs
+            }
+        }
+    }
+
+    private func updateLocation(from coordinate: CLLocationCoordinate2D) {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        geocoder.reverseGeocodeLocation(location) { placemarks, _ in
+            guard let placemark = placemarks?.first else {
+                if self.location.isEmpty {
+                    self.location = "Pinned location"
+                }
+                return
+            }
+
+            let parts = [placemark.name, placemark.locality, placemark.administrativeArea]
+            let text = parts.compactMap { $0 }.joined(separator: ", ")
+            if !text.isEmpty {
+                self.location = text
+            } else if self.location.isEmpty {
+                self.location = "Pinned location"
             }
         }
     }

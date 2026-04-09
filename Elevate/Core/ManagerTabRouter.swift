@@ -19,6 +19,7 @@ enum ManagerScreen {
     case quotationApproval
     case inventoryManager
     case createJob
+    case memberDetails
 }
 
 final class ManagerTabRouter: ObservableObject {
@@ -26,6 +27,7 @@ final class ManagerTabRouter: ObservableObject {
     @Published var selectedTab: TabItem = .dashboard
     @Published var currentScreen: ManagerScreen = .dashboard
     @Published var selectedJobId: String?
+    @Published var selectedMemberId: String?
 }
 
 private struct ManagerTabRouterKey: EnvironmentKey {

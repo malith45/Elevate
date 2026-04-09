@@ -22,23 +22,52 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
     private let session = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
     private var previewLayer: AVCaptureVideoPreviewLayer?
+    private let accessLabel = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        configureSession()
-        configurePreview()
-        configureCaptureButton()
+        checkCameraAccess()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        session.startRunning()
+        if session.isRunning == false {
+            session.startRunning()
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         session.stopRunning()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = view.bounds
+    }
+
+    private func checkCameraAccess() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            configureSession()
+            configurePreview()
+            configureCaptureButton()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self?.configureSession()
+                        self?.configurePreview()
+                        self?.configureCaptureButton()
+                    } else {
+                        self?.showAccessDeniedMessage()
+                    }
+                }
+            }
+        default:
+            showAccessDeniedMessage()
+        }
     }
 
     private func configureSession() {
@@ -70,6 +99,29 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
         previewLayer = preview
     }
 
+    private func showAccessDeniedMessage() {
+        accessLabel.text = "Camera access is disabled. Enable it in Settings."
+        accessLabel.textColor = .white
+        accessLabel.numberOfLines = 0
+        accessLabel.textAlignment = .center
+        accessLabel.frame = CGRect(x: 24, y: 0, width: view.bounds.width - 48, height: 120)
+        accessLabel.center = view.center
+        view.addSubview(accessLabel)
+
+        let closeButton = UIButton(type: .system)
+        closeButton.setTitle("Close", for: .normal)
+        closeButton.setTitleColor(.white, for: .normal)
+        closeButton.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        closeButton.layer.cornerRadius = 16
+        closeButton.frame = CGRect(x: (view.bounds.width - 120) / 2, y: view.bounds.height - 90, width: 120, height: 40)
+        closeButton.addTarget(self, action: #selector(closeCamera), for: .touchUpInside)
+        view.addSubview(closeButton)
+    }
+
+    @objc private func closeCamera() {
+        onDismiss?()
+    }
+
     private func configureCaptureButton() {
         let button = UIButton(type: .system)
         button.setTitle("Capture", for: .normal)
@@ -82,6 +134,21 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
     }
 
     @objc private func capturePhoto() {
+        if session.isRunning == false {
+            session.startRunning()
+        }
+        guard let connection = output.connection(with: .video), connection.isEnabled else {
+            accessLabel.text = "Camera is unavailable. Try again on a physical device."
+            accessLabel.textColor = .white
+            accessLabel.numberOfLines = 0
+            accessLabel.textAlignment = .center
+            accessLabel.frame = CGRect(x: 24, y: 0, width: view.bounds.width - 48, height: 120)
+            accessLabel.center = view.center
+            if accessLabel.superview == nil {
+                view.addSubview(accessLabel)
+            }
+            return
+        }
         let settings = AVCapturePhotoSettings()
         output.capturePhoto(with: settings, delegate: self)
     }

@@ -5,6 +5,7 @@ struct ManagerNotificationsView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
+    @ObservedObject private var network = NetworkService.shared
     
     var body: some View {
         ZStack {
@@ -50,6 +51,12 @@ struct ManagerNotificationsView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            loadNotifications()
+        }
+        .onChange(of: network.isOnline) { _, _ in
+            loadNotifications()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .notificationsDidChange)) { _ in
             loadNotifications()
         }
     }

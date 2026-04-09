@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct ManagerEditProfileView: View {
     @Environment(\.managerTabRouter) private var router
@@ -7,6 +9,8 @@ struct ManagerEditProfileView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var profileImage: UIImage?
 
     var body: some View {
         ZStack {
@@ -71,6 +75,24 @@ struct ManagerEditProfileView: View {
         .onAppear {
             if let user = appSession.currentUser {
                 username = user.username
+                profileImage = ProfileImageStore.shared.loadImage(for: user.id)
+            }
+        }
+        .onChange(of: selectedPhotoItem) { _, newValue in
+            guard let newValue, let user = appSession.currentUser else { return }
+            Task {
+                if let data = try? await newValue.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self.profileImage = image
+                    }
+                    ProfilePhotoService.shared.uploadProfilePhoto(data: data, userId: user.id) { result in
+                        if case .success(let url) = result {
+                            ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
+                        }
+                        _ = ProfileImageStore.shared.saveImage(data, for: user.id)
+                    }
+                }
             }
         }
         .alert("Profile", isPresented: Binding(
@@ -89,18 +111,25 @@ struct ManagerEditProfileView: View {
                 .fill(Color.elevateDarkGreen)
                 .frame(width: 64, height: 64)
                 .overlay(
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.white)
+                    Group {
+                        if let image = profileImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        } else {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                        }
+                    }
                 )
+                .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("PROFILE PHOTO")
                     .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
-                Button(action: {
-                    // TODO: Add photo picker.
-                }) {
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.pencil")
                         Text("Change Photo")

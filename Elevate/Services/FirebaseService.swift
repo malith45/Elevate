@@ -160,6 +160,17 @@ final class FirebaseService {
         }
     }
 
+    func fetchUserPhotoUrl(userId: String, completion: @escaping (Result<String?, Error>) -> Void) {
+        db.collection("users").document(userId).getDocument { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            let url = snapshot?.data()?["photoUrl"] as? String
+            completion(.success(url))
+        }
+    }
+
     func fetchUsers(organizationId: String, completion: @escaping (Result<[User], Error>) -> Void) {
         db.collection("users")
             .whereField("organizationId", isEqualTo: organizationId)

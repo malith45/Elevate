@@ -56,20 +56,16 @@ struct ManagerJobListView: View {
                         .padding(.horizontal, 24)
 
                         // Job Cards
-                        if viewModel.filteredJobs.isEmpty {
-                            EmptyStateCard()
-                        } else {
-                            VStack(spacing: 16) {
-                                ForEach(viewModel.filteredJobs, id: \.id) { job in
-                                    Button(action: {
-                                        router.selectedJobId = job.id
-                                        router.currentScreen = .jobDetails
-                                        router.selectedTab = .jobs
-                                    }) {
-                                        ManagerJobCard(job: job)
-                                    }
-                                    .buttonStyle(.plain)
+                        VStack(spacing: 16) {
+                            ForEach(viewModel.filteredJobs, id: \.id) { job in
+                                Button(action: {
+                                    router.selectedJobId = job.id
+                                    router.currentScreen = .jobDetails
+                                    router.selectedTab = .jobs
+                                }) {
+                                    ManagerJobCard(job: job)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
 
@@ -82,6 +78,9 @@ struct ManagerJobListView: View {
                         }
                         .padding(.horizontal, 24)
                     }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
                 }
             }
         }

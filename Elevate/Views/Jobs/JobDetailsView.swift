@@ -73,27 +73,42 @@ struct JobDetailsView: View {
                                 .background(Color.elevateLightGray)
                                 .cornerRadius(16)
                         
-                        // Map view block placeholder
+                        // Map preview
                         ZStack(alignment: .bottomLeading) {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.elevateDarkGreen.opacity(0.8))
+                            if let latitude = job.siteLatitude, let longitude = job.siteLongitude {
+                                let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                                let position = MapCameraPosition.region(
+                                    MKCoordinateRegion(
+                                        center: coordinate,
+                                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                    )
+                                )
+                                Map(position: .constant(position)) {
+                                    Marker("Site", coordinate: coordinate)
+                                }
                                 .frame(height: 140)
-                                .overlay(
-                                    Image(systemName: "map.fill")
-                                        .font(.system(size: 60))
-                                        .foregroundColor(.white.opacity(0.3))
-                                )
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    Image(systemName: "mappin.circle.fill")
-                                        .foregroundColor(.elevateDarkGreen)
-                                        .font(.system(size: 24))
-                                )
-                                .position(x: 180, y: 70) // roughly center
-                            
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.elevateDarkGreen.opacity(0.8))
+                                    .frame(height: 140)
+                                    .overlay(
+                                        Image(systemName: "map.fill")
+                                            .font(.system(size: 60))
+                                            .foregroundColor(.white.opacity(0.3))
+                                    )
+
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Image(systemName: "mappin.circle.fill")
+                                            .foregroundColor(.elevateDarkGreen)
+                                            .font(.system(size: 24))
+                                    )
+                                    .position(x: 180, y: 70)
+                            }
+
                             Button(action: { openInMaps(job) }) {
                                 Text("VIEW IN MAPS")
                                     .scaledFont(size: 10, weight: .bold)
@@ -105,7 +120,6 @@ struct JobDetailsView: View {
                             }
                             .padding(12)
                         }
-                        .cornerRadius(12)
                         
                         // Cost and Quotation Block
                         HStack(spacing: 16) {

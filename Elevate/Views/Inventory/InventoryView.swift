@@ -77,6 +77,14 @@ struct InventoryView: View {
                     }
                     .padding(.horizontal, 24)
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
+                }
+                .refreshable {
+                    if let user = appSession.currentUser {
+                        viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
+                    }
+                }
             }
             
         }

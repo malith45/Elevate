@@ -29,13 +29,6 @@ struct TechnicianStatisticsView: View {
                         }
                         .padding(.horizontal, 24)
                         
-                        // Top Stats Row
-                        HStack(spacing: 16) {
-                            StatCard(icon: "star.fill", value: ratingString(), title: "AVG. RATING")
-                            StatCard(icon: "clock.fill", value: percentString(viewModel.onScheduleRate), title: "ON-TIME RATE")
-                        }
-                        .padding(.horizontal, 24)
-                        
                         // Jobs Completed Chart
                         VStack(spacing: 24) {
                             HStack {

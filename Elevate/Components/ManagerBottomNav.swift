@@ -3,15 +3,16 @@ import SwiftUI
 struct ManagerBottomNav: View {
     @Binding var selectedTab: TabItem
     var mode: BottomNavMode = .links
+    var onSelect: ((TabItem) -> Void)? = nil
     @Namespace private var selectionNamespace
     
     var body: some View {
         ZStack {
             HStack(spacing: 0) {
-                ManagerTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                ManagerTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                ManagerTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                ManagerTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
+                ManagerTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                ManagerTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                ManagerTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                ManagerTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 8)
@@ -38,6 +39,7 @@ struct ManagerTabBarButton: View {
     @Binding var selectedTab: TabItem
     var mode: BottomNavMode
     var selectionNamespace: Namespace.ID
+    var onSelect: ((TabItem) -> Void)? = nil
     
     var isSelected: Bool {
         selectedTab == tab
@@ -50,6 +52,7 @@ struct ManagerTabBarButton: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     selectedTab = tab
                 }
+                onSelect?(tab)
             }) {
                 buttonContent
             }
@@ -62,6 +65,7 @@ struct ManagerTabBarButton: View {
                 }
                 .simultaneousGesture(TapGesture().onEnded {
                     selectedTab = tab
+                    onSelect?(tab)
                 })
             }
         }
@@ -106,7 +110,7 @@ struct ManagerTabBarButton: View {
         case .dashboard:
             return AnyView(ManagerDashboardView(selectedTab: .constant(.dashboard)))
         case .jobs:
-            return AnyView(Text("Manager Job List View"))
+            return AnyView(ManagerJobListView())
         case .map:
             return AnyView(ManagerMapView(viewModel: MapViewModel()))
         case .profile:

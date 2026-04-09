@@ -4,10 +4,15 @@ struct ManagerOrganizationView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerOrganizationViewModel()
+    @ObservedObject private var network = NetworkService.shared
     @State private var organizationNameDraft = ""
     @State private var introductionDraft = ""
     @State private var isEditingName = false
     @State private var isEditingIntroduction = false
+    @State private var activeMembersCount = 0
+    @State private var managementCount = 0
+    private let localStorage = LocalStorageService.shared
+    private let firebase = FirebaseService.shared
 
     var body: some View {
         ZStack {
@@ -106,8 +111,8 @@ struct ManagerOrganizationView: View {
                                 .foregroundColor(.elevateTextGray)
 
                             HStack(spacing: 16) {
-                                metricCard(title: "ACTIVE MEMBERS", value: "24", icon: "person.2")
-                                metricCard(title: "MANAGEMENT", value: "3", icon: "person.3")
+                                metricCard(title: "ACTIVE MEMBERS", value: "\(activeMembersCount)", icon: "person.2")
+                                metricCard(title: "MANAGEMENT", value: "\(managementCount)", icon: "person.3")
                             }
 
                             Button(action: {
@@ -134,6 +139,9 @@ struct ManagerOrganizationView: View {
                         .padding(.bottom, 24)
                     }
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
+                }
             }
         }
         .navigationBarHidden(true)
@@ -143,6 +151,12 @@ struct ManagerOrganizationView: View {
                 viewModel.organizationName = user.organizationId
             }
             viewModel.load(organizationId: user.organizationId, isOnline: NetworkService.shared.isOnline)
+            refreshMemberMetrics(organizationId: user.organizationId)
+        }
+        .onChange(of: network.isOnline) { _, _ in
+            if let user = appSession.currentUser {
+                refreshMemberMetrics(organizationId: user.organizationId)
+            }
         }
         .alert("Edit Organization Name", isPresented: $isEditingName) {
             TextField("Organization Name", text: $organizationNameDraft)
@@ -214,6 +228,26 @@ struct ManagerOrganizationView: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+    }
+
+    private func refreshMemberMetrics(organizationId: String) {
+        let local = localStorage.fetchUsers(organizationId: organizationId)
+        applyMemberMetrics(local)
+
+        guard NetworkService.shared.isOnline else { return }
+        firebase.fetchUsers(organizationId: organizationId) { result in
+            if case .success(let users) = result {
+                self.localStorage.saveUsers(users)
+                DispatchQueue.main.async {
+                    self.applyMemberMetrics(users)
+                }
+            }
+        }
+    }
+
+    private func applyMemberMetrics(_ users: [User]) {
+        activeMembersCount = users.count
+        managementCount = users.filter { $0.role.uppercased() == "MANAGER" }.count
     }
 }
 

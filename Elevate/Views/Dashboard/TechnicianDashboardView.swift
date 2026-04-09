@@ -8,6 +8,7 @@ struct TechnicianDashboardView: View {
     @Binding var selectedTab: TabItem
     @State private var isRefreshing = false
     @State private var showLastSynced = false
+    @State private var navigationJobId: String?
 
     init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
         _selectedTab = selectedTab
@@ -54,38 +55,49 @@ struct TechnicianDashboardView: View {
 
                         // Quick Stats
                         HStack(spacing: 16) {
-                            StatPill(icon: "calendar", value: "\(viewModel.totalJobsToday)", title: "TODAY'S JOBS", isPrimary: true)
-                            StatPill(icon: "exclamationmark.triangle", value: "\(viewModel.urgentJobsToday)", title: "URGENT", isPrimary: false)
+                            StatPill(icon: "calendar", value: "\(technicianJobsTodayCount)", title: "TODAY'S JOBS", isPrimary: true)
+                            StatPill(icon: "exclamationmark.triangle", value: "\(technicianUrgentTodayCount)", title: "URGENT", isPrimary: false)
                         }
                         
                         if let urgentMessage = urgentUpdateMessage {
-                            HStack(spacing: 16) {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.white)
+                            Button(action: {
+                                if let jobId = urgentJobId {
+                                    navigationJobId = jobId
+                                }
+                            }) {
+                                HStack(spacing: 16) {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.white)
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("URGENT UPDATE")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.white.opacity(0.8))
-                                    Text(urgentMessage)
-                                        .scaledFont(size: 14, weight: .medium)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("URGENT UPDATE")
+                                            .scaledFont(size: 10, weight: .bold)
+                                            .foregroundColor(.white.opacity(0.8))
+                                        Text(urgentMessage)
+                                            .scaledFont(size: 14, weight: .medium)
+                                            .foregroundColor(.white)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .bold))
                                         .foregroundColor(.white)
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.white)
+                                .padding()
+                                .background(Color.elevateDarkGreen)
+                                .cornerRadius(12)
                             }
-                            .padding()
-                            .background(Color.elevateDarkGreen)
-                            .cornerRadius(12)
+                            .buttonStyle(.plain)
                         }
                         
                         // Shortcuts
                         HStack(spacing: 16) {
                             Button(action: {
-                                selectedTab = .jobs
+                                if let nextJobId = nextJobId {
+                                    navigationJobId = nextJobId
+                                } else {
+                                    selectedTab = .jobs
+                                }
                             }) {
                                 ShortcutBoxInternal(title: "START JOB", icon: "play.fill")
                             }
@@ -113,15 +125,20 @@ struct TechnicianDashboardView: View {
                             }
                             
                             VStack(spacing: 16) {
-                                ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
-                                    TaskRow(
-                                        time: timeString(from: job.scheduledAt),
-                                        ampm: ampmString(from: job.scheduledAt),
-                                        title: job.title,
-                                        location: job.location,
-                                        priority: job.priority.uppercased(),
-                                        color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
-                                    )
+                                ForEach(technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                    Button(action: {
+                                        navigationJobId = job.id
+                                    }) {
+                                        TaskRow(
+                                            time: timeString(from: job.scheduledAt),
+                                            ampm: ampmString(from: job.scheduledAt),
+                                            title: job.title,
+                                            location: job.location,
+                                            priority: job.priority.uppercased(),
+                                            color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -129,6 +146,9 @@ struct TechnicianDashboardView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
                 }
                 .refreshable {
                     if let user = appSession.currentUser {
@@ -150,6 +170,15 @@ struct TechnicianDashboardView: View {
             }
         }
         .navigationBarHidden(true)
+        .background(
+            NavigationLink(
+                destination: navigationDestination,
+                isActive: Binding(
+                    get: { navigationJobId != nil },
+                    set: { if !$0 { navigationJobId = nil } }
+                )
+            ) { EmptyView() }
+        )
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
@@ -228,7 +257,7 @@ struct TechnicianDashboardView: View {
     }
 
     private var urgentUpdateMessage: String? {
-        let urgentJobs = viewModel.jobs.filter {
+        let urgentJobs = technicianJobs.filter {
             let priority = $0.priority.uppercased()
             return priority == "HIGH" || priority == "URGENT"
         }
@@ -239,6 +268,44 @@ struct TechnicianDashboardView: View {
 
         let location = job.location.isEmpty ? "your area" : job.location
         return "Urgent job: \(job.title) in \(location)"
+    }
+
+    private var urgentJobId: String? {
+        technicianJobs.first(where: {
+            let priority = $0.priority.uppercased()
+            return priority == "HIGH" || priority == "URGENT"
+        })?.id
+    }
+
+    private var nextJobId: String? {
+        let upcoming = technicianJobs.filter {
+            let status = $0.status.uppercased()
+            return status != "COMPLETED" && status != "CANCELLED"
+        }
+        return upcoming.sorted { $0.scheduledAt < $1.scheduledAt }.first?.id
+    }
+
+    private var technicianJobs: [Job] {
+        guard let user = appSession.currentUser else { return [] }
+        return viewModel.jobs.filter { $0.assignedUserId == user.id }
+    }
+
+    private var navigationDestination: some View {
+        Group {
+            if let jobId = navigationJobId {
+                JobDetailsView(jobId: jobId)
+            }
+        }
+    }
+
+    private var technicianJobsTodayCount: Int {
+        technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.count
+    }
+
+    private var technicianUrgentTodayCount: Int {
+        technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }
+            .filter { $0.priority.uppercased() == "HIGH" || $0.priority.uppercased() == "URGENT" }
+            .count
     }
 }
 
@@ -296,9 +363,6 @@ struct TaskRow: View {
                     .cornerRadius(8)
             }
             Spacer()
-            Image(systemName: "ellipsis")
-                .foregroundColor(.elevateTextGray)
-                .rotationEffect(.degrees(90))
         }
     }
 }

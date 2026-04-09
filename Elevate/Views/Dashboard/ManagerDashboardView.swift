@@ -209,14 +209,21 @@ struct ManagerDashboardView: View {
                             
                             VStack(spacing: 16) {
                                 ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
-                                    TaskRow(
-                                        time: timeString(from: job.scheduledAt),
-                                        ampm: ampmString(from: job.scheduledAt),
-                                        title: job.title,
-                                        location: job.location,
-                                        priority: job.priority.uppercased(),
-                                        color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
-                                    )
+                                    Button(action: {
+                                        router.selectedJobId = job.id
+                                        router.currentScreen = .jobDetails
+                                        router.selectedTab = .jobs
+                                    }) {
+                                        TaskRow(
+                                            time: timeString(from: job.scheduledAt),
+                                            ampm: ampmString(from: job.scheduledAt),
+                                            title: job.title,
+                                            location: job.location,
+                                            priority: job.priority.uppercased(),
+                                            color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -224,6 +231,9 @@ struct ManagerDashboardView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
                 }
                 .refreshable {
                     let finishSync = {

@@ -56,13 +56,9 @@ struct JobListView: View {
                         .padding(.horizontal, 24)
                         
                         // Job Cards
-                        if viewModel.filteredJobs.isEmpty {
-                            EmptyStateCard()
-                        } else {
-                            VStack(spacing: 16) {
-                                ForEach(viewModel.filteredJobs, id: \.id) { job in
-                                    JobCard(job: job)
-                                }
+                        VStack(spacing: 16) {
+                            ForEach(viewModel.filteredJobs, id: \.id) { job in
+                                JobCard(job: job)
                             }
                         }
                         
@@ -74,6 +70,9 @@ struct JobListView: View {
                         .padding(.horizontal, 24)
                         
                     }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
                 }
             }
         }

@@ -627,6 +627,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Allow full access to the calendar to schedule and view jobs.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Allow access to the calendar to schedule and view jobs.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Allow access to the camera to upload job photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Log in securely using Face ID";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Allow access to your location to show job routes.";
@@ -662,6 +664,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Allow full access to the calendar to schedule and view jobs.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Allow access to the calendar to schedule and view jobs.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Allow access to the camera to upload job photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Log in securely using Face ID";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Allow access to your location to show job routes.";

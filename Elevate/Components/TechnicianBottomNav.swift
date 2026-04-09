@@ -3,15 +3,16 @@ import SwiftUI
 struct TechnicianBottomNav: View {
     @Binding var selectedTab: TabItem
     var mode: BottomNavMode = .links
+    var onSelect: ((TabItem) -> Void)? = nil
     @Namespace private var selectionNamespace
     
     var body: some View {
         ZStack {
             HStack(spacing: 0) {
-                TechnicianTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                TechnicianTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                TechnicianTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
-                TechnicianTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace)
+                TechnicianTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                TechnicianTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                TechnicianTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                TechnicianTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 8)
@@ -38,6 +39,7 @@ struct TechnicianTabBarButton: View {
     @Binding var selectedTab: TabItem
     var mode: BottomNavMode
     var selectionNamespace: Namespace.ID
+    var onSelect: ((TabItem) -> Void)? = nil
     
     var isSelected: Bool {
         selectedTab == tab
@@ -50,6 +52,7 @@ struct TechnicianTabBarButton: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     selectedTab = tab
                 }
+                onSelect?(tab)
             }) {
                 buttonContent
             }
@@ -62,6 +65,7 @@ struct TechnicianTabBarButton: View {
                 }
                 .simultaneousGesture(TapGesture().onEnded {
                     selectedTab = tab
+                    onSelect?(tab)
                 })
             }
         }

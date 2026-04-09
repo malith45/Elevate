@@ -54,6 +54,12 @@ struct ManagerMainTabView: View {
                     ManagerInventoryView()
                 case .createJob:
                     ManagerCreateJobView()
+                case .memberDetails:
+                    if let memberId = router.selectedMemberId {
+                        ManagerMemberDetailView(memberId: memberId)
+                    } else {
+                        ManagerMembersView()
+                    }
                 }
             }
             .environment(\.managerTabRouter, router)
@@ -70,7 +76,19 @@ struct ManagerMainTabView: View {
                 }
             }
 
-            ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs)
+            ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
+                router.selectedTab = tab
+                switch tab {
+                case .dashboard:
+                    router.currentScreen = .dashboard
+                case .jobs:
+                    router.currentScreen = .jobs
+                case .map:
+                    router.currentScreen = .map
+                case .profile:
+                    router.currentScreen = .profile
+                }
+            }
                 .ignoresSafeArea(.keyboard, edges: .bottom)
                 .padding(.bottom, 8) // Buffer for home indicator
                 .zIndex(1)

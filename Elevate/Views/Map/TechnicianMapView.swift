@@ -126,26 +126,6 @@ struct TechnicianMapView: View {
                     Spacer()
 
                     VStack(spacing: 10) {
-                        Button(action: zoomIn) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.elevateDarkGreen)
-                                .frame(width: 40, height: 40)
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
-                        }
-
-                        Button(action: zoomOut) {
-                            Image(systemName: "minus")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.elevateDarkGreen)
-                                .frame(width: 40, height: 40)
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
-                        }
-
                         Button(action: centerOnUser) {
                             Image(systemName: "location.fill")
                                 .font(.system(size: 14, weight: .bold))
@@ -221,24 +201,6 @@ struct TechnicianMapView: View {
 
     private var shouldShowTripCard: Bool {
         viewModel.destination != nil || viewModel.route != nil
-    }
-
-    private func zoomIn() {
-        adjustZoom(multiplier: 0.7)
-    }
-
-    private func zoomOut() {
-        adjustZoom(multiplier: 1.3)
-    }
-
-    private func adjustZoom(multiplier: CLLocationDegrees) {
-        var region = viewModel.region
-        let minDelta: CLLocationDegrees = 0.002
-        let maxDelta: CLLocationDegrees = 2.0
-        region.span.latitudeDelta = min(max(region.span.latitudeDelta * multiplier, minDelta), maxDelta)
-        region.span.longitudeDelta = min(max(region.span.longitudeDelta * multiplier, minDelta), maxDelta)
-        viewModel.region = region
-        mapPosition = .region(region)
     }
 
     private func centerOnUser() {

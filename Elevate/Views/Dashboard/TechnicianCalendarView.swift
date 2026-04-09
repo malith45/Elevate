@@ -159,6 +159,9 @@ struct TechnicianCalendarView: View {
                         
                     }
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
+                }
             }
             
         }
@@ -245,9 +248,19 @@ private extension TechnicianCalendarView {
 
     func syncJobs() {
         guard let user = appSession.currentUser else { return }
-        let jobs = localStorage.fetchJobs(organizationId: user.organizationId)
-            .filter { $0.assignedUserId == user.id }
-        viewModel.syncJobsIfAuthorized(jobs)
-        viewModel.loadEventsIfAuthorized()
+        let refreshLocal = {
+            let jobs = localStorage.fetchJobs(organizationId: user.organizationId)
+                .filter { $0.assignedUserId == user.id }
+            self.viewModel.syncJobsIfAuthorized(jobs)
+            self.viewModel.loadEventsIfAuthorized()
+        }
+
+        if NetworkService.shared.isOnline {
+            SyncManager.shared.startSyncing(organizationId: user.organizationId, userId: user.id) {
+                refreshLocal()
+            }
+        } else {
+            refreshLocal()
+        }
     }
 }

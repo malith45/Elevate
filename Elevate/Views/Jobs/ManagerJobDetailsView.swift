@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 struct ManagerJobDetailsView: View {
     let jobId: String
@@ -86,42 +87,56 @@ struct ManagerJobDetailsView: View {
                                 .cornerRadius(16)
 
                             ZStack(alignment: .bottomLeading) {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.elevateDarkGreen.opacity(0.8))
+                                if let latitude = job.siteLatitude, let longitude = job.siteLongitude {
+                                    let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                                    let position = MapCameraPosition.region(
+                                        MKCoordinateRegion(
+                                            center: coordinate,
+                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                        )
+                                    )
+                                    Map(position: .constant(position)) {
+                                        Marker("Site", coordinate: coordinate)
+                                    }
                                     .frame(height: 150)
-                                    .overlay(
-                                        Image(systemName: "map.fill")
-                                            .font(.system(size: 60))
-                                            .foregroundColor(.white.opacity(0.3))
-                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.elevateDarkGreen.opacity(0.8))
+                                        .frame(height: 150)
+                                        .overlay(
+                                            Image(systemName: "map.fill")
+                                                .font(.system(size: 60))
+                                                .foregroundColor(.white.opacity(0.3))
+                                        )
 
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Image(systemName: "mappin.circle.fill")
-                                            .foregroundColor(.elevateDarkGreen)
-                                            .font(.system(size: 24))
-                                    )
-                                    .position(x: 160, y: 60)
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 32, height: 32)
+                                        .overlay(
+                                            Image(systemName: "mappin.circle.fill")
+                                                .foregroundColor(.elevateDarkGreen)
+                                                .font(.system(size: 24))
+                                        )
+                                        .position(x: 160, y: 60)
 
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Image(systemName: "person.circle.fill")
-                                            .foregroundColor(.elevateDarkGreen)
-                                            .font(.system(size: 22))
-                                    )
-                                    .position(x: 240, y: 95)
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 32, height: 32)
+                                        .overlay(
+                                            Image(systemName: "person.circle.fill")
+                                                .foregroundColor(.elevateDarkGreen)
+                                                .font(.system(size: 22))
+                                        )
+                                        .position(x: 240, y: 95)
 
-                                HStack(spacing: 12) {
-                                    legendPill(title: "Site", icon: "mappin")
-                                    legendPill(title: "Technician", icon: "person")
+                                    HStack(spacing: 12) {
+                                        legendPill(title: "Site", icon: "mappin")
+                                        legendPill(title: "Technician", icon: "person")
+                                    }
+                                    .padding(12)
                                 }
-                                .padding(12)
                             }
-                            .cornerRadius(12)
 
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading, spacing: 6) {

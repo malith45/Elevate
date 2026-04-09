@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct ManagerAddMemberView: View {
     @Environment(\.managerTabRouter) private var router
@@ -8,6 +10,8 @@ struct ManagerAddMemberView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var memberPhotoData: Data?
 
     private let roles = ["Technician", "Manager"]
 
@@ -73,6 +77,16 @@ struct ManagerAddMemberView: View {
             }
         }
         .navigationBarHidden(true)
+        .onChange(of: selectedPhotoItem) { _, newValue in
+            guard let newValue else { return }
+            Task {
+                if let data = try? await newValue.loadTransferable(type: Data.self) {
+                    DispatchQueue.main.async {
+                        memberPhotoData = data
+                    }
+                }
+            }
+        }
         .alert("Add Member", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { _ in viewModel.errorMessage = nil }
@@ -121,18 +135,25 @@ struct ManagerAddMemberView: View {
                 .fill(Color.elevateDarkGreen)
                 .frame(width: 64, height: 64)
                 .overlay(
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.white)
+                    Group {
+                        if let data = memberPhotoData, let image = UIImage(data: data) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        } else {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                        }
+                    }
                 )
+                .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("PROFILE PHOTO")
                     .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
-                Button(action: {
-                    // TODO: Add photo picker.
-                }) {
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.pencil")
                         Text("Change Photo")
@@ -165,7 +186,15 @@ struct ManagerAddMemberView: View {
             role: roleKey,
             password: password
         ) { created in
-            if created != nil {
+            if let created {
+                if let data = memberPhotoData {
+                    ProfilePhotoService.shared.uploadProfilePhoto(data: data, userId: created.id) { result in
+                        if case .success(let url) = result {
+                            ProfileImageStore.shared.saveRemoteUrl(url, for: created.id)
+                        }
+                        _ = ProfileImageStore.shared.saveImage(data, for: created.id)
+                    }
+                }
                 router.currentScreen = .members
                 router.selectedTab = .profile
             }

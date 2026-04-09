@@ -4,6 +4,8 @@ struct ManagerMembersView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerMembersViewModel()
+    @State private var isEditorPresented = false
+    @State private var editingMember: User?
 
     var body: some View {
         ZStack {
@@ -53,13 +55,23 @@ struct ManagerMembersView: View {
 
                         VStack(spacing: 12) {
                             ForEach(viewModel.members) { member in
-                                memberRow(member)
+                                Button(action: {
+                                    router.selectedMemberId = member.id
+                                    router.currentScreen = .memberDetails
+                                    router.selectedTab = .profile
+                                }) {
+                                    memberRow(member)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
                     }
                     .padding(.top, 12)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
                 }
             }
         }
@@ -75,6 +87,20 @@ struct ManagerMembersView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "")
+        }
+        .sheet(isPresented: $isEditorPresented) {
+            if let member = editingMember {
+                MemberEditorView(member: member) { draft in
+                    viewModel.updateMember(
+                        member,
+                        displayName: draft.displayName,
+                        role: draft.role,
+                        email: draft.email,
+                        phone: draft.phone,
+                        isOnline: NetworkService.shared.isOnline
+                    )
+                }
+            }
         }
     }
 
@@ -130,7 +156,7 @@ struct ManagerMembersView: View {
 
             Spacer()
 
-            Text(member.id)
+            Text(shortId(member.id))
                 .scaledFont(size: 9, weight: .bold)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -139,6 +165,8 @@ struct ManagerMembersView: View {
                 .foregroundColor(.elevateTextGray)
 
             Button(action: {
+                editingMember = member
+                isEditorPresented = true
             }) {
                 Image(systemName: "pencil")
                     .font(.system(size: 12, weight: .bold))
@@ -154,6 +182,10 @@ struct ManagerMembersView: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+    }
+
+    private func shortId(_ id: String) -> String {
+        String(id.prefix(6))
     }
 }
 

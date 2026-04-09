@@ -52,6 +52,14 @@ struct ManagerInventoryView: View {
                     }
                     .padding(.top, 12)
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 96)
+                }
+                .refreshable {
+                    if let user = appSession.currentUser {
+                        viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
+                    }
+                }
             }
 
             Button(action: {
@@ -92,7 +100,9 @@ struct ManagerInventoryView: View {
                         unitPrice: draft.unitPrice,
                         sku: draft.sku,
                         isOnline: network.isOnline
-                    ) { _ in }
+                    ) { _ in
+                        viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
+                    }
                 } else {
                     viewModel.createItem(
                         organizationId: user.organizationId,
@@ -102,7 +112,9 @@ struct ManagerInventoryView: View {
                         unitPrice: draft.unitPrice,
                         sku: draft.sku,
                         isOnline: network.isOnline
-                    ) { _ in }
+                    ) { _ in
+                        viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
+                    }
                 }
             }
         }

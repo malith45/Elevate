@@ -5,6 +5,7 @@ struct TechnicianNotificationsView: View {
     @State private var selectedTab: TabItem = .dashboard
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
+    @ObservedObject private var network = NetworkService.shared
     
     var body: some View {
         ZStack {
@@ -47,6 +48,12 @@ struct TechnicianNotificationsView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            loadNotifications()
+        }
+        .onChange(of: network.isOnline) { _, _ in
+            loadNotifications()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .notificationsDidChange)) { _ in
             loadNotifications()
         }
     }

@@ -174,6 +174,7 @@ struct ManagerJobIssueReportView: View {
         let name = viewModel.technician?.displayName.isEmpty == false ? viewModel.technician?.displayName : viewModel.technician?.username
         let displayName = name ?? "Assigned Technician"
         let memberId = viewModel.report?.userId ?? viewModel.job?.assignedUserId ?? "TECH-0000"
+        let shortId = String(memberId.prefix(6))
 
         return HStack(spacing: 16) {
             Circle()
@@ -187,7 +188,7 @@ struct ManagerJobIssueReportView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(displayName)
                     .scaledFont(size: 16, weight: .bold)
-                Text("Member ID: \(memberId)")
+                Text("Member ID: \(shortId)")
                     .scaledFont(size: 12)
                     .foregroundColor(.elevateTextGray)
             }

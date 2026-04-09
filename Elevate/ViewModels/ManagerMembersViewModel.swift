@@ -24,4 +24,41 @@ final class ManagerMembersViewModel: ObservableObject {
             }
         }
     }
+
+    func updateMember(_ member: User, displayName: String, role: String, email: String, phone: String, isOnline: Bool) {
+        let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedRole = role.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var fields: [String: Any] = [:]
+        if !trimmedName.isEmpty {
+            fields["displayName"] = trimmedName
+        }
+        if !trimmedRole.isEmpty {
+            fields["role"] = trimmedRole.uppercased()
+        }
+        fields["email"] = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        fields["phone"] = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let updated = User(
+            id: member.id,
+            organizationId: member.organizationId,
+            username: member.username,
+            displayName: trimmedName.isEmpty ? member.displayName : trimmedName,
+            role: trimmedRole.isEmpty ? member.role : trimmedRole.uppercased(),
+            email: email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : email.trimmingCharacters(in: .whitespacesAndNewlines),
+            phone: phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : phone.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+
+        localStorage.saveUsers([updated])
+        members = localStorage.fetchUsers(organizationId: member.organizationId)
+
+        guard isOnline else { return }
+        firebase.updateUserProfile(userId: member.id, fields: fields) { result in
+            if case .failure(let error) = result {
+                DispatchQueue.main.async {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 }

@@ -63,8 +63,12 @@ struct ManagerMainTabView: View {
                 }
             }
             .environment(\.managerTabRouter, router)
-            .onChange(of: router.selectedTab) { _, _ in
-                switch router.selectedTab {
+            .onChange(of: router.selectedTab) { oldTab, newTab in
+                // Only reset screen when the tab actually changed (real tab-bar tap).
+                // Sub-screen navigations set selectedTab to keep the tab highlighted
+                // but also set currentScreen themselves — we must not override that.
+                guard oldTab != newTab else { return }
+                switch newTab {
                 case .dashboard:
                     router.currentScreen = .dashboard
                 case .jobs:

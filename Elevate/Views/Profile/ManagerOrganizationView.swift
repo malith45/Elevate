@@ -246,7 +246,7 @@ struct ManagerOrganizationView: View {
     }
 
     private func applyMemberMetrics(_ users: [User]) {
-        activeMembersCount = users.count
+        activeMembersCount = users.filter { $0.role.uppercased() == "TECHNICIAN" }.count
         managementCount = users.filter { $0.role.uppercased() == "MANAGER" }.count
     }
 }

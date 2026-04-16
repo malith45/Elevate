@@ -24,6 +24,8 @@ struct ManagerProfileView: View {
                         VStack(spacing: 12) {
                             if let user = appSession.currentUser {
                                 ProfilePhotoView(userId: user.id, size: 100)
+                                    .accessibilityLabel("Profile photo of \(displayName)")
+                                    .accessibilityHint("Go to Edit Profile to change your photo")
                             } else {
                                 Circle()
                                     .fill(Color.elevateDarkGreen)
@@ -34,10 +36,12 @@ struct ManagerProfileView: View {
                                             .foregroundColor(.white)
                                     )
                                     .clipShape(Circle())
+                                    .accessibilityLabel("Profile photo placeholder")
                             }
                             
                             Text(displayName)
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .accessibilityAddTraits(.isHeader)
                             
                             Button(action: {
                                 router.currentScreen = .editProfile
@@ -55,6 +59,8 @@ struct ManagerProfileView: View {
                                 .background(Color.elevateDarkGreen)
                                 .cornerRadius(20)
                             }
+                            .accessibilityLabel("Edit profile")
+                            .accessibilityHint("Double tap to edit your profile details")
                         }
                         .padding(.top, 32)
                         
@@ -63,6 +69,7 @@ struct ManagerProfileView: View {
                             router.currentScreen = .organization
                             router.selectedTab = .profile
                         }) {
+                        
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Text("ORGANIZATION DETAILS")
@@ -122,6 +129,8 @@ struct ManagerProfileView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Organization: \(organizationName)")
+                        .accessibilityHint("Double tap to view organization details")
                         
                         // APP SETTINGS
                         VStack(alignment: .leading, spacing: 12) {
@@ -146,6 +155,7 @@ struct ManagerProfileView: View {
                                             .frame(width: 32, height: 32)
                                             .background(Color.elevateLightGray)
                                             .cornerRadius(6)
+                                            .accessibilityHidden(true)
                                         
                                         Text("Accessibility Settings")
                                             .scaledFont(size: 16, weight: .semibold)
@@ -156,11 +166,14 @@ struct ManagerProfileView: View {
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .bold))
                                             .foregroundColor(.gray)
+                                            .accessibilityHidden(true)
                                     }
                                     .padding(.vertical, 16)
                                     .padding(.horizontal, 20)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Accessibility Settings")
+                                .accessibilityHint("Double tap to open accessibility options")
                             }
                             .background(Color.white)
                             .cornerRadius(12)
@@ -176,6 +189,8 @@ struct ManagerProfileView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.large)
                         .tint(.red)
+                        .accessibilityLabel("Log out")
+                        .accessibilityHint("Double tap to sign out of your account")
                         
                     }
                     .padding(.horizontal, 24)

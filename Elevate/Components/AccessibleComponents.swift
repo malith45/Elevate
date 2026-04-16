@@ -79,9 +79,9 @@ struct AccessibleButton: View {
                         .stroke(settings.isHighContrast ? .black : .clear, lineWidth: 2)
                 )
         }
-        .accessibilityElement(children: .contain)
         .accessibilityLabel(label)
         .accessibilityHint("Double tap to activate")
+        .accessibilityAddTraits(.isButton)
     }
     
     private var backgroundColor: Color {

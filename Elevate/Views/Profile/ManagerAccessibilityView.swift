@@ -1,8 +1,10 @@
 import SwiftUI
+import UIKit
 
 struct ManagerAccessibilityView: View {
     @Environment(\.managerTabRouter) private var router
     @ObservedObject var settings = AccessibilitySettings.shared
+    @State private var showSettingsPrompt = false
     
     var body: some View {
         ZStack {
@@ -41,7 +43,20 @@ struct ManagerAccessibilityView: View {
                             VStack(spacing: 0) {
                                 AccessToggleRow(title: "High Contrast Mode", desc: "Enhance visibility of UI elements", icon: "circle.lefthalf.fill", isOn: $settings.isHighContrast)
                                 Divider().padding(.leading, 64)
-                                AccessToggleRow(title: "VoiceOver Compatibility", desc: "Optimized layout for screen readers", icon: "person.wave.2.fill", isOn: $settings.isVoiceOver)
+                                AccessToggleRow(title: "VoiceOver Compatibility", desc: "Optimized layout for screen readers", icon: "person.wave.2.fill", isOn: Binding(
+                                    get: { settings.isVoiceOver },
+                                    set: { newValue in
+                                        settings.isVoiceOver = newValue
+                                        if newValue {
+                                            showSettingsPrompt = true
+                                        }
+                                        let message = newValue
+                                            ? "VoiceOver compatibility enabled. App layout is now optimised for screen readers."
+                                            : "VoiceOver compatibility disabled."
+                                        UIAccessibility.post(notification: .announcement, argument: message)
+                                        HapticManager.shared.playSelection()
+                                    }
+                                ))
                             }
                             .background(Color.white)
                             .cornerRadius(12)
@@ -112,11 +127,22 @@ struct ManagerAccessibilityView: View {
                         
                     }
                     .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
                 }
             }
             
         }
         .navigationBarHidden(true)
+        .alert("Enable iOS VoiceOver", isPresented: $showSettingsPrompt) {
+            Button("Cancel", role: .cancel) { }
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("VoiceOver is a system-wide feature. Would you like to open your device Settings to turn it on? (Go to Settings > Accessibility > VoiceOver)")
+        }
     }
 }
 

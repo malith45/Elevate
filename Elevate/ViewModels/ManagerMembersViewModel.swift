@@ -18,6 +18,10 @@ final class ManagerMembersViewModel: ObservableObject {
                 case .success(let users):
                     self.localStorage.saveUsers(users)
                     self.members = users
+                    // Sync each member's profile photo URL into the local cache
+                    users.forEach { user in
+                        ProfileImageSync.shared.syncProfilePhotoUrl(userId: user.id)
+                    }
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }

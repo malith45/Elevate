@@ -105,8 +105,10 @@ struct GlobalAccessibilityModifier: ViewModifier {
             .brightness(settings.isHighContrast ? -0.15 : 0)
             .contrast(settings.isHighContrast ? 1.5 : 1.0)
             .saturation(settings.isHighContrast ? 1.2 : 1.0)
-            // VoiceOver: Enable accessibility features
-            .accessibilityElement(children: settings.isVoiceOver ? .combine : .contain)
+            // VoiceOver: .contain allows VoiceOver to navigate individual child elements.
+            // NOTE: Do NOT use .combine here — it collapses the entire screen into
+            // one accessibility element, breaking all VoiceOver navigation.
+            .accessibilityElement(children: .contain)
     }
 }
 

@@ -11,6 +11,10 @@ struct ManagerEditProfileView: View {
     @State private var confirmPassword = ""
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var profileImage: UIImage?
+    @State private var isUploadingPhoto = false
+
+    enum Field: Hashable { case username, password, confirmPassword }
+    @FocusState private var focusedField: Field?
 
     var body: some View {
         ZStack {
@@ -44,24 +48,34 @@ struct ManagerEditProfileView: View {
                                 iconName: "person",
                                 text: $username
                             )
+                            .focused($focusedField, equals: .username)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .password }
 
                             SecureCustomTextField(
-                                title: "PASSWORD",
-                                placeholder: "••••••••",
+                                title: "NEW PASSWORD",
+                                placeholder: "Leave blank to keep current",
                                 iconName: "lock",
                                 text: $password
                             )
+                            .focused($focusedField, equals: .password)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .confirmPassword }
 
                             SecureCustomTextField(
                                 title: "CONFIRM PASSWORD",
                                 placeholder: "••••••••",
-                                iconName: "lock",
+                                iconName: "lock.fill",
                                 text: $confirmPassword
                             )
+                            .focused($focusedField, equals: .confirmPassword)
+                            .submitLabel(.done)
+                            .onSubmit { focusedField = nil; saveChanges() }
                         }
                         .padding(.horizontal, 24)
 
                         PrimaryButton(title: "Save Changes", iconName: "checkmark") {
+                            focusedField = nil
                             saveChanges()
                         }
                         .padding(.horizontal, 24)
@@ -69,6 +83,7 @@ struct ManagerEditProfileView: View {
                     }
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                .scrollDismissesKeyboard(.interactively)
             }
         }
         .navigationBarHidden(true)
@@ -80,18 +95,35 @@ struct ManagerEditProfileView: View {
         }
         .onChange(of: selectedPhotoItem) { _, newValue in
             guard let newValue, let user = appSession.currentUser else { return }
+            isUploadingPhoto = true
             Task {
                 if let data = try? await newValue.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
+                    let uploadData = image.jpegData(compressionQuality: 0.85) ?? data
                     DispatchQueue.main.async {
                         self.profileImage = image
                     }
-                    ProfilePhotoService.shared.uploadProfilePhoto(data: data, userId: user.id) { result in
-                        if case .success(let url) = result {
-                            ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
+                    _ = ProfileImageStore.shared.saveImage(uploadData, for: user.id)
+                    NotificationCenter.default.post(
+                        name: .profilePhotoDidUpdate,
+                        object: nil,
+                        userInfo: ["userId": user.id]
+                    )
+                    ProfilePhotoService.shared.uploadProfilePhoto(data: uploadData, userId: user.id) { result in
+                        DispatchQueue.main.async {
+                            self.isUploadingPhoto = false
+                            if case .success(let url) = result {
+                                ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
+                                NotificationCenter.default.post(
+                                    name: .profilePhotoDidUpdate,
+                                    object: nil,
+                                    userInfo: ["userId": user.id]
+                                )
+                            }
                         }
-                        _ = ProfileImageStore.shared.saveImage(data, for: user.id)
                     }
+                } else {
+                    DispatchQueue.main.async { self.isUploadingPhoto = false }
                 }
             }
         }
@@ -107,23 +139,35 @@ struct ManagerEditProfileView: View {
 
     private var profilePhotoCard: some View {
         HStack(spacing: 16) {
-            Circle()
-                .fill(Color.elevateDarkGreen)
-                .frame(width: 64, height: 64)
-                .overlay(
-                    Group {
-                        if let image = profileImage {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                        } else {
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
+            ZStack(alignment: .bottomTrailing) {
+                Circle()
+                    .fill(Color.elevateDarkGreen)
+                    .frame(width: 72, height: 72)
+                    .overlay(
+                        Group {
+                            if let image = profileImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.crop.circle")
+                                    .font(.system(size: 28))
+                                    .foregroundColor(.white)
+                            }
                         }
-                    }
-                )
-                .clipShape(Circle())
+                    )
+                    .clipShape(Circle())
+
+                if isUploadingPhoto {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .frame(width: 24, height: 24)
+                        .background(Color.elevateDarkGreen)
+                        .clipShape(Circle())
+                        .offset(x: 4, y: 4)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("PROFILE PHOTO")
@@ -131,13 +175,14 @@ struct ManagerEditProfileView: View {
                     .foregroundColor(.elevateTextGray)
                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                     HStack(spacing: 6) {
-                        Image(systemName: "square.and.pencil")
-                        Text("Change Photo")
+                        Image(systemName: "photo.badge.plus")
+                        Text(isUploadingPhoto ? "Uploading…" : "Change Photo")
                     }
                     .scaledFont(size: 12, weight: .bold)
                     .foregroundColor(.elevateDarkGreen)
                 }
                 .buttonStyle(.plain)
+                .disabled(isUploadingPhoto)
             }
 
             Spacer()
@@ -153,6 +198,10 @@ struct ManagerEditProfileView: View {
         if !password.isEmpty || !confirmPassword.isEmpty {
             guard password == confirmPassword else {
                 viewModel.errorMessage = "Passwords do not match."
+                return
+            }
+            guard password.count >= 6 else {
+                viewModel.errorMessage = "Password must be at least 6 characters."
                 return
             }
         }

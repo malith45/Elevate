@@ -25,6 +25,7 @@ struct TechnicianProfileView: View {
                         VStack(spacing: 12) {
                             if let user = appSession.currentUser {
                                 ProfilePhotoView(userId: user.id, size: 100)
+                                    .accessibilityLabel("Profile photo of \(displayName)")
                             } else {
                                 Circle()
                                     .fill(Color.elevateDarkGreen)
@@ -35,14 +36,16 @@ struct TechnicianProfileView: View {
                                             .foregroundColor(.white)
                                     )
                                     .clipShape(Circle())
+                                    .accessibilityLabel("Profile photo placeholder")
                             }
                             
                             Text(displayName)
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .accessibilityAddTraits(.isHeader)
 
                             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "square.and.pencil")
+                                    Image(systemName: "photo.badge.plus")
                                         .font(.system(size: 10, weight: .bold))
                                     Text("CHANGE PHOTO")
                                 }
@@ -53,6 +56,8 @@ struct TechnicianProfileView: View {
                                 .background(Color.elevateDarkGreen)
                                 .cornerRadius(16)
                             }
+                            .accessibilityLabel("Change profile photo")
+                            .accessibilityHint("Double tap to select a new profile photo")
                         }
                         .padding(.top, 32)
                         
@@ -129,6 +134,8 @@ struct TechnicianProfileView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.large)
                         .tint(.red)
+                        .accessibilityLabel("Log out")
+                        .accessibilityHint("Double tap to sign out of your account")
                         
                     }
                     .padding(.horizontal, 24)
@@ -155,12 +162,27 @@ struct TechnicianProfileView: View {
             guard let newValue, let user = appSession.currentUser else { return }
             Task {
                 if let data = try? await newValue.loadTransferable(type: Data.self),
-                   let _ = UIImage(data: data) {
-                    ProfilePhotoService.shared.uploadProfilePhoto(data: data, userId: user.id) { result in
-                        if case .success(let url) = result {
-                            ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
+                   let image = UIImage(data: data) {
+                    let uploadData = image.jpegData(compressionQuality: 0.85) ?? data
+                    // Save locally first
+                    _ = ProfileImageStore.shared.saveImage(uploadData, for: user.id)
+                    // Notify ProfilePhotoView to refresh
+                    NotificationCenter.default.post(
+                        name: .profilePhotoDidUpdate,
+                        object: nil,
+                        userInfo: ["userId": user.id]
+                    )
+                    ProfilePhotoService.shared.uploadProfilePhoto(data: uploadData, userId: user.id) { result in
+                        DispatchQueue.main.async {
+                            if case .success(let url) = result {
+                                ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
+                                NotificationCenter.default.post(
+                                    name: .profilePhotoDidUpdate,
+                                    object: nil,
+                                    userInfo: ["userId": user.id]
+                                )
+                            }
                         }
-                        _ = ProfileImageStore.shared.saveImage(data, for: user.id)
                     }
                 }
             }
@@ -226,6 +248,7 @@ struct AppSettingToggleRow: View {
                 .frame(width: 32, height: 32)
                 .background(Color.elevateLightGray)
                 .cornerRadius(6)
+                .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -242,6 +265,10 @@ struct AppSettingToggleRow: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 20)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityHint(subtitle)
     }
 }
 

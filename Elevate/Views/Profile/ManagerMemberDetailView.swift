@@ -6,7 +6,7 @@ struct ManagerMemberDetailView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @State private var member: User?
-    @State private var isEditorPresented = false
+    @State private var editingMember: User?
     @State private var errorMessage: String?
     @ObservedObject private var network = NetworkService.shared
 
@@ -31,7 +31,7 @@ struct ManagerMemberDetailView: View {
                         detailsCard
 
                         PrimaryButton(title: "Edit Member", iconName: nil) {
-                            isEditorPresented = true
+                            editingMember = member
                         }
                         .padding(.horizontal, 24)
                     }
@@ -49,12 +49,17 @@ struct ManagerMemberDetailView: View {
         .onChange(of: network.isOnline) { _, _ in
             loadMember()
         }
-        .sheet(isPresented: $isEditorPresented) {
-            if let member = member {
-                MemberEditorView(member: member) { draft in
-                    updateMember(member, draft: draft)
+        .sheet(item: $editingMember) { editMember in
+            MemberEditorView(member: editMember, onSave: { draft in
+                updateMember(editMember, draft: draft)
+            }, onDelete: {
+                let viewModel = ManagerMembersViewModel()
+                viewModel.deleteMember(editMember, isOnline: network.isOnline) { success in
+                    if success {
+                        router.currentScreen = .members
+                    }
                 }
-            }
+            })
         }
         .alert("Member", isPresented: Binding(
             get: { errorMessage != nil },
@@ -162,6 +167,7 @@ struct ManagerMemberDetailView: View {
             role: draft.role,
             email: draft.email,
             phone: draft.phone,
+            profileImage: draft.profileImage,
             isOnline: network.isOnline
         )
         loadMember()

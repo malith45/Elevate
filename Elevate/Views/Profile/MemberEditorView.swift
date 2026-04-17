@@ -1,27 +1,35 @@
 import SwiftUI
+import PhotosUI
 
 struct MemberEditorDraft {
     var displayName: String
     var role: String
     var email: String
     var phone: String
+    var profileImage: UIImage?
 }
 
 struct MemberEditorView: View {
     let member: User
     var onSave: (MemberEditorDraft) -> Void
+    var onDelete: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var displayName: String
     @State private var role: String
     @State private var email: String
     @State private var phone: String
+    
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var selectedImage: UIImage? = nil
+    @State private var showingDeleteConfirm = false
 
     private let roleOptions = ["TECHNICIAN", "MANAGER"]
 
-    init(member: User, onSave: @escaping (MemberEditorDraft) -> Void) {
+    init(member: User, onSave: @escaping (MemberEditorDraft) -> Void, onDelete: (() -> Void)? = nil) {
         self.member = member
         self.onSave = onSave
+        self.onDelete = onDelete
         _displayName = State(initialValue: member.displayName.isEmpty ? member.username : member.displayName)
         _role = State(initialValue: member.role.isEmpty ? "TECHNICIAN" : member.role.uppercased())
         _email = State(initialValue: member.email ?? "")
@@ -47,10 +55,18 @@ struct MemberEditorView: View {
 
                     Spacer()
 
-                    Button("Save") { saveAndDismiss() }
-                        .scaledFont(size: 15, weight: .bold)
-                        .foregroundColor(.elevateDarkGreen)
-                        .accessibilityLabel("Save member changes")
+                    if member.role != "OWNER" {
+                        Button("Save") { saveAndDismiss() }
+                            .scaledFont(size: 15, weight: .bold)
+                            .foregroundColor(.elevateDarkGreen)
+                            .accessibilityLabel("Save member changes")
+                    } else {
+                        // Empty spacer equivalent to keep alignment
+                        Text("Save")
+                            .scaledFont(size: 15, weight: .bold)
+                            .foregroundColor(.clear)
+                            .accessibilityHidden(true)
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
@@ -62,13 +78,33 @@ struct MemberEditorView: View {
 
                         // Avatar + name preview
                         VStack(spacing: 10) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.elevateDarkGreen.opacity(0.12))
-                                    .frame(width: 72, height: 72)
-                                Image(systemName: "person.crop.circle")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.elevateDarkGreen)
+                            ZStack(alignment: .bottomTrailing) {
+                                if let selectedImage = selectedImage {
+                                    Image(uiImage: selectedImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 72, height: 72)
+                                        .clipShape(Circle())
+                                } else {
+                                    ProfilePhotoView(userId: member.id, size: 72)
+                                }
+                                
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                                    Image(systemName: "camera.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.elevateDarkGreen)
+                                        .background(Circle().fill(Color.white).frame(width: 20, height: 20))
+                                }
+                                .offset(x: 4, y: 4)
+                            }
+                            .onChange(of: selectedPhotoItem) { _, newItem in
+                                Task {
+                                    if let data = try? await newItem?.loadTransferable(type: Data.self), let uiImage = UIImage(data: data) {
+                                        await MainActor.run {
+                                            selectedImage = uiImage
+                                        }
+                                    }
+                                }
                             }
                             Text(displayName.isEmpty ? member.username : displayName)
                                 .scaledFont(size: 18, weight: .bold)
@@ -139,11 +175,42 @@ struct MemberEditorView: View {
                                 .scaledFont(size: 12)
                                 .foregroundColor(.elevateTextGray)
                         }
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 16)
                         .accessibilityLabel("Member ID \(String(member.id.prefix(8)))")
+                        
+                        if onDelete != nil && member.role != "OWNER" {
+                            Button(action: {
+                                showingDeleteConfirm = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Delete Member")
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.red)
+                                .cornerRadius(12)
+                                .shadow(color: Color.red.opacity(0.3), radius: 6, x: 0, y: 4)
+                            }
+                            .padding(.bottom, 40)
+                            .alert("Delete Member", isPresented: $showingDeleteConfirm) {
+                                Button("Cancel", role: .cancel) { }
+                                Button("Delete", role: .destructive) {
+                                    onDelete?()
+                                    dismiss()
+                                }
+                            } message: {
+                                Text("Are you sure you want to delete this member? This action cannot be undone.")
+                            }
+                        } else {
+                            Spacer().frame(height: 40)
+                        }
 
                     }
                     .padding(.horizontal, 20)
+                    .disabled(member.role == "OWNER")
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
@@ -214,7 +281,8 @@ struct MemberEditorView: View {
             displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines),
             role: role,
             email: email.trimmingCharacters(in: .whitespacesAndNewlines),
-            phone: phone.trimmingCharacters(in: .whitespacesAndNewlines)
+            phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
+            profileImage: selectedImage
         )
         onSave(draft)
         dismiss()

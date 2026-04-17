@@ -33,5 +33,7 @@ final class AppSession: ObservableObject {
     func signOut() {
         sessionStore.clear()
         currentUser = nil
+        ManagerTabRouter.shared.currentScreen = .dashboard
+        ManagerTabRouter.shared.selectedTab = .dashboard
     }
 }

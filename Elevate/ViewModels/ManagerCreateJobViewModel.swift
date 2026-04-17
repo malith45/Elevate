@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 final class ManagerCreateJobViewModel: ObservableObject {
     @Published var technicians: [User] = []
@@ -69,6 +70,10 @@ final class ManagerCreateJobViewModel: ObservableObject {
         )
 
         localStorage.saveJobs([job])
+        
+        DispatchQueue.main.async {
+            HapticManager.shared.playNotification(type: .success)
+        }
 
         guard isOnline else {
             isSaving = false

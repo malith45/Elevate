@@ -84,7 +84,7 @@ final class SignUpViewModel: ObservableObject {
                                     organizationId: trimmedOrgId,
                                     username: trimmedUsername,
                                     displayName: trimmedUsername,
-                                    role: "MANAGER",
+                                    role: "OWNER",
                                     password: password
                                 ) { userResult in
                                     DispatchQueue.main.async(execute: DispatchWorkItem(block: {

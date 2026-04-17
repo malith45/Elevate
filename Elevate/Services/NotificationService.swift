@@ -43,4 +43,11 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
     func notificationToken() -> String? {
         fcmToken ?? UserDefaults.standard.string(forKey: "fcmToken")
     }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        DispatchQueue.main.async {
+            HapticManager.shared.playNotification(type: .success)
+        }
+        completionHandler([.banner, .sound, .list])
+    }
 }

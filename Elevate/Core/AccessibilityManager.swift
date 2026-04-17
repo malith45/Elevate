@@ -1,5 +1,36 @@
 import SwiftUI
 import Combine
+import AVFoundation
+
+// MARK: - Voice Over Narrator
+class VoiceOverManager: NSObject, AVSpeechSynthesizerDelegate {
+    static let shared = VoiceOverManager()
+    private let synthesizer = AVSpeechSynthesizer()
+    
+    var isEnabled: Bool = UserDefaults.standard.bool(forKey: "isVoiceOverApp") {
+        didSet {
+            UserDefaults.standard.set(isEnabled, forKey: "isVoiceOverApp")
+            if isEnabled {
+                speak("Voice Over audio narration enabled.")
+            } else {
+                synthesizer.stopSpeaking(at: .immediate)
+            }
+        }
+    }
+    
+    private override init() {
+        super.init()
+        synthesizer.delegate = self
+    }
+    
+    func speak(_ text: String) {
+        guard isEnabled else { return }
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.5
+        synthesizer.speak(utterance)
+    }
+}
 
 // MARK: - Haptic Manager
 class HapticManager {
@@ -38,11 +69,13 @@ class AccessibilitySettings: ObservableObject {
             UserDefaults.standard.set(isHighContrast, forKey: "isHighContrast")
         }
     }
+    
     @Published var isVoiceOver: Bool {
         didSet {
-            UserDefaults.standard.set(isVoiceOver, forKey: "isVoiceOver")
+            VoiceOverManager.shared.isEnabled = isVoiceOver
         }
     }
+
     @Published var textSize: Double {
         didSet {
             UserDefaults.standard.set(textSize, forKey: "textSize")
@@ -56,7 +89,7 @@ class AccessibilitySettings: ObservableObject {
     
     init() {
         self.isHighContrast = UserDefaults.standard.bool(forKey: "isHighContrast")
-        self.isVoiceOver = UserDefaults.standard.bool(forKey: "isVoiceOver")
+        self.isVoiceOver = VoiceOverManager.shared.isEnabled
         self.textSize = UserDefaults.standard.double(forKey: "textSize") > 0 ? UserDefaults.standard.double(forKey: "textSize") : 0.5
         self.hapticFeedback = UserDefaults.standard.object(forKey: "hapticFeedback") == nil ? true : UserDefaults.standard.bool(forKey: "hapticFeedback")
     }
@@ -105,10 +138,6 @@ struct GlobalAccessibilityModifier: ViewModifier {
             .brightness(settings.isHighContrast ? -0.15 : 0)
             .contrast(settings.isHighContrast ? 1.5 : 1.0)
             .saturation(settings.isHighContrast ? 1.2 : 1.0)
-            // VoiceOver: .contain allows VoiceOver to navigate individual child elements.
-            // NOTE: Do NOT use .combine here — it collapses the entire screen into
-            // one accessibility element, breaking all VoiceOver navigation.
-            .accessibilityElement(children: .contain)
     }
 }
 

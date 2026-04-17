@@ -43,6 +43,10 @@ final class FirebaseService {
                 phone: data["phone"] as? String
             )
 
+            if let photoUrl = data["photoUrl"] as? String {
+                ProfileImageCache.shared.saveRemoteUrl(photoUrl, for: doc.documentID)
+            }
+
             // Optional: validate password against auth provider or a hashed field.
             completion(.success(user))
         }
@@ -156,6 +160,10 @@ final class FirebaseService {
                 email: data["email"] as? String,
                 phone: data["phone"] as? String
             )
+
+            if let photoUrl = data["photoUrl"] as? String {
+                ProfileImageCache.shared.saveRemoteUrl(photoUrl, for: snapshot?.documentID ?? userId)
+            }
             completion(.success(user))
         }
     }
@@ -182,6 +190,9 @@ final class FirebaseService {
 
                 let users = snapshot?.documents.compactMap { doc -> User? in
                     let data = doc.data()
+                    if let photoUrl = data["photoUrl"] as? String {
+                        ProfileImageCache.shared.saveRemoteUrl(photoUrl, for: doc.documentID)
+                    }
                     return User(
                         id: doc.documentID,
                         organizationId: data["organizationId"] as? String ?? "",
@@ -236,6 +247,64 @@ final class FirebaseService {
                 completion(.failure(error))
             } else {
                 completion(.success(()))
+            }
+        }
+    }
+
+    func deleteUserProfile(userId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("users").document(userId).delete { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    func dropOrganization(organizationId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        let collections = ["users", "jobs", "inventory", "issueReports", "notifications"]
+        var overallError: Error?
+
+        for collection in collections {
+            dispatchGroup.enter()
+            db.collection(collection).whereField("organizationId", isEqualTo: organizationId).getDocuments { snapshot, error in
+                if let error = error {
+                    overallError = error
+                    dispatchGroup.leave()
+                    return
+                }
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
+                    dispatchGroup.leave()
+                    return
+                }
+
+                let batch = self.db.batch()
+                for document in documents {
+                    batch.deleteDocument(document.reference)
+                }
+
+                batch.commit { error in
+                    if let error = error {
+                        overallError = error
+                    }
+                    dispatchGroup.leave()
+                }
+            }
+        }
+
+        dispatchGroup.notify(queue: .main) {
+            if let error = overallError {
+                completion(.failure(error))
+            } else {
+                // Finally drop the org doc itself
+                self.db.collection("organizations").document(organizationId).delete { error in
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
             }
         }
     }

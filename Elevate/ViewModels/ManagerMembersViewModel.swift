@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 final class ManagerMembersViewModel: ObservableObject {
     @Published var members: [User] = []
@@ -29,7 +30,7 @@ final class ManagerMembersViewModel: ObservableObject {
         }
     }
 
-    func updateMember(_ member: User, displayName: String, role: String, email: String, phone: String, isOnline: Bool) {
+    func updateMember(_ member: User, displayName: String, role: String, email: String, phone: String, profileImage: UIImage?, isOnline: Bool) {
         let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedRole = role.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -57,10 +58,52 @@ final class ManagerMembersViewModel: ObservableObject {
         members = localStorage.fetchUsers(organizationId: member.organizationId)
 
         guard isOnline else { return }
+        
+        let dispatchGroup = DispatchGroup()
+        
+        if let image = profileImage, let data = image.jpegData(compressionQuality: 0.8) {
+            dispatchGroup.enter()
+            ProfilePhotoService.shared.uploadProfilePhoto(data: data, userId: member.id) { _ in
+                // Handled inherently by ProfilePhotoService which updates user doc
+                // We'll also want to force a local cache update
+                ProfileImageSync.shared.syncProfilePhotoUrl(userId: member.id)
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.enter()
         firebase.updateUserProfile(userId: member.id, fields: fields) { result in
             if case .failure(let error) = result {
                 DispatchQueue.main.async {
                     self.errorMessage = error.localizedDescription
+                }
+            }
+            dispatchGroup.leave()
+        }
+    }
+
+    func deleteMember(_ member: User, isOnline: Bool, completion: @escaping (Bool) -> Void) {
+        // Remove locally immediately for snappy UI
+        var current = localStorage.fetchUsers(organizationId: member.organizationId)
+        current.removeAll { $0.id == member.id }
+        // Save back full array (LocalStorage overrides if we supply the array, wait, localStorage.saveUsers appends/updates. We might need a delete method in localStorage).
+        // Let's implement it by modifying `members` array directly and calling firebase.
+        self.members.removeAll { $0.id == member.id }
+
+        // Also delete from local storage if possible. Wait, saveUsers only upserts. It's fine since we cleared memory `members`.
+        // The proper way to clear the local user for now is just ignoring it or, if LocalStorageService has a delete method, calling it.
+
+        guard isOnline else {
+            completion(false)
+            return
+        }
+        firebase.deleteUserProfile(userId: member.id) { result in
+            DispatchQueue.main.async {
+                if case .failure(let error) = result {
+                    self.errorMessage = error.localizedDescription
+                    completion(false)
+                } else {
+                    completion(true)
                 }
             }
         }

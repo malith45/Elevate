@@ -18,15 +18,7 @@ struct ManagerJobListView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
                         // Search
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.elevateTextGray)
-                            TextField("Search jobs", text: $viewModel.searchText)
-                                .scaledFont(size: 14)
-                        }
-                        .padding(12)
-                        .background(Color.white)
-                        .cornerRadius(10)
+                        CustomSearchBar(text: $viewModel.searchText, placeholder: "Search jobs")
                         .padding(.horizontal, 24)
                         .padding(.top, 12)
 

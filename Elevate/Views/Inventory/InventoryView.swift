@@ -20,15 +20,7 @@ struct InventoryView: View {
                 BackHeaderNav()
                 
                 // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.elevateTextGray)
-                    TextField("Search", text: $searchText)
-                        .scaledFont(size: 16)
-                }
-                .padding()
-                .background(Color.elevateLightGray.opacity(0.5))
-                .cornerRadius(12)
+                CustomSearchBar(text: $searchText, placeholder: "Search")
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
                 

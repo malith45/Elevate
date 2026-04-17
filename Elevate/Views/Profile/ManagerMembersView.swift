@@ -4,7 +4,6 @@ struct ManagerMembersView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerMembersViewModel()
-    @State private var isEditorPresented = false
     @State private var editingMember: User?
     @State private var searchText = ""
 
@@ -92,43 +91,29 @@ struct ManagerMembersView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
-        .sheet(isPresented: $isEditorPresented) {
-            if let member = editingMember {
-                MemberEditorView(member: member) { draft in
-                    viewModel.updateMember(
-                        member,
-                        displayName: draft.displayName,
-                        role: draft.role,
-                        email: draft.email,
-                        phone: draft.phone,
-                        isOnline: NetworkService.shared.isOnline
-                    )
+        .sheet(item: $editingMember) { member in
+            MemberEditorView(member: member, onSave: { draft in
+                viewModel.updateMember(
+                    member,
+                    displayName: draft.displayName,
+                    role: draft.role,
+                    email: draft.email,
+                    phone: draft.phone,
+                    profileImage: draft.profileImage,
+                    isOnline: NetworkService.shared.isOnline
+                )
+            }, onDelete: {
+                viewModel.deleteMember(member, isOnline: NetworkService.shared.isOnline) { success in
+                    if success {
+                        // deleted successfully
+                    }
                 }
-            }
+            })
         }
     }
 
     private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.elevateTextGray)
-            TextField("Search members…", text: $searchText)
-                .scaledFont(size: 14)
-                .foregroundColor(.black)
-                .autocapitalization(.none)
-                .accessibilityLabel("Search members")
-            if !searchText.isEmpty {
-                Button(action: { searchText = "" }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.elevateTextGray)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 16)
-        .background(Color.white)
-        .cornerRadius(12)
+        CustomSearchBar(text: $searchText, placeholder: "Search members...")
         .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
         .padding(.horizontal, 24)
     }
@@ -179,7 +164,6 @@ struct ManagerMembersView: View {
             // Edit Button — standalone, not nested in a nav button
             Button(action: {
                 editingMember = member
-                isEditorPresented = true
             }) {
                 Image(systemName: "square.and.pencil")
                     .font(.system(size: 14, weight: .semibold))

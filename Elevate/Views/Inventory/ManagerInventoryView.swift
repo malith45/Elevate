@@ -129,16 +129,7 @@ struct ManagerInventoryView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.elevateTextGray)
-            TextField("Search inventory...", text: $searchText)
-                .scaledFont(size: 14)
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 16)
-        .background(Color.elevateLightGray.opacity(0.5))
-        .cornerRadius(12)
+        CustomSearchBar(text: $searchText, placeholder: "Search inventory...")
         .padding(.horizontal, 24)
     }
 

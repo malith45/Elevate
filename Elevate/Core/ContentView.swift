@@ -12,7 +12,7 @@ struct ContentView: View {
     
     var body: some View {
         if let user = appSession.currentUser {
-            if user.role.lowercased() == "manager" {
+            if user.role.lowercased() == "manager" || user.role.lowercased() == "owner" {
                 ManagerMainTabView()
             } else {
                 MainTabView()

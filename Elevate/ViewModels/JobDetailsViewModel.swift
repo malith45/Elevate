@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 final class JobDetailsViewModel: ObservableObject {
     @Published var job: Job?
@@ -44,6 +45,12 @@ final class JobDetailsViewModel: ObservableObject {
 
         localStorage.saveJobs([updatedJob])
         job = updatedJob
+
+        if normalized == "COMPLETED" {
+            DispatchQueue.main.async {
+                HapticManager.shared.playNotification(type: .success)
+            }
+        }
 
         var fields: [String: Any] = [
             "status": status,

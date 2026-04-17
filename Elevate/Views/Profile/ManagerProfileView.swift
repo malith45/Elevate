@@ -216,6 +216,16 @@ struct ManagerProfileView: View {
         .onAppear {
             loadProfile()
         }
+        .onChange(of: pushNotificationsEnabled) { _, newValue in
+            guard let user = appSession.currentUser else { return }
+            if newValue {
+                if let token = UserDefaults.standard.string(forKey: "fcmToken") {
+                    FirebaseService.shared.saveFcmToken(userId: user.id, token: token)
+                }
+            } else {
+                FirebaseService.shared.saveFcmToken(userId: user.id, token: "")
+            }
+        }
     }
 
     private var displayName: String {

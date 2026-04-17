@@ -9,11 +9,16 @@ struct ManagerEditProfileView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var displayName = ""
+    @State private var email = ""
+    @State private var phone = ""
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var profileImage: UIImage?
     @State private var isUploadingPhoto = false
+    @State private var showDropOrgConfirm = false
+    @State private var showDeleteProfileConfirm = false
 
-    enum Field: Hashable { case username, password, confirmPassword }
+    enum Field: Hashable { case username, displayName, email, phone, password, confirmPassword }
     @FocusState private var focusedField: Field?
 
     var body: some View {
@@ -50,7 +55,39 @@ struct ManagerEditProfileView: View {
                             )
                             .focused($focusedField, equals: .username)
                             .submitLabel(.next)
+                            .onSubmit { focusedField = .displayName }
+
+                            CustomTextField(
+                                title: "DISPLAY NAME",
+                                placeholder: "Full Name",
+                                iconName: "person.text.rectangle",
+                                text: $displayName
+                            )
+                            .focused($focusedField, equals: .displayName)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .email }
+
+                            CustomTextField(
+                                title: "EMAIL",
+                                placeholder: "Email address",
+                                iconName: "envelope",
+                                text: $email
+                            )
+                            .focused($focusedField, equals: .email)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .phone }
+                            .keyboardType(.emailAddress)
+
+                            CustomTextField(
+                                title: "PHONE",
+                                placeholder: "Phone Number",
+                                iconName: "phone",
+                                text: $phone
+                            )
+                            .focused($focusedField, equals: .phone)
+                            .submitLabel(.next)
                             .onSubmit { focusedField = .password }
+                            .keyboardType(.phonePad)
 
                             SecureCustomTextField(
                                 title: "NEW PASSWORD",
@@ -79,7 +116,43 @@ struct ManagerEditProfileView: View {
                             saveChanges()
                         }
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 24)
+                        .padding(.bottom, 16)
+
+                        if appSession.currentUser?.role == "OWNER" {
+                            Button(action: {
+                                showDropOrgConfirm = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Delete Account & Organization")
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.red)
+                                .cornerRadius(12)
+                            }
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 24)
+                        } else {
+                            Button(action: {
+                                showDeleteProfileConfirm = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Delete My Profile")
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.red)
+                                .cornerRadius(12)
+                            }
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 24)
+                        }
                     }
                 }
                 .scrollBounceBehavior(.basedOnSize)
@@ -90,6 +163,9 @@ struct ManagerEditProfileView: View {
         .onAppear {
             if let user = appSession.currentUser {
                 username = user.username
+                displayName = user.displayName
+                email = user.email ?? ""
+                phone = user.phone ?? ""
                 profileImage = ProfileImageStore.shared.loadImage(for: user.id)
             }
         }
@@ -134,6 +210,28 @@ struct ManagerEditProfileView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "")
+        }
+        .alert("Wipe Organization", isPresented: $showDropOrgConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete Organization", role: .destructive) {
+                if let user = appSession.currentUser {
+                    viewModel.dropOrganization(organizationId: user.organizationId, appSession: appSession) { success in
+                    }
+                }
+            }
+        } message: {
+            Text("Are you absolutely sure? This will delete all members, jobs, and organization data permanently.")
+        }
+        .alert("Delete Profile", isPresented: $showDeleteProfileConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete Account", role: .destructive) {
+                if let user = appSession.currentUser {
+                    viewModel.deleteProfile(userId: user.id, appSession: appSession) { success in
+                    }
+                }
+            }
+        } message: {
+            Text("Are you absolutely sure you want to delete your profile? This cannot be undone.")
         }
     }
 
@@ -206,7 +304,7 @@ struct ManagerEditProfileView: View {
             }
         }
 
-        viewModel.updateProfile(user: user, username: username, password: password.isEmpty ? nil : password) { updated in
+        viewModel.updateProfile(user: user, username: username, displayName: displayName, email: email, phone: phone, password: password.isEmpty ? nil : password) { updated in
             if let updated = updated {
                 appSession.updateCurrentUser(updated)
                 router.currentScreen = .profile

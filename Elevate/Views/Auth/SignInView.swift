@@ -127,7 +127,9 @@ struct SignInView: View {
                             displayName: "Biometric User",
                             role: "technician",
                             email: nil,
-                            phone: nil
+                            phone: nil,
+                            latitude: nil,
+                            longitude: nil
                         )
                         appSession.signIn(user: tempUser)
                     }

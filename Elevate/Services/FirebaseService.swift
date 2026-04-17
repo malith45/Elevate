@@ -3,6 +3,7 @@ import Combine
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseMessaging
+import CoreLocation
 
 final class FirebaseService {
     static let shared = FirebaseService()
@@ -40,7 +41,9 @@ final class FirebaseService {
                 displayName: data["displayName"] as? String ?? "",
                 role: data["role"] as? String ?? "",
                 email: data["email"] as? String,
-                phone: data["phone"] as? String
+                phone: data["phone"] as? String,
+                latitude: data["latitude"] as? Double,
+                longitude: data["longitude"] as? Double
             )
 
             if let photoUrl = data["photoUrl"] as? String {
@@ -158,7 +161,9 @@ final class FirebaseService {
                 displayName: data["displayName"] as? String ?? "",
                 role: data["role"] as? String ?? "",
                 email: data["email"] as? String,
-                phone: data["phone"] as? String
+                phone: data["phone"] as? String,
+                latitude: data["latitude"] as? Double,
+                longitude: data["longitude"] as? Double
             )
 
             if let photoUrl = data["photoUrl"] as? String {
@@ -200,7 +205,9 @@ final class FirebaseService {
                         displayName: data["displayName"] as? String ?? "",
                         role: data["role"] as? String ?? "",
                         email: data["email"] as? String,
-                        phone: data["phone"] as? String
+                        phone: data["phone"] as? String,
+                        latitude: data["latitude"] as? Double,
+                        longitude: data["longitude"] as? Double
                     )
                 } ?? []
 
@@ -208,7 +215,7 @@ final class FirebaseService {
             }
     }
 
-    func createUser(organizationId: String, username: String, displayName: String, role: String, password: String?, completion: @escaping (Result<User, Error>) -> Void) {
+    func createUser(organizationId: String, username: String, displayName: String, role: String, email: String?, phone: String?, password: String?, completion: @escaping (Result<User, Error>) -> Void) {
         let doc = db.collection("users").document()
         var data: [String: Any] = [
             "organizationId": organizationId,
@@ -217,6 +224,8 @@ final class FirebaseService {
             "role": role,
             "createdAt": Timestamp(date: Date())
         ]
+        if let email = email { data["email"] = email }
+        if let phone = phone { data["phone"] = phone }
         if let password = password {
             data["password"] = password
         }
@@ -231,11 +240,34 @@ final class FirebaseService {
                     username: username,
                     displayName: displayName,
                     role: role,
-                    email: nil,
-                    phone: nil
+                    email: email,
+                    phone: phone,
+                    latitude: nil,
+                    longitude: nil
                 )
                 completion(.success(user))
             }
+        }
+    }
+
+    func updateUserLocation(userId: String, latitude: Double, longitude: Double) {
+        let payload: [String: Any] = [
+            "latitude": latitude,
+            "longitude": longitude,
+            "locationUpdatedAt": Timestamp(date: Date())
+        ]
+        db.collection("users").document(userId).updateData(payload) { _ in }
+    }
+
+    func listenToUserLocation(userId: String, completion: @escaping (CLLocationCoordinate2D?) -> Void) -> ListenerRegistration {
+        return db.collection("users").document(userId).addSnapshotListener { snapshot, _ in
+            guard let data = snapshot?.data(),
+                  let lat = data["latitude"] as? Double,
+                  let lon = data["longitude"] as? Double else {
+                completion(nil)
+                return
+            }
+            completion(CLLocationCoordinate2D(latitude: lat, longitude: lon))
         }
     }
 
@@ -640,7 +672,6 @@ final class FirebaseService {
     func fetchIssueReports(jobId: String, completion: @escaping (Result<[IssueReport], Error>) -> Void) {
         db.collection("issueReports")
             .whereField("jobId", isEqualTo: jobId)
-            .order(by: "createdAt", descending: true)
             .getDocuments { snapshot, error in
                 if let error = error {
                     completion(.failure(error))

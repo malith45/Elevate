@@ -205,6 +205,7 @@ struct ManagerProfileView: View {
             
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Manager Profile and Administrative Settings")
         .alert("Log out?", isPresented: $showLogoutConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Log Out", role: .destructive) {

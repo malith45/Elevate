@@ -54,8 +54,8 @@ struct JobDetailsView: View {
                                         .foregroundColor(.elevateDarkGreen)
                                 }
                                 Spacer()
-                                Text("ID\n\(job.id)")
-                                    .scaledFont(size: 12, weight: .bold)
+                                Text("ID\n\(String(job.id.prefix(8)).uppercased())")
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
                                     .multilineTextAlignment(.leading)
                                     .padding(12)
                                     .background(Color.elevateLightGray)
@@ -66,7 +66,7 @@ struct JobDetailsView: View {
                                 .scaledFont(size: 14)
                                 .foregroundColor(.black.opacity(0.8))
                             
-                            Text("Assigned: \(job.assignedUserId)")
+                            Text("Assigned: \(viewModel.assignedTechnician?.displayName ?? job.assignedUserId)")
                                 .scaledFont(size: 12, weight: .bold)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
@@ -86,27 +86,24 @@ struct JobDetailsView: View {
                                 Map(position: .constant(position)) {
                                     Marker("Site", coordinate: coordinate)
                                 }
-                                .frame(height: 140)
+                                .frame(height: 160)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                             } else {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.elevateDarkGreen.opacity(0.8))
-                                    .frame(height: 140)
-                                    .overlay(
+                                // Improved Placeholder
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(LinearGradient(colors: [.elevateDarkGreen.opacity(0.85), .elevateDarkGreen.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        .frame(height: 160)
+                                    
+                                    VStack(spacing: 8) {
                                         Image(systemName: "map.fill")
-                                            .font(.system(size: 60))
-                                            .foregroundColor(.white.opacity(0.3))
-                                    )
-
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Image(systemName: "mappin.circle.fill")
-                                            .foregroundColor(.elevateDarkGreen)
-                                            .font(.system(size: 24))
-                                    )
-                                    .position(x: 180, y: 70)
+                                            .font(.system(size: 40))
+                                            .foregroundColor(.white.opacity(0.4))
+                                        Text("Location preview unavailable")
+                                            .scaledFont(size: 12, weight: .semibold)
+                                            .foregroundColor(.white.opacity(0.7))
+                                    }
+                                }
                             }
 
                             Button(action: { openInMaps(job) }) {
@@ -213,6 +210,8 @@ struct JobDetailsView: View {
                             }
                         }
                         
+                        Spacer().frame(height: 100)
+                        
                         } else {
                             Text("Loading job details...")
                                 .scaledFont(size: 14)
@@ -238,11 +237,11 @@ struct JobDetailsView: View {
     }
 
     private func currencyString(_ value: Double?) -> String {
-        guard let value = value else { return "LKR -" }
+        let actualValue = value ?? 0.0
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
-        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+        return formatter.string(from: NSNumber(value: actualValue)) ?? "LKR \(actualValue)"
     }
 
     private func openInMaps(_ job: Job) {

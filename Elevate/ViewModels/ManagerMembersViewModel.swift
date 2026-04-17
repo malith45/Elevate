@@ -51,7 +51,9 @@ final class ManagerMembersViewModel: ObservableObject {
             displayName: trimmedName.isEmpty ? member.displayName : trimmedName,
             role: trimmedRole.isEmpty ? member.role : trimmedRole.uppercased(),
             email: email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : email.trimmingCharacters(in: .whitespacesAndNewlines),
-            phone: phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : phone.trimmingCharacters(in: .whitespacesAndNewlines)
+            phone: phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : phone.trimmingCharacters(in: .whitespacesAndNewlines),
+            latitude: member.latitude,
+            longitude: member.longitude
         )
 
         localStorage.saveUsers([updated])

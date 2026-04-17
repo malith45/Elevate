@@ -134,6 +134,7 @@ struct ManagerAccessibilityView: View {
             
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Manager Accessibility Settings")
     }
 }
 

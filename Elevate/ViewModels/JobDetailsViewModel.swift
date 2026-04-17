@@ -1,15 +1,35 @@
-import Foundation
 import Combine
 import UIKit
+import FirebaseFirestore
+import CoreLocation
 
 final class JobDetailsViewModel: ObservableObject {
     @Published var job: Job?
+    @Published var assignedTechnician: User?
+    @Published var technicianLocation: CLLocationCoordinate2D?
+
+    private var locationListener: ListenerRegistration?
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
 
     func load(jobId: String) {
         job = localStorage.fetchJob(id: jobId)
+        if let assignedId = job?.assignedUserId {
+            assignedTechnician = localStorage.fetchUser(id: assignedId)
+            
+            // Start listening to technician location
+            locationListener?.remove()
+            locationListener = FirebaseService.shared.listenToUserLocation(userId: assignedId) { [weak self] coord in
+                DispatchQueue.main.async {
+                    self?.technicianLocation = coord
+                }
+            }
+        }
+    }
+
+    deinit {
+        locationListener?.remove()
     }
 
     func updateStatus(jobId: String, status: String, user: User, isOnline: Bool) {

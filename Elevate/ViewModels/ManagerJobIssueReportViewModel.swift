@@ -29,8 +29,8 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
                 switch result {
                 case .success(let reports):
                     reports.forEach { self.localStorage.saveIssueReport($0, isSynced: true) }
-                    self.reports = reports
-                    self.report = reports.first
+                    self.reports = reports.sorted { $0.createdAt > $1.createdAt }
+                    self.report = self.reports.first
                     if let selected = self.report {
                         self.technician = self.localStorage.fetchUser(id: selected.userId)
                     }

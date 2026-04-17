@@ -48,18 +48,72 @@ struct ManagerJobListView: View {
                         .padding(.horizontal, 24)
 
                         // Job Cards
-                        VStack(spacing: 16) {
-                            ForEach(viewModel.filteredJobs, id: \.id) { job in
-                                Button(action: {
-                                    router.selectedJobId = job.id
-                                    router.currentScreen = .jobDetails
-                                    router.selectedTab = .jobs
-                                }) {
-                                    ManagerJobCard(job: job)
+                        VStack(spacing: 24) {
+                            if viewModel.selectedFilter == .upcoming {
+                                let past = pastJobs()
+                                let future = upcomingJobs()
+                                
+                                if !past.isEmpty {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("PAST JOBS")
+                                            .scaledFont(size: 12, weight: .bold)
+                                            .foregroundColor(.red)
+                                            .padding(.horizontal, 24)
+                                        
+                                        ForEach(past) { job in
+                                            Button(action: {
+                                                router.selectedJobId = job.id
+                                                router.currentScreen = .jobDetails
+                                                router.selectedTab = .jobs
+                                            }) {
+                                                ManagerJobCard(job: job)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
                                 }
-                                .buttonStyle(.plain)
+                                
+                                if !future.isEmpty {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("UPCOMING JOBS")
+                                            .scaledFont(size: 12, weight: .bold)
+                                            .foregroundColor(.elevateDarkGreen)
+                                            .padding(.horizontal, 24)
+                                        
+                                        ForEach(future) { job in
+                                            Button(action: {
+                                                router.selectedJobId = job.id
+                                                router.currentScreen = .jobDetails
+                                                router.selectedTab = .jobs
+                                            }) {
+                                                ManagerJobCard(job: job)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                }
+                                
+                                if past.isEmpty && future.isEmpty {
+                                    emptyState
+                                }
+                            } else {
+                                if viewModel.filteredJobs.isEmpty {
+                                    emptyState
+                                } else {
+                                    ForEach(viewModel.filteredJobs) { job in
+                                        Button(action: {
+                                            router.selectedJobId = job.id
+                                            router.currentScreen = .jobDetails
+                                            router.selectedTab = .jobs
+                                        }) {
+                                            ManagerJobCard(job: job)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
                             }
                         }
+                        .padding(.top, 8)
 
                         // Bottom Stats
                         HStack(spacing: 16) {
@@ -77,6 +131,7 @@ struct ManagerJobListView: View {
             }
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Manager Job Administration")
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
@@ -87,6 +142,29 @@ struct ManagerJobListView: View {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
             }
         }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .font(.system(size: 44))
+                .foregroundColor(.gray.opacity(0.3))
+            Text("No jobs found for this filter")
+                .scaledFont(size: 14)
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+    }
+
+    private func pastJobs() -> [Job] {
+        let today = Calendar.current.startOfDay(for: Date())
+        return viewModel.filteredJobs.filter { $0.scheduledAt < today }
+    }
+
+    private func upcomingJobs() -> [Job] {
+        let today = Calendar.current.startOfDay(for: Date())
+        return viewModel.filteredJobs.filter { $0.scheduledAt >= today }
     }
 
     private func todayString() -> String {

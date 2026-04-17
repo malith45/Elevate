@@ -54,7 +54,9 @@ final class LocalStorageService {
             displayName: result.value(forKey: "displayName") as? String ?? "",
             role: result.value(forKey: "role") as? String ?? "",
             email: result.value(forKey: "email") as? String,
-            phone: result.value(forKey: "phone") as? String
+            phone: result.value(forKey: "phone") as? String,
+            latitude: nil,
+            longitude: nil
         )
     }
 
@@ -70,7 +72,9 @@ final class LocalStorageService {
                 displayName: result.value(forKey: "displayName") as? String ?? "",
                 role: result.value(forKey: "role") as? String ?? "",
                 email: result.value(forKey: "email") as? String,
-                phone: result.value(forKey: "phone") as? String
+                phone: result.value(forKey: "phone") as? String,
+                latitude: nil,
+                longitude: nil
             )
         }
     }

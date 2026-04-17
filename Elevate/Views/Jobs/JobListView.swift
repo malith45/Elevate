@@ -48,11 +48,51 @@ struct JobListView: View {
                         .padding(.horizontal, 24)
                         
                         // Job Cards
-                        VStack(spacing: 16) {
-                            ForEach(viewModel.filteredJobs, id: \.id) { job in
-                                JobCard(job: job)
+                        VStack(spacing: 24) {
+                            if viewModel.selectedFilter == .upcoming {
+                                let past = pastJobs()
+                                let future = upcomingJobs()
+                                
+                                if !past.isEmpty {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("PAST JOBS")
+                                            .scaledFont(size: 12, weight: .bold)
+                                            .foregroundColor(.red)
+                                            .padding(.horizontal, 24)
+                                        
+                                        ForEach(past) { job in
+                                            JobCard(job: job)
+                                        }
+                                    }
+                                }
+                                
+                                if !future.isEmpty {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("UPCOMING JOBS")
+                                            .scaledFont(size: 12, weight: .bold)
+                                            .foregroundColor(.elevateDarkGreen)
+                                            .padding(.horizontal, 24)
+                                        
+                                        ForEach(future) { job in
+                                            JobCard(job: job)
+                                        }
+                                    }
+                                }
+                                
+                                if past.isEmpty && future.isEmpty {
+                                    emptyState
+                                }
+                            } else {
+                                if viewModel.filteredJobs.isEmpty {
+                                    emptyState
+                                } else {
+                                    ForEach(viewModel.filteredJobs) { job in
+                                        JobCard(job: job)
+                                    }
+                                }
                             }
                         }
+                        .padding(.top, 8)
                         
                         // Bottom Stats
                         HStack(spacing: 16) {
@@ -60,6 +100,7 @@ struct JobListView: View {
                             StatPill(icon: "clock", value: "\(viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" }.count)", title: "PENDING JOBS", isPrimary: false)
                         }
                         .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
                         
                     }
                 }
@@ -69,6 +110,7 @@ struct JobListView: View {
             }
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Technician Job Schedule")
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
@@ -79,6 +121,29 @@ struct JobListView: View {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
             }
         }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .font(.system(size: 44))
+                .foregroundColor(.gray.opacity(0.3))
+            Text("No jobs found for this filter")
+                .scaledFont(size: 14)
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+    }
+
+    private func pastJobs() -> [Job] {
+        let today = Calendar.current.startOfDay(for: Date())
+        return viewModel.filteredJobs.filter { $0.scheduledAt < today }
+    }
+
+    private func upcomingJobs() -> [Job] {
+        let today = Calendar.current.startOfDay(for: Date())
+        return viewModel.filteredJobs.filter { $0.scheduledAt >= today }
     }
 
     private func todayString() -> String {

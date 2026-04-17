@@ -147,6 +147,7 @@ struct TechnicianProfileView: View {
             
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Technician Profile and Settings")
         .alert("Log out?", isPresented: $showLogoutConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Log Out", role: .destructive) {

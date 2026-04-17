@@ -85,6 +85,8 @@ final class SignUpViewModel: ObservableObject {
                                     username: trimmedUsername,
                                     displayName: trimmedUsername,
                                     role: "OWNER",
+                                    email: nil,
+                                    phone: nil,
                                     password: password
                                 ) { userResult in
                                     DispatchQueue.main.async(execute: DispatchWorkItem(block: {

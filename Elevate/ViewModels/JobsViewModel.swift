@@ -22,7 +22,9 @@ final class JobsViewModel: ObservableObject {
             case .today:
                 return calendar.isDateInToday(job.scheduledAt) && job.status.uppercased() != "COMPLETED"
             case .upcoming:
-                return job.scheduledAt > Date() && job.status.uppercased() != "COMPLETED"
+                // Include all jobs not completed (past, today, future)
+                // The view will handle sectioning them into "Past" and "Upcoming"
+                return job.status.uppercased() != "COMPLETED"
             case .completed:
                 return job.status.uppercased() == "COMPLETED"
             }

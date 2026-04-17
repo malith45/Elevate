@@ -9,6 +9,7 @@ struct ManagerJobDetailsView: View {
     @StateObject private var viewModel = JobDetailsViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var reportCount = 0
+    @State private var cameraPosition: MapCameraPosition = .automatic
 
     private let localStorage = LocalStorageService.shared
 
@@ -67,8 +68,8 @@ struct ManagerJobDetailsView: View {
                                         .foregroundColor(.elevateDarkGreen)
                                 }
                                 Spacer()
-                                Text("ID\n\(job.id)")
-                                    .scaledFont(size: 12, weight: .bold)
+                                Text("ID\n\(String(job.id.prefix(8)).uppercased())")
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
                                     .multilineTextAlignment(.leading)
                                     .padding(12)
                                     .background(Color.elevateLightGray)
@@ -79,62 +80,76 @@ struct ManagerJobDetailsView: View {
                                 .scaledFont(size: 14)
                                 .foregroundColor(.black.opacity(0.8))
 
-                            Text("Assigned: \(job.assignedUserId)")
+                            Text("Assigned: \(viewModel.assignedTechnician?.displayName ?? job.assignedUserId)")
                                 .scaledFont(size: 12, weight: .bold)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(Color.elevateLightGray)
                                 .cornerRadius(16)
 
-                            ZStack(alignment: .bottomLeading) {
-                                if let latitude = job.siteLatitude, let longitude = job.siteLongitude {
-                                    let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                                    let position = MapCameraPosition.region(
-                                        MKCoordinateRegion(
-                                            center: coordinate,
-                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                                        )
-                                    )
-                                    Map(position: .constant(position)) {
-                                        Marker("Site", coordinate: coordinate)
+                            ZStack(alignment: .bottomTrailing) {
+                                if let siteLat = viewModel.job?.siteLatitude, let siteLon = viewModel.job?.siteLongitude {
+                                    let siteCoord = CLLocationCoordinate2D(latitude: siteLat, longitude: siteLon)
+                                    
+                                    Map(position: $cameraPosition) {
+                                        Marker("Site", systemImage: "mappin.circle.fill", coordinate: siteCoord)
+                                            .tint(.elevateDarkGreen)
+                                        
+                                        if let techCoord = viewModel.technicianLocation {
+                                            Marker("Technician", systemImage: "person.circle.fill", coordinate: techCoord)
+                                                .tint(.blue)
+                                        }
                                     }
-                                    .frame(height: 150)
+                                    .frame(height: 220)
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                                } else {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.elevateDarkGreen.opacity(0.8))
-                                        .frame(height: 150)
-                                        .overlay(
-                                            Image(systemName: "map.fill")
-                                                .font(.system(size: 60))
-                                                .foregroundColor(.white.opacity(0.3))
-                                        )
-
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 32, height: 32)
-                                        .overlay(
-                                            Image(systemName: "mappin.circle.fill")
-                                                .foregroundColor(.elevateDarkGreen)
-                                                .font(.system(size: 24))
-                                        )
-                                        .position(x: 160, y: 60)
-
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 32, height: 32)
-                                        .overlay(
-                                            Image(systemName: "person.circle.fill")
-                                                .foregroundColor(.elevateDarkGreen)
-                                                .font(.system(size: 22))
-                                        )
-                                        .position(x: 240, y: 95)
-
-                                    HStack(spacing: 12) {
-                                        legendPill(title: "Site", icon: "mappin")
-                                        legendPill(title: "Technician", icon: "person")
+                                    .overlay(alignment: .topTrailing) {
+                                        VStack(spacing: 8) {
+                                            Button(action: {
+                                                cameraPosition = .region(MKCoordinateRegion(center: siteCoord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                                            }) {
+                                                HStack(spacing: 4) {
+                                                    Image(systemName: "mappin.circle.fill")
+                                                    Text("SITE")
+                                                }
+                                                .scaledFont(size: 8, weight: .bold)
+                                                .padding(6)
+                                                .background(.ultraThinMaterial)
+                                                .cornerRadius(8)
+                                            }
+                                            
+                                            if let techCoord = viewModel.technicianLocation {
+                                                Button(action: {
+                                                    cameraPosition = .region(MKCoordinateRegion(center: techCoord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                                                }) {
+                                                    HStack(spacing: 4) {
+                                                        Image(systemName: "person.circle.fill")
+                                                        Text("TECH")
+                                                    }
+                                                    .scaledFont(size: 8, weight: .bold)
+                                                    .padding(6)
+                                                    .background(.ultraThinMaterial)
+                                                    .cornerRadius(8)
+                                                }
+                                            }
+                                        }
+                                        .padding(8)
                                     }
-                                    .padding(12)
+                                } else {
+                                    // Improved Placeholder
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(LinearGradient(colors: [.elevateDarkGreen.opacity(0.85), .elevateDarkGreen.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                            .frame(height: 160)
+                                        
+                                        VStack(spacing: 8) {
+                                            Image(systemName: "map.fill")
+                                                .font(.system(size: 40))
+                                                .foregroundColor(.white.opacity(0.4))
+                                            Text("Location preview unavailable")
+                                                .scaledFont(size: 12, weight: .semibold)
+                                                .foregroundColor(.white.opacity(0.7))
+                                        }
+                                    }
                                 }
                             }
 
@@ -234,6 +249,8 @@ struct ManagerJobDetailsView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 24)
+                    
+                    Spacer().frame(height: 100)
                 }
             }
         }
@@ -250,11 +267,11 @@ struct ManagerJobDetailsView: View {
     }
 
     private func currencyString(_ value: Double?) -> String {
-        guard let value = value else { return "LKR -" }
+        let actualValue = value ?? 0.0
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
-        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+        return formatter.string(from: NSNumber(value: actualValue)) ?? "LKR \(actualValue)"
     }
 
     private func legendPill(title: String, icon: String) -> some View {

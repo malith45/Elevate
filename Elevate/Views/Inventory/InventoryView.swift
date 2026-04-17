@@ -84,6 +84,7 @@ struct InventoryView: View {
         .navigationDestination(isPresented: $navigateToQuotation) {
             QuotationStatusView(jobId: jobId)
         }
+        .speakOnAppear("Inventory Selection")
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)

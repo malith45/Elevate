@@ -78,6 +78,7 @@ struct ManagerInventoryView: View {
             .padding(.bottom, 110)
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Inventory Management Dashboard")
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)

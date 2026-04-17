@@ -266,6 +266,7 @@ struct ManagerDashboardView: View {
             
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Welcome to your Manager Dashboard")
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)

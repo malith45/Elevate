@@ -9,4 +9,6 @@ struct User: Identifiable, Codable, Equatable {
     let role: String
     let email: String?
     let phone: String?
+    let latitude: Double?
+    let longitude: Double?
 }

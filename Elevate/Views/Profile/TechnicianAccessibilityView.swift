@@ -130,6 +130,7 @@ struct TechnicianAccessibilityView: View {
             
         }
         .navigationBarHidden(true)
+        .speakOnAppear("Accessibility Settings")
     }
 }
 

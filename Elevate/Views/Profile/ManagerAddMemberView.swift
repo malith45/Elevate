@@ -8,6 +8,9 @@ struct ManagerAddMemberView: View {
     @StateObject private var viewModel = ManagerAddMemberViewModel()
     @State private var selectedRole = "Technician"
     @State private var username = ""
+    @State private var displayName = ""
+    @State private var email = ""
+    @State private var phone = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -45,9 +48,30 @@ struct ManagerAddMemberView: View {
 
                             CustomTextField(
                                 title: "USERNAME",
-                                placeholder: "Member username",
+                                placeholder: "e.g. john_doe",
                                 iconName: "person",
                                 text: $username
+                            )
+
+                            CustomTextField(
+                                title: "DISPLAY NAME",
+                                placeholder: "e.g. John Doe",
+                                iconName: "textformat",
+                                text: $displayName
+                            )
+
+                            CustomTextField(
+                                title: "EMAIL ADDRESS",
+                                placeholder: "john@example.com",
+                                iconName: "envelope",
+                                text: $email
+                            )
+
+                            CustomTextField(
+                                title: "PHONE NUMBER",
+                                placeholder: "+94 7X XXX XXXX",
+                                iconName: "phone",
+                                text: $phone
                             )
 
                             SecureCustomTextField(
@@ -66,7 +90,7 @@ struct ManagerAddMemberView: View {
                         }
                         .padding(.horizontal, 24)
 
-                        PrimaryButton(title: "Create Member", iconName: "checkmark") {
+                        PrimaryButton(title: "Create Member") {
                             createMember()
                         }
                         .padding(.horizontal, 24)
@@ -130,10 +154,10 @@ struct ManagerAddMemberView: View {
     }
 
     private var profilePhotoCard: some View {
-        HStack(spacing: 16) {
+        VStack(spacing: 20) {
             Circle()
                 .fill(Color.elevateDarkGreen)
-                .frame(width: 64, height: 64)
+                .frame(width: 100, height: 100)
                 .overlay(
                     Group {
                         if let data = memberPhotoData, let image = UIImage(data: data) {
@@ -142,34 +166,36 @@ struct ManagerAddMemberView: View {
                                 .scaledToFill()
                         } else {
                             Image(systemName: "person.fill")
-                                .font(.system(size: 24))
+                                .font(.system(size: 40))
                                 .foregroundColor(.white)
                         }
                     }
                 )
                 .clipShape(Circle())
+                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(spacing: 8) {
                 Text("PROFILE PHOTO")
                     .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
+                
                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.pencil")
-                        Text("Change Photo")
-                    }
-                    .scaledFont(size: 12, weight: .bold)
-                    .foregroundColor(.elevateDarkGreen)
+                    Text("Choose Photo")
+                        .scaledFont(size: 14, weight: .bold)
+                        .foregroundColor(.elevateDarkGreen)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(Color.elevateDarkGreen.opacity(0.1))
+                        .cornerRadius(20)
                 }
                 .buttonStyle(.plain)
             }
-
-            Spacer()
         }
-        .padding(16)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
         .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
     }
 
     private func createMember() {
@@ -183,8 +209,11 @@ struct ManagerAddMemberView: View {
         viewModel.createMember(
             organizationId: user.organizationId,
             username: username,
+            displayName: displayName,
             role: roleKey,
-            password: password
+            email: email.isEmpty ? nil : email,
+            phone: phone.isEmpty ? nil : phone,
+            password: password.isEmpty ? nil : password
         ) { created in
             if let created {
                 if let data = memberPhotoData {

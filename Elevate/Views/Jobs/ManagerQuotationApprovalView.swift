@@ -23,7 +23,16 @@ struct ManagerQuotationApprovalView: View {
                             .foregroundColor(.elevateDarkGreen)
 
                         if viewModel.items.isEmpty {
-                            EmptyStateCard()
+                            VStack(spacing: 12) {
+                                Image(systemName: "doc.text")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.elevateTextGray.opacity(0.5))
+                                Text("No pending quotations for this job.")
+                                    .scaledFont(size: 14)
+                                    .foregroundColor(.elevateTextGray)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 60)
                         } else {
                             VStack(spacing: 12) {
                                 ForEach(viewModel.items) { item in

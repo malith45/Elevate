@@ -42,7 +42,7 @@ struct ManagerEditProfileView: View {
                                 .foregroundColor(.elevateTextGray)
                         }
                         .padding(.horizontal, 24)
-                        .padding(.top, 12)
+                        .padding(.top, 4)
 
                         VStack(spacing: 16) {
                             profilePhotoCard
@@ -111,7 +111,7 @@ struct ManagerEditProfileView: View {
                         }
                         .padding(.horizontal, 24)
 
-                        PrimaryButton(title: "Save Changes", iconName: "checkmark") {
+                        PrimaryButton(title: "Save Changes", iconName: nil) {
                             focusedField = nil
                             saveChanges()
                         }
@@ -123,7 +123,6 @@ struct ManagerEditProfileView: View {
                                 showDropOrgConfirm = true
                             }) {
                                 HStack {
-                                    Image(systemName: "trash")
                                     Text("Delete Account & Organization")
                                 }
                                 .scaledFont(size: 14, weight: .bold)
@@ -140,7 +139,6 @@ struct ManagerEditProfileView: View {
                                 showDeleteProfileConfirm = true
                             }) {
                                 HStack {
-                                    Image(systemName: "trash")
                                     Text("Delete My Profile")
                                 }
                                 .scaledFont(size: 14, weight: .bold)
@@ -152,6 +150,8 @@ struct ManagerEditProfileView: View {
                             }
                             .padding(.horizontal, 24)
                             .padding(.bottom, 24)
+                            
+                            Spacer().frame(height: 100)
                         }
                     }
                 }
@@ -236,11 +236,11 @@ struct ManagerEditProfileView: View {
     }
 
     private var profilePhotoCard: some View {
-        HStack(spacing: 16) {
+        VStack(spacing: 16) {
             ZStack(alignment: .bottomTrailing) {
                 Circle()
                     .fill(Color.elevateDarkGreen)
-                    .frame(width: 72, height: 72)
+                    .frame(width: 100, height: 100)
                     .overlay(
                         Group {
                             if let image = profileImage {
@@ -250,7 +250,7 @@ struct ManagerEditProfileView: View {
                                     .clipShape(Circle())
                             } else {
                                 Image(systemName: "person.crop.circle")
-                                    .font(.system(size: 28))
+                                    .font(.system(size: 40))
                                     .foregroundColor(.white)
                             }
                         }
@@ -260,32 +260,28 @@ struct ManagerEditProfileView: View {
                 if isUploadingPhoto {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .frame(width: 24, height: 24)
+                        .frame(width: 32, height: 32)
                         .background(Color.elevateDarkGreen)
                         .clipShape(Circle())
                         .offset(x: 4, y: 4)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(spacing: 8) {
                 Text("PROFILE PHOTO")
                     .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(.elevateTextGray)
                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "photo.badge.plus")
-                        Text(isUploadingPhoto ? "Uploading…" : "Change Photo")
-                    }
-                    .scaledFont(size: 12, weight: .bold)
-                    .foregroundColor(.elevateDarkGreen)
+                    Text(isUploadingPhoto ? "Uploading…" : "Change Photo")
+                        .scaledFont(size: 12, weight: .bold)
+                        .foregroundColor(.elevateDarkGreen)
                 }
                 .buttonStyle(.plain)
                 .disabled(isUploadingPhoto)
             }
-
-            Spacer()
         }
-        .padding(16)
+        .frame(maxWidth: .infinity)
+        .padding(24)
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)

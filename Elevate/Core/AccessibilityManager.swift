@@ -163,4 +163,23 @@ extension View {
     func scaledFont(size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> some View {
         self.modifier(ScaledTextModifier(baseSize: size, weight: weight, design: design))
     }
+    
+    func speakOnAppear(_ text: String) -> some View {
+        self.modifier(VoiceOverNarratorModifier(text: text))
+    }
+}
+
+// MARK: - Voice Over Narrator Modifier
+struct VoiceOverNarratorModifier: ViewModifier {
+    let text: String
+    @ObservedObject var settings = AccessibilitySettings.shared
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                if settings.isVoiceOver {
+                    VoiceOverManager.shared.speak(text)
+                }
+            }
+    }
 }

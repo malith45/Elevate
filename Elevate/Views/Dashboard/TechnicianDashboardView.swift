@@ -179,6 +179,7 @@ struct TechnicianDashboardView: View {
                 )
             ) { EmptyView() }
         )
+        .speakOnAppear("Welcome to your Technician Dashboard")
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)

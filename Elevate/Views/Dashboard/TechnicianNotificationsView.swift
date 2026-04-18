@@ -32,7 +32,7 @@ struct TechnicianNotificationsView: View {
                         .padding(.horizontal, 24)
                         
                         if viewModel.notifications.isEmpty {
-                            EmptyStateCard()
+                            EmptyStateView(title: "No notifications yet", message: "Updates about jobs, approvals, and inventory will show up here.")
                         } else {
                             NotificationSection(title: "TODAY", items: viewModel.todayItems, onTap: handleTap, destinationProvider: notificationDestination)
                             NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems, onTap: handleTap, destinationProvider: notificationDestination)
@@ -185,25 +185,6 @@ private func notificationDestination(for item: NotificationItem) -> AnyView? {
         return AnyView(JobDetailsView(jobId: targetId))
     }
     return nil
-}
-
-struct EmptyStateCard: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("No notifications yet")
-                .scaledFont(size: 18, weight: .bold)
-            Text("Updates about jobs, approvals, and inventory will show up here.")
-                .scaledFont(size: 14)
-                .foregroundColor(.elevateTextGray)
-                .multilineTextAlignment(.center)
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 6)
-        .padding(.horizontal, 24)
-    }
 }
 
 #Preview {

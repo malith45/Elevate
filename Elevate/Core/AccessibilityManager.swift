@@ -134,10 +134,6 @@ struct GlobalAccessibilityModifier: ViewModifier {
         content
             .environment(\.accessibilitySettings, settings)
             .environment(\.dynamicTypeSize, settings.getDynamicTypeSize())
-            // High Contrast: Apply darker colors and increased contrast
-            .brightness(settings.isHighContrast ? -0.15 : 0)
-            .contrast(settings.isHighContrast ? 1.5 : 1.0)
-            .saturation(settings.isHighContrast ? 1.2 : 1.0)
     }
 }
 

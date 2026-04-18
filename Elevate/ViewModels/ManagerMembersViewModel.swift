@@ -30,7 +30,7 @@ final class ManagerMembersViewModel: ObservableObject {
         }
     }
 
-    func updateMember(_ member: User, displayName: String, role: String, email: String, phone: String, profileImage: UIImage?, isOnline: Bool) {
+    func updateMember(_ member: User, displayName: String, role: String, email: String, phone: String, password: String?, profileImage: UIImage?, isOnline: Bool) {
         let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedRole = role.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -43,6 +43,10 @@ final class ManagerMembersViewModel: ObservableObject {
         }
         fields["email"] = email.trimmingCharacters(in: .whitespacesAndNewlines)
         fields["phone"] = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if let password = password, !password.isEmpty {
+            fields["password"] = password
+        }
 
         let updated = User(
             id: member.id,

@@ -16,8 +16,6 @@ struct ManagerOrganizationView: View {
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
-
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
                     router.currentScreen = .profile
@@ -26,93 +24,105 @@ struct ManagerOrganizationView: View {
                 .background(Color.white)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 32) {
+                        
+                        // Header Section
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Organization")
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
+                            Text("Manage your corporate identity and team metrics.")
+                                .scaledFont(size: 14)
+                                .foregroundColor(.elevateTextGray)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 24)
+
+                        // CORE IDENTITY SECTION
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("CORE IDENTITY")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
+                                    .tracking(1)
                                 Spacer()
-                                Image(systemName: "checkmark.shield")
-                                    .foregroundColor(.elevateTextGray)
+                                Image(systemName: "checkmark.shield.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.elevateDarkGreen)
+                                Text("Verified")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.elevateDarkGreen)
                             }
+                            .padding(.horizontal, 4)
 
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("ORGANIZATION NAME")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
-                                    Spacer()
-                                    Button(action: {
+                            VStack(spacing: 0) {
+                                // Name Field
+                                identityField(
+                                    label: "ORGANIZATION NAME",
+                                    value: organizationName,
+                                    icon: "building.2",
+                                    onEdit: {
                                         organizationNameDraft = organizationName
                                         isEditingName = true
-                                    }) {
-                                        Image(systemName: "square.and.pencil")
-                                            .foregroundColor(.elevateTextGray)
                                     }
-                                    .buttonStyle(.plain)
-                                }
-                                Text(organizationName)
-                                    .scaledFont(size: 20, weight: .bold)
-                                    .foregroundColor(.black)
-                            }
-                            .padding(16)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("INTRODUCTION")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
-                                    Spacer()
-                                    Button(action: {
+                                )
+                                
+                                Divider().padding(.leading, 50)
+                                
+                                // Introduction Field
+                                identityField(
+                                    label: "INTRODUCTION",
+                                    value: introductionText,
+                                    icon: "quote.opening",
+                                    onEdit: {
                                         introductionDraft = introductionText
                                         isEditingIntroduction = true
-                                    }) {
-                                        Image(systemName: "square.and.pencil")
-                                            .foregroundColor(.elevateTextGray)
                                     }
-                                    .buttonStyle(.plain)
-                                }
-                                Text(introductionText)
-                                    .scaledFont(size: 14)
-                                    .foregroundColor(.elevateTextGray)
+                                )
                             }
-                            .padding(16)
                             .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-
-                            HStack {
-                                VStack(alignment: .leading, spacing: 6) {
+                            .cornerRadius(16)
+                            .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
+                            
+                            // Organization Code Badge
+                            HStack(spacing: 12) {
+                                Image(systemName: "qrcode.viewfinder")
+                                    .foregroundColor(.elevateDarkGreen)
+                                    .font(.system(size: 18, weight: .bold))
+                                
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text("ORGANIZATION CODE")
                                         .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(.elevateTextGray)
                                     Text(organizationCode)
-                                        .scaledFont(size: 16, weight: .bold)
-                                        .foregroundColor(.black)
+                                        .scaledFont(size: 15, weight: .bold, design: .monospaced)
                                 }
                                 Spacer()
-                                Image(systemName: "lock.fill")
-                                    .foregroundColor(.elevateTextGray)
+                                Text("REG-CORE")
+                                    .scaledFont(size: 8, weight: .black)
+                                    .foregroundColor(.elevateDarkGreen.opacity(0.6))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.elevateDarkGreen.opacity(0.1))
+                                    .cornerRadius(6)
                             }
                             .padding(16)
-                            .background(Color.elevateLightGray)
-                            .cornerRadius(12)
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            .shadow(color: Color.black.opacity(0.01), radius: 5, x: 0, y: 2)
                         }
                         .padding(.horizontal, 24)
-                        .padding(.top, 8)
 
+                        // VITALITY SECTION (Metrics)
                         VStack(alignment: .leading, spacing: 16) {
                             Text("ECOSYSTEM VITALITY")
                                 .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
+                                .tracking(1)
+                                .padding(.leading, 4)
 
-                            HStack(spacing: 16) {
-                                metricCard(title: "ACTIVE MEMBERS", value: "\(activeMembersCount)", icon: "person.2")
-                                metricCard(title: "MANAGEMENT", value: "\(managementCount)", icon: "person.3")
+                            HStack(spacing: 12) {
+                                metricCard(title: "Active Personnel", value: "\(activeMembersCount)", icon: "person.2.fill")
+                                metricCard(title: "Management Team", value: "\(managementCount)", icon: "shield.lefthalf.filled")
                             }
 
                             Button(action: {
@@ -120,27 +130,26 @@ struct ManagerOrganizationView: View {
                                 router.selectedTab = .profile
                             }) {
                                 HStack(spacing: 12) {
-                                    Text("Manage Members")
+                                    Image(systemName: "person.3.fill")
+                                    Text("Manage Team Members")
                                         .scaledFont(size: 14, weight: .bold)
                                     Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .bold))
+                                    Image(systemName: "arrow.right.circle.fill")
                                 }
                                 .foregroundColor(.white)
-                                .padding(.vertical, 14)
-                                .padding(.horizontal, 16)
+                                .padding(.vertical, 16)
+                                .padding(.horizontal, 20)
                                 .background(Color.elevateDarkGreen)
                                 .cornerRadius(16)
-                                .shadow(color: Color.elevateDarkGreen.opacity(0.25), radius: 8, x: 0, y: 4)
+                                .shadow(color: Color.elevateDarkGreen.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                             .buttonStyle(.plain)
+                            .padding(.top, 8)
                         }
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 24)
+
+                        Spacer().frame(height: 100)
                     }
-                }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 96)
                 }
             }
         }
@@ -158,19 +167,15 @@ struct ManagerOrganizationView: View {
                 refreshMemberMetrics(organizationId: user.organizationId)
             }
         }
-        .alert("Edit Organization Name", isPresented: $isEditingName) {
-            TextField("Organization Name", text: $organizationNameDraft)
-            Button("Cancel", role: .cancel) {}
-            Button("Save") {
+        .sheet(isPresented: $isEditingName) {
+            editorSheet(title: "Organization Name", text: $organizationNameDraft) {
                 guard let user = appSession.currentUser else { return }
                 viewModel.organizationName = organizationNameDraft
                 viewModel.save(organizationId: user.organizationId, name: organizationNameDraft, introduction: nil)
             }
         }
-        .alert("Edit Introduction", isPresented: $isEditingIntroduction) {
-            TextField("Introduction", text: $introductionDraft)
-            Button("Cancel", role: .cancel) {}
-            Button("Save") {
+        .sheet(isPresented: $isEditingIntroduction) {
+            editorSheet(title: "Introduction", text: $introductionDraft) {
                 guard let user = appSession.currentUser else { return }
                 viewModel.introduction = introductionDraft
                 viewModel.save(organizationId: user.organizationId, name: nil, introduction: introductionDraft)
@@ -207,27 +212,101 @@ struct ManagerOrganizationView: View {
         return "ORG-1024-SV"
     }
 
+    // MARK: - Sub-views
+
+    private func identityField(label: String, value: String, icon: String, onEdit: @escaping () -> Void) -> some View {
+        Button(action: onEdit) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.elevateDarkGreen.opacity(0.1))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: icon)
+                        .foregroundColor(.elevateDarkGreen)
+                        .font(.system(size: 14, weight: .bold))
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(label)
+                        .scaledFont(size: 9, weight: .bold)
+                        .foregroundColor(.elevateTextGray)
+                        .tracking(0.5)
+                    Text(value)
+                        .scaledFont(size: 14, weight: .semibold)
+                        .foregroundColor(.black)
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "pencil")
+                    .foregroundColor(.elevateDarkGreen)
+                    .font(.system(size: 14, weight: .bold))
+                    .frame(width: 32, height: 32)
+                    .background(Color.elevateDarkGreen.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            .padding(16)
+        }
+        .buttonStyle(.plain)
+    }
+
     private func metricCard(title: String, value: String, icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .center, spacing: 8) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.elevateLightGray)
-                    .frame(width: 42, height: 42)
+                Circle()
+                    .fill(Color.elevateDarkGreen.opacity(0.05))
+                    .frame(width: 44, height: 44)
                 Image(systemName: icon)
                     .foregroundColor(.elevateDarkGreen)
+                    .font(.system(size: 18, weight: .bold))
             }
-            Text(value)
-                .scaledFont(size: 28, weight: .bold)
-                .foregroundColor(.black)
-            Text(title)
-                .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(.elevateTextGray)
+            
+            VStack(spacing: 2) {
+                Text(value)
+                    .scaledFont(size: 24, weight: .bold, design: .rounded)
+                    .foregroundColor(.black)
+                Text(title)
+                    .scaledFont(size: 10, weight: .bold)
+                    .foregroundColor(.elevateTextGray)
+                    .multilineTextAlignment(.center)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 12)
         .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
+    }
+
+    private func editorSheet(title: String, text: Binding<String>, onSave: @escaping () -> Void) -> some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                CustomTextField(title: title.uppercased(), placeholder: "Enter \(title.lowercased())", iconName: "pencil.and.outline", text: text)
+                    .padding(.top, 32)
+                
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+            .navigationTitle("Edit \(title)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { isEditingName = false; isEditingIntroduction = false }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        onSave()
+                        isEditingName = false
+                        isEditingIntroduction = false
+                    }
+                    .fontWeight(.bold)
+                    .foregroundColor(.elevateDarkGreen)
+                }
+            }
+        }
+        .presentationDetents([.height(280)])
     }
 
     private func refreshMemberMetrics(organizationId: String) {

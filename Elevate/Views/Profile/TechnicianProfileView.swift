@@ -21,121 +21,156 @@ struct TechnicianProfileView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
                         
-                        // User Details
-                        VStack(spacing: 12) {
-                            if let user = appSession.currentUser {
-                                ProfilePhotoView(userId: user.id, size: 100)
-                                    .accessibilityLabel("Profile photo of \(displayName)")
-                            } else {
-                                Circle()
-                                    .fill(Color.elevateDarkGreen)
-                                    .frame(width: 100, height: 100)
-                                    .overlay(
-                                        Image(systemName: "person.fill")
-                                            .font(.system(size: 44))
-                                            .foregroundColor(.white)
-                                    )
-                                    .clipShape(Circle())
-                                    .accessibilityLabel("Profile photo placeholder")
+                        // USER HEADER SECTION
+                        VStack(spacing: 16) {
+                            ZStack(alignment: .bottomTrailing) {
+                                if let user = appSession.currentUser {
+                                    ProfilePhotoView(userId: user.id, size: 110)
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                                }
+                                
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 34, height: 34)
+                                        .background(Color.elevateDarkGreen)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                }
+                                .offset(x: 2, y: 2)
                             }
                             
-                            Text(displayName)
-                                .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                .accessibilityAddTraits(.isHeader)
-
-                            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: 10, weight: .bold))
-                                    Text("CHANGE PHOTO")
-                                }
-                                .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color.elevateDarkGreen)
-                                .cornerRadius(16)
+                            VStack(spacing: 4) {
+                                Text(displayName)
+                                    .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                
+                                Text(appSession.currentUser?.role.uppercased() ?? "TECHNICIAN")
+                                    .scaledFont(size: 10, weight: .black)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(Color.elevateDarkGreen)
+                                    .cornerRadius(6)
+                                    .tracking(1)
                             }
-                            .accessibilityLabel("Change profile photo")
-                            .accessibilityHint("Double tap to select a new profile photo")
                         }
-                        .padding(.top, 32)
+                        .padding(.top, 24)
                         
-                        // ORGANIZATION DETAILS CARD
+                        // ORGANIZATION IDENTITY (Badge Style)
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
-                                Text("ORGANIZATION DETAILS")
+                                Text("IDENTITY")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(.elevateTextGray)
+                                    .tracking(1)
                                 Spacer()
-                                Image(systemName: "building.2")
-                                    .foregroundColor(.gray)
+                                Image(systemName: "building.2.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.elevateDarkGreen.opacity(0.6))
                             }
+                            .padding(.horizontal, 4)
                             
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(organizationName)
-                                    .scaledFont(size: 18, weight: .bold)
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.elevateDarkGreen.opacity(0.05))
+                                        .frame(width: 50, height: 50)
+                                    Image(systemName: "building.2")
+                                        .foregroundColor(.elevateDarkGreen)
+                                        .font(.system(size: 20))
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(organizationName)
+                                        .scaledFont(size: 16, weight: .bold)
+                                        .foregroundColor(.black)
+                                    Text(organizationCode)
+                                        .scaledFont(size: 12, weight: .semibold, design: .monospaced)
+                                        .foregroundColor(.elevateTextGray)
+                                }
+                                
+                                Spacer()
+                                
+                                Text("ACTIVE")
+                                    .scaledFont(size: 8, weight: .bold)
                                     .foregroundColor(.elevateDarkGreen)
-                                Text(organizationCode)
-                                    .scaledFont(size: 12)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.elevateDarkGreen.opacity(0.1))
+                                    .cornerRadius(6)
                             }
+                            .padding(16)
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
-                        .padding(20)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
                         
-                        // APP SETTINGS
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("APP SETTINGS")
-                                .scaledFont(size: 12, weight: .bold)
+                        // PREFERENCES & SETTINGS
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("PREFERENCES")
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
+                                .tracking(1)
+                                .padding(.horizontal, 4)
                             
                             VStack(spacing: 0) {
-                                AppSettingToggleRow(title: "Enable Face ID", subtitle: "Secure biometric login", icon: "faceid", isOn: $biometricLoginEnabled)
+                                AppSettingToggleRow(title: "Face ID Authentication", subtitle: "Secure your sessions", icon: "faceid", isOn: $biometricLoginEnabled)
                                 Divider().padding(.leading, 64)
-                                AppSettingToggleRow(title: "Notification Preferences", subtitle: "Manage push alerts", icon: "bell", isOn: $pushNotificationsEnabled)
+                                AppSettingToggleRow(title: "Push Notifications", subtitle: "Stay updated on new jobs", icon: "bell.fill", isOn: $pushNotificationsEnabled)
                                 Divider().padding(.leading, 64)
                                 
                                 NavigationLink(destination: TechnicianAccessibilityView()) {
                                     HStack(spacing: 16) {
-                                        Image(systemName: "figure.arms.open")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.elevateDarkGreen)
-                                            .frame(width: 32, height: 32)
-                                            .background(Color.elevateLightGray)
-                                            .cornerRadius(6)
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Color.elevateDarkGreen.opacity(0.05))
+                                                .frame(width: 36, height: 36)
+                                            Image(systemName: "figure.arms.open")
+                                                .foregroundColor(.elevateDarkGreen)
+                                                .font(.system(size: 16, weight: .bold))
+                                        }
                                         
-                                        Text("Accessibility Settings")
-                                            .scaledFont(size: 16, weight: .semibold)
-                                            .foregroundColor(.black)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Accessibility")
+                                                .scaledFont(size: 15, weight: .semibold)
+                                                .foregroundColor(.black)
+                                            Text("Optimize for your needs")
+                                                .scaledFont(size: 11)
+                                                .foregroundColor(.elevateTextGray)
+                                        }
                                         
                                         Spacer()
                                         
                                         Image(systemName: "chevron.right")
-                                            .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(.gray)
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.elevateLightGray)
                                     }
-                                    .padding(.vertical, 16)
-                                    .padding(.horizontal, 20)
+                                    .padding(16)
                                 }
                             }
                             .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+                            .cornerRadius(16)
+                            .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
                         
-                        // LOGOUT
-                        Button(action: { showLogoutConfirmation = true }) {
-                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
-                                .scaledFont(size: 16, weight: .semibold)
+                        // ACCOUNT ACTIONS
+                        VStack(spacing: 16) {
+                            Button(action: { showLogoutConfirmation = true }) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    Text("Log Out")
+                                        .scaledFont(size: 15, weight: .bold)
+                                }
+                                .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.red.opacity(0.05))
+                                .cornerRadius(16)
+                            }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .tint(.red)
-                        .accessibilityLabel("Log out")
-                        .accessibilityHint("Double tap to sign out of your account")
+                        .padding(.top, 8)
                         
                     }
                     .padding(.horizontal, 24)
@@ -253,29 +288,30 @@ struct AppSettingToggleRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(.gray)
-                .frame(width: 32, height: 32)
-                .background(Color.elevateLightGray)
-                .cornerRadius(6)
-                .accessibilityHidden(true)
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.elevateDarkGreen.opacity(0.05))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .foregroundColor(.elevateDarkGreen)
+                    .font(.system(size: 16, weight: .bold))
+            }
+            .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .scaledFont(size: 16, weight: .semibold)
+                    .scaledFont(size: 15, weight: .semibold)
                 Text(subtitle)
-                    .scaledFont(size: 12)
-                    .foregroundColor(.gray)
+                    .scaledFont(size: 11)
+                    .foregroundColor(.elevateTextGray)
             }
             Spacer()
             
             Toggle("", isOn: $isOn)
-                .tint(.elevateDarkGreen)
+                .tint(Color.elevateDarkGreen)
                 .labelsHidden()
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
+        .padding(16)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
         .accessibilityValue(isOn ? "On" : "Off")

@@ -10,9 +10,7 @@ struct ManagerMembersView: View {
     var filteredMembers: [User] {
         if searchText.isEmpty { return viewModel.members }
         return viewModel.members.filter {
-            let name = $0.displayName.isEmpty ? $0.username : $0.displayName
-            return name.localizedCaseInsensitiveContains(searchText) ||
-                   $0.role.localizedCaseInsensitiveContains(searchText)
+            $0.displayName.localizedCaseInsensitiveContains(searchText)
         }
     }
 
@@ -28,68 +26,65 @@ struct ManagerMembersView: View {
                 .background(Color.white)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        searchBar
+                    VStack(alignment: .leading, spacing: 28) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Team Members")
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
+                            Text("Manage and coordinate your active personnel.")
+                                .scaledFont(size: 14)
+                                .foregroundColor(.elevateTextGray)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 24)
 
-                        HStack(alignment: .center) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Members")
-                                    .scaledFont(size: 22, weight: .bold, design: .rounded)
-                                Text("\(filteredMembers.count) Active")
-                                    .scaledFont(size: 12)
-                                    .foregroundColor(.elevateTextGray)
-                            }
-
-                            Spacer()
-
-                            Button(action: {
-                                router.currentScreen = .addMember
-                                router.selectedTab = .profile
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "person.badge.plus")
-                                    Text("Add New")
+                        VStack(spacing: 16) {
+                            HStack(spacing: 12) {
+                                CustomSearchBar(text: $searchText, placeholder: "Search by display name...")
+                                
+                                Button(action: {
+                                    router.currentScreen = .addMember
+                                    router.selectedTab = .profile
+                                }) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 14))
+                                        Text("Add")
+                                            .scaledFont(size: 12, weight: .bold)
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color.elevateDarkGreen)
+                                    .cornerRadius(10)
                                 }
-                                .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(.white)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 14)
-                                .background(Color.elevateDarkGreen)
-                                .cornerRadius(12)
-                                .shadow(color: Color.elevateDarkGreen.opacity(0.25), radius: 6, x: 0, y: 4)
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Add new member")
-                        }
-                        .padding(.horizontal, 24)
+                            .padding(.horizontal, 24)
 
-                        VStack(spacing: 12) {
-                            ForEach(filteredMembers) { member in
-                                memberRow(member)
+                            if filteredMembers.isEmpty {
+                                EmptyStateView(title: "No Members Found", message: "Try a different search term or add a new team member.")
+                                    .padding(.top, 40)
+                            } else {
+                                VStack(spacing: 14) {
+                                    ForEach(filteredMembers) { member in
+                                        memberRow(member)
+                                    }
+                                }
+                                .padding(.horizontal, 24)
                             }
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 24)
+                        
+                        // Bottom buffer for smooth scrolling
+                        Color.clear.frame(height: 20)
                     }
-                    .padding(.top, 12)
                 }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 96)
-                }
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
         .navigationBarHidden(true)
         .onAppear {
             guard let user = appSession.currentUser else { return }
             viewModel.load(organizationId: user.organizationId, isOnline: NetworkService.shared.isOnline)
-        }
-        .alert("Members", isPresented: Binding(
-            get: { viewModel.errorMessage != nil },
-            set: { _ in viewModel.errorMessage = nil }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "")
         }
         .sheet(item: $editingMember) { member in
             MemberEditorView(member: member, onSave: { draft in
@@ -99,99 +94,78 @@ struct ManagerMembersView: View {
                     role: draft.role,
                     email: draft.email,
                     phone: draft.phone,
+                    password: draft.password,
                     profileImage: draft.profileImage,
                     isOnline: NetworkService.shared.isOnline
                 )
             }, onDelete: {
-                viewModel.deleteMember(member, isOnline: NetworkService.shared.isOnline) { success in
-                    if success {
-                        // deleted successfully
-                    }
-                }
+                viewModel.deleteMember(member, isOnline: NetworkService.shared.isOnline) { _ in }
             })
         }
     }
 
-    private var searchBar: some View {
-        CustomSearchBar(text: $searchText, placeholder: "Search members...")
-        .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
-        .padding(.horizontal, 24)
-    }
-
     private func memberRow(_ member: User) -> some View {
         let name = member.displayName.isEmpty ? member.username : member.displayName
-        let role = member.role.isEmpty ? "Member" : member.role.capitalized
+        let role = member.role.capitalized
 
         return HStack(spacing: 12) {
-            // Avatar — shows uploaded profile photo if available
-            ProfilePhotoView(userId: member.id, size: 52)
-                .overlay(alignment: .bottomTrailing) {
+            // Avatar
+            ProfilePhotoView(userId: member.id, size: 54)
+                .overlay(
                     Circle()
-                        .fill(Color.elevateDarkGreen)
-                        .frame(width: 10, height: 10)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
-                        .offset(x: 2, y: 2)
-                }
+                        .stroke(Color.elevateLightGray.opacity(0.5), lineWidth: 1)
+                )
 
-            // Name + Role
-            VStack(alignment: .leading, spacing: 4) {
+            // Info
+            VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .scaledFont(size: 14, weight: .bold)
+                    .scaledFont(size: 15, weight: .bold)
                     .foregroundColor(.black)
-                HStack(spacing: 5) {
-                    Image(systemName: "briefcase.circle")
-                        .font(.system(size: 11))
-                        .foregroundColor(.elevateTextGray)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: member.role.uppercased() == "MANAGER" ? "person.badge.shield.fill" : "hammer.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(.elevateDarkGreen)
+                    
                     Text(role)
-                        .scaledFont(size: 11, weight: .medium)
+                        .scaledFont(size: 11, weight: .semibold)
                         .foregroundColor(.elevateTextGray)
                 }
             }
 
             Spacer()
 
-            // ID Badge
-            Text(shortId(member.id))
-                .scaledFont(size: 11, weight: .bold)
-                .foregroundColor(.elevateDarkGreen)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 5)
-                .frame(minWidth: 52)
-                .background(Color.elevateDarkGreen.opacity(0.08))
-                .cornerRadius(8)
-                .accessibilityLabel("User ID \(shortId(member.id))")
+            // Actions
+            HStack(spacing: 10) {
+                Button(action: {
+                    editingMember = member
+                }) {
+                    Text("Edit")
+                        .scaledFont(size: 11, weight: .bold)
+                        .foregroundColor(.elevateDarkGreen)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .background(Color.elevateDarkGreen.opacity(0.1))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
 
-            // Edit Button — standalone, not nested in a nav button
-            Button(action: {
-                editingMember = member
-            }) {
-                Image(systemName: "square.and.pencil")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.elevateDarkGreen)
-                    .frame(width: 34, height: 34)
-                    .background(Color.elevateDarkGreen.opacity(0.08))
-                    .cornerRadius(10)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.elevateLightGray.opacity(0.5))
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Edit \(name)")
         }
-        .padding(14)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
         .background(Color.white)
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-        // Row tap → member details (using onTapGesture avoids nested-button conflict)
-        .contentShape(Rectangle())
+        .shadow(color: Color.black.opacity(0.01), radius: 5, x: 0, y: 2)
         .onTapGesture {
+            HapticManager.shared.playNotification(type: .success)
             router.selectedMemberId = member.id
             router.currentScreen = .memberDetails
             router.selectedTab = .profile
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(name), \(role)")
-    }
-
-    private func shortId(_ id: String) -> String {
-        String(id.prefix(6)).uppercased()
     }
 }
 

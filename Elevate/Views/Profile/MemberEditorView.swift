@@ -6,6 +6,7 @@ struct MemberEditorDraft {
     var role: String
     var email: String
     var phone: String
+    var password: String?
     var profileImage: UIImage?
 }
 
@@ -15,16 +16,40 @@ struct MemberEditorView: View {
     var onDelete: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var appSession: AppSession
+    
     @State private var displayName: String
     @State private var role: String
     @State private var email: String
     @State private var phone: String
+    @State private var password: String = ""
+    @State private var confirmPassword: String = ""
+    
+    // Validation Errors
+    @State private var emailError: String?
+    @State private var phoneError: String?
+    @State private var passwordError: String?
+    @State private var confirmPasswordError: String?
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var selectedImage: UIImage? = nil
     @State private var showingDeleteConfirm = false
 
     private let roleOptions = ["TECHNICIAN", "MANAGER"]
+    
+    private var currentUserRole: String {
+        appSession.currentUser?.role.uppercased() ?? ""
+    }
+    
+    private var targetRole: String {
+        member.role.uppercased()
+    }
+    
+    private var canEditPassword: Bool {
+        if currentUserRole == "OWNER" { return true }
+        if currentUserRole == "MANAGER" && targetRole == "TECHNICIAN" { return true }
+        return false
+    }
 
     init(member: User, onSave: @escaping (MemberEditorDraft) -> Void, onDelete: (() -> Void)? = nil) {
         self.member = member
@@ -44,58 +69,57 @@ struct MemberEditorView: View {
                 // Header
                 HStack {
                     Button("Cancel") { dismiss() }
-                        .scaledFont(size: 15, weight: .medium)
+                        .scaledFont(size: 15, weight: .semibold)
                         .foregroundColor(.elevateTextGray)
-                        .accessibilityLabel("Cancel editing member")
 
                     Spacer()
 
-                    Text("Edit Member")
-                        .scaledFont(size: 16, weight: .bold)
+                    Text("Edit Profile")
+                        .scaledFont(size: 17, weight: .bold, design: .rounded)
 
                     Spacer()
 
-                    if member.role != "OWNER" {
-                        Button("Save") { saveAndDismiss() }
-                            .scaledFont(size: 15, weight: .bold)
-                            .foregroundColor(.elevateDarkGreen)
-                            .accessibilityLabel("Save member changes")
-                    } else {
-                        // Empty spacer equivalent to keep alignment
-                        Text("Save")
-                            .scaledFont(size: 15, weight: .bold)
-                            .foregroundColor(.clear)
-                            .accessibilityHidden(true)
+                    Button("Save") {
+                        if validate() {
+                            saveAndDismiss()
+                        }
                     }
+                    .scaledFont(size: 15, weight: .bold)
+                    .foregroundColor(.elevateDarkGreen)
+                    .opacity(member.role == "OWNER" && currentUserRole != "OWNER" ? 0.5 : 1.0)
+                    .disabled(member.role == "OWNER" && currentUserRole != "OWNER")
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 14)
+                .padding(.vertical, 16)
                 .background(Color.white)
-                .overlay(Divider(), alignment: .bottom)
+                .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-
-                        // Avatar + name preview
-                        VStack(spacing: 10) {
+                    VStack(spacing: 24) {
+                        
+                        // Avatar Section
+                        VStack(spacing: 16) {
                             ZStack(alignment: .bottomTrailing) {
                                 if let selectedImage = selectedImage {
                                     Image(uiImage: selectedImage)
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
-                                        .frame(width: 72, height: 72)
+                                        .frame(width: 100, height: 100)
                                         .clipShape(Circle())
                                 } else {
-                                    ProfilePhotoView(userId: member.id, size: 72)
+                                    ProfilePhotoView(userId: member.id, size: 100)
                                 }
                                 
-                                PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
-                                    Image(systemName: "camera.circle.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.elevateDarkGreen)
-                                        .background(Circle().fill(Color.white).frame(width: 20, height: 20))
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 32, height: 32)
+                                        .background(Color.elevateDarkGreen)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                 }
-                                .offset(x: 4, y: 4)
+                                .offset(x: 2, y: 2)
                             }
                             .onChange(of: selectedPhotoItem) { _, newItem in
                                 Task {
@@ -106,174 +130,180 @@ struct MemberEditorView: View {
                                     }
                                 }
                             }
-                            Text(displayName.isEmpty ? member.username : displayName)
-                                .scaledFont(size: 18, weight: .bold)
-                                .foregroundColor(.black)
-                                .accessibilityLabel("Member name preview: \(displayName.isEmpty ? member.username : displayName)")
+                            
+                            VStack(spacing: 4) {
+                                Text(displayName.isEmpty ? member.username : displayName)
+                                    .scaledFont(size: 18, weight: .bold)
+                                Text(member.username.uppercased())
+                                    .scaledFont(size: 12, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                                    .tracking(1)
+                            }
                         }
-                        .frame(maxWidth: .infinity)
                         .padding(.top, 24)
-                        .padding(.bottom, 8)
 
-                        // PROFILE SECTION
-                        sectionCard(title: "PROFILE", icon: "person.text.rectangle") {
-                            VStack(spacing: 14) {
-                                editorField(
-                                    label: "FULL NAME",
-                                    placeholder: "Display name",
-                                    icon: "person",
-                                    text: $displayName,
-                                    keyboard: .default
-                                )
+                        // ROLE PICKER (Card Style)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("ACCOUNT ROLE")
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(.elevateTextGray)
+                                .padding(.leading, 4)
 
-                                Divider()
-
-                                // Role Picker
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("ROLE")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
-
-                                    HStack(spacing: 10) {
-                                        ForEach(roleOptions, id: \.self) { option in
-                                            roleChip(option)
-                                        }
-                                    }
+                            HStack(spacing: 12) {
+                                ForEach(roleOptions, id: \.self) { option in
+                                    roleCard(option)
                                 }
                             }
                         }
+                        .padding(.horizontal, 20)
+                        .disabled(member.role == "OWNER")
 
-                        // CONTACT SECTION
-                        sectionCard(title: "CONTACT", icon: "phone.badge.checkmark") {
-                            VStack(spacing: 14) {
-                                editorField(
-                                    label: "EMAIL",
-                                    placeholder: "member@company.com",
-                                    icon: "envelope",
-                                    text: $email,
-                                    keyboard: .emailAddress
-                                )
+                        // INFORMATION SECTION
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text("PERSONAL INFORMATION")
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(.elevateTextGray)
+                                .padding(.leading, 4)
 
-                                Divider()
-
-                                editorField(
-                                    label: "PHONE",
-                                    placeholder: "+1 (555) 000-0000",
-                                    icon: "phone",
-                                    text: $phone,
-                                    keyboard: .phonePad
-                                )
+                            VStack(spacing: 16) {
+                                CustomTextField(title: "DISPLAY NAME", placeholder: "Full name", iconName: "person", text: $displayName)
+                                
+                                CustomTextField(title: "EMAIL ADDRESS", placeholder: "email@example.com", iconName: "envelope", text: $email, errorMessage: emailError)
+                                    .keyboardType(.emailAddress)
+                                
+                                CustomTextField(title: "PHONE NUMBER", placeholder: "077 123 4567", iconName: "phone", text: $phone, errorMessage: phoneError)
+                                    .keyboardType(.phonePad)
                             }
                         }
+                        .padding(.horizontal, 20)
 
-                        // Member ID (read-only)
-                        HStack {
-                            Image(systemName: "tag.circle")
-                                .foregroundColor(.elevateTextGray)
-                                .font(.system(size: 14))
-                            Text("Member ID: \(String(member.id.prefix(8)).uppercased())")
-                                .scaledFont(size: 12)
-                                .foregroundColor(.elevateTextGray)
+                        // PASSWORD SECTION (Conditional)
+                        if canEditPassword {
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("SECURITY")
+                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(.elevateTextGray)
+                                    .padding(.leading, 4)
+
+                                VStack(spacing: 16) {
+                                    SecureCustomTextField(title: "RESET PASSWORD", placeholder: "Enter new password", iconName: "lock", text: $password, errorMessage: passwordError)
+                                    
+                                    SecureCustomTextField(title: "CONFIRM PASSWORD", placeholder: "Re-enter password", iconName: "lock.fill", text: $confirmPassword, errorMessage: confirmPasswordError)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        } else if currentUserRole == "MANAGER" && targetRole == "MANAGER" {
+                            // Informative note for Managers editing other Managers
+                            HStack(spacing: 8) {
+                                Image(systemName: "lock.shield.fill")
+                                    .foregroundColor(.orange)
+                                Text("Password management is restricted for other Managers.")
+                                    .scaledFont(size: 11, weight: .medium)
+                                    .foregroundColor(.elevateTextGray)
+                            }
+                            .padding(.horizontal, 24)
                         }
-                        .padding(.bottom, 16)
-                        .accessibilityLabel("Member ID \(String(member.id.prefix(8)))")
-                        
+
+                        // DELETE SECTION
                         if onDelete != nil && member.role != "OWNER" {
                             Button(action: {
                                 showingDeleteConfirm = true
                             }) {
                                 HStack {
-                                    Image(systemName: "trash")
-                                    Text("Delete Member")
+                                    Image(systemName: "trash.fill")
+                                    Text("Remove Member")
                                 }
                                 .scaledFont(size: 14, weight: .bold)
-                                .foregroundColor(.white)
+                                .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.red)
-                                .cornerRadius(12)
-                                .shadow(color: Color.red.opacity(0.3), radius: 6, x: 0, y: 4)
+                                .padding(.vertical, 16)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(16)
                             }
-                            .padding(.bottom, 40)
-                            .alert("Delete Member", isPresented: $showingDeleteConfirm) {
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                            .alert("Remove Member", isPresented: $showingDeleteConfirm) {
                                 Button("Cancel", role: .cancel) { }
-                                Button("Delete", role: .destructive) {
+                                Button("Remove", role: .destructive) {
                                     onDelete?()
                                     dismiss()
                                 }
                             } message: {
-                                Text("Are you sure you want to delete this member? This action cannot be undone.")
+                                Text("Are you sure you want to remove \(displayName) from the organization? This cannot be undone.")
                             }
-                        } else {
-                            Spacer().frame(height: 40)
                         }
 
+                        // Bottom Spacer
+                        Spacer().frame(height: 100)
                     }
-                    .padding(.horizontal, 20)
-                    .disabled(member.role == "OWNER")
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
         }
     }
 
-    // MARK: - Sub-views
-
-    private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.elevateDarkGreen)
-                Text(title)
-                    .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
-            }
-            content()
-        }
-        .padding(16)
-        .background(Color.white)
-        .cornerRadius(14)
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-    }
-
-    private func editorField(label: String, placeholder: String, icon: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(.elevateTextGray)
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundColor(.elevateTextGray)
-                    .frame(width: 18)
-                TextField(placeholder, text: text)
-                    .scaledFont(size: 15)
-                    .keyboardType(keyboard)
-                    .autocapitalization(.none)
-                    .accessibilityLabel(label)
-            }
-        }
-    }
-
-    private func roleChip(_ option: String) -> some View {
-        let isSelected = role == option
+    private func roleCard(_ option: String) -> some View {
+        let isSelected = role.uppercased() == option.uppercased()
         return Button(action: { role = option }) {
-            HStack(spacing: 6) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 13, weight: .bold))
+            HStack(spacing: 8) {
+                Image(systemName: option.uppercased() == "MANAGER" ? "person.badge.shield.fill" : "hammer.fill")
+                    .font(.system(size: 14))
                 Text(option.capitalized)
-                    .scaledFont(size: 13, weight: .semibold)
+                    .scaledFont(size: 13, weight: .bold)
             }
             .foregroundColor(isSelected ? .white : .elevateDarkGreen)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 14)
-            .background(isSelected ? Color.elevateDarkGreen : Color.elevateDarkGreen.opacity(0.08))
-            .cornerRadius(20)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(isSelected ? Color.elevateDarkGreen : Color.white)
+            .cornerRadius(12)
+            .shadow(color: isSelected ? Color.elevateDarkGreen.opacity(0.2) : Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.clear : Color.elevateLightGray.opacity(0.5), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Role: \(option.capitalized)")
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private func validate() -> Bool {
+        var isValid = true
+        emailError = nil
+        phoneError = nil
+        passwordError = nil
+        confirmPasswordError = nil
+        
+        if !email.isEmpty && !isValidEmail(email) {
+            emailError = "Invalid email format"
+            isValid = false
+        }
+        
+        if !phone.isEmpty && !isValidPhone(phone) {
+            phoneError = "Invalid phone format"
+            isValid = false
+        }
+        
+        if !password.isEmpty {
+            if password.count < 8 {
+                passwordError = "Minimum 8 characters"
+                isValid = false
+            }
+            if password != confirmPassword {
+                confirmPasswordError = "Passwords do not match"
+                isValid = false
+            }
+        }
+        
+        return isValid
+    }
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let regex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        return NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: email)
+    }
+
+    private func isValidPhone(_ phone: String) -> Bool {
+        let regex = "^[\\d\\s\\+\\-\\(\\)]*$"
+        return NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: phone)
     }
 
     private func saveAndDismiss() {
@@ -282,6 +312,7 @@ struct MemberEditorView: View {
             role: role,
             email: email.trimmingCharacters(in: .whitespacesAndNewlines),
             phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
+            password: password.isEmpty ? nil : password,
             profileImage: selectedImage
         )
         onSave(draft)

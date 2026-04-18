@@ -35,7 +35,7 @@ struct ManagerNotificationsView: View {
                         .padding(.horizontal, 24)
                         
                         if viewModel.notifications.isEmpty {
-                            EmptyStateCard()
+                            EmptyStateView(title: "No notifications yet", message: "Updates about jobs, approvals, and inventory will show up here.")
                         } else {
                             NotificationSection(title: "TODAY", items: viewModel.todayItems, onTap: handleTap)
                             NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems, onTap: handleTap)

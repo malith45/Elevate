@@ -63,39 +63,23 @@ struct ManagerMainTabView: View {
                 }
             }
             .environment(\.managerTabRouter, router)
-            .onChange(of: router.selectedTab) { oldTab, newTab in
-                // Only reset screen when the tab actually changed (real tab-bar tap).
-                // Sub-screen navigations set selectedTab to keep the tab highlighted
-                // but also set currentScreen themselves — we must not override that.
-                guard oldTab != newTab else { return }
-                switch newTab {
-                case .dashboard:
-                    router.currentScreen = .dashboard
-                case .jobs:
-                    router.currentScreen = .jobs
-                case .map:
-                    router.currentScreen = .map
-                case .profile:
-                    router.currentScreen = .profile
+            .safeAreaInset(edge: .bottom) {
+                ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
+                    router.selectedTab = tab
+                    switch tab {
+                    case .dashboard:
+                        router.currentScreen = .dashboard
+                    case .jobs:
+                        router.currentScreen = .jobs
+                    case .map:
+                        router.currentScreen = .map
+                    case .profile:
+                        router.currentScreen = .profile
+                    }
                 }
-            }
-
-            ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
-                router.selectedTab = tab
-                switch tab {
-                case .dashboard:
-                    router.currentScreen = .dashboard
-                case .jobs:
-                    router.currentScreen = .jobs
-                case .map:
-                    router.currentScreen = .map
-                case .profile:
-                    router.currentScreen = .profile
-                }
-            }
                 .ignoresSafeArea(.keyboard, edges: .bottom)
                 .padding(.bottom, 8) // Buffer for home indicator
-                .zIndex(1)
+            }
         }
     }
 }

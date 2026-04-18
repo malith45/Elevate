@@ -167,6 +167,7 @@ struct ManagerMemberDetailView: View {
             role: draft.role,
             email: draft.email,
             phone: draft.phone,
+            password: draft.password,
             profileImage: draft.profileImage,
             isOnline: network.isOnline
         )

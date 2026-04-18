@@ -149,9 +149,6 @@ struct ManagerEditProfileView: View {
                                 .cornerRadius(12)
                             }
                             .padding(.horizontal, 24)
-                            .padding(.bottom, 24)
-                            
-                            Spacer().frame(height: 100)
                         }
                     }
                 }

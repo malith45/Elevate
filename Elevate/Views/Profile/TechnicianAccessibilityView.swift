@@ -6,178 +6,159 @@ struct TechnicianAccessibilityView: View {
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
             
             VStack(spacing: 0) {
                 BackHeaderNav()
-                    .background(Color.white)
+                .background(settings.isHighContrast ? Color.black : Color.white)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 16) {
                         
                         // Header
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Accessibility")
-                                .scaledFont(size: 32)
-                                .fontWeight(.black)
-                                .fontDesign(.rounded)
+                                .font(.system(size: 32, weight: .black, design: .rounded))
+                                .foregroundColor(settings.isHighContrast ? .white : .black)
+                            
                             Text("Customize your experience to fit your specific needs and preferences.")
-                                .scaledFont(size: 14)
-                                .foregroundColor(.elevateTextGray)
+                                .font(.system(size: 15))
+                                .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
                                 .lineSpacing(4)
                         }
-                        .padding(.top, 16)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 24)
+                        .padding(.bottom, 12)
                         
-                        // AUDIO / NARRATION
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("AUDIO NARRATION")
-                                .scaledFont(size: 10)
-                                .fontWeight(.bold)
-                                .foregroundColor(.elevateTextGray)
-                            
-                            VStack(spacing: 0) {
-                                AccessToggleRow(title: "In-App Voice Over", desc: "Speak interactions and labels aloud", icon: "speaker.wave.3", isOn: $settings.isVoiceOver)
-                            }
-                            .background(Color.white)
-                            .cornerRadius(12)
-                        }
-                        
-                        // VISION SUPPORT
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("VISION SUPPORT")
-                                .scaledFont(size: 10)
-                                .fontWeight(.bold)
-                                .foregroundColor(.elevateTextGray)
-                            
-                            VStack(spacing: 0) {
-                                AccessToggleRow(title: "High Contrast Mode", desc: "Enhance visibility of UI elements", icon: "circle.lefthalf.fill", isOn: $settings.isHighContrast)
-                            }
-                            .background(Color.white)
-                            .cornerRadius(12)
-                        }
-                        
-                        // TYPOGRAPHY
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("TYPOGRAPHY")
-                                .scaledFont(size: 10)
-                                .fontWeight(.bold)
-                                .foregroundColor(.elevateTextGray)
-                            
-                            VStack(spacing: 24) {
-                                HStack {
-                                    Image(systemName: "textformat")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.elevateDarkGreen)
-                                        .frame(width: 40, height: 40)
-                                        .background(Color.elevateLightGray)
-                                        .cornerRadius(8)
-                                    Text("Text Size Adjustment")
-                                        .scaledFont(size: 14)
-                                        .fontWeight(.bold)
-                                    Spacer()
-                                    Text("DEFAULT")
-                                        .scaledFont(size: 10)
-                                        .fontWeight(.bold)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.elevateLightGray.opacity(0.8))
-                                        .foregroundColor(.elevateDarkGreen)
-                                        .cornerRadius(12)
+                        VStack(spacing: 24) {
+                            // AUDIO / NARRATION
+                            VStack(alignment: .leading, spacing: 12) {
+                                sectionHeader("AUDIO NARRATION")
+                                AccessibleCard {
+                                    AccessToggleRow(
+                                        title: "In-App Voice Over",
+                                        desc: "Speak interactions and labels aloud",
+                                        icon: "speaker.wave.3",
+                                        isOn: $settings.isVoiceOver
+                                    )
+                                    .padding(-20)
                                 }
-                                
-                                HStack {
-                                    Text("A").scaledFont(size: 12).fontWeight(.bold).foregroundColor(.gray)
-                                    Slider(value: $settings.textSize, in: 0...1)
-                                        .accentColor(.elevateDarkGreen)
-                                    Text("A").scaledFont(size: 20).fontWeight(.bold).foregroundColor(.gray)
-                                }
-                                
-                                Text("\"The Precise Monolith aesthetic combines Swiss editorial design with modern glassmorphism.\"")
-                                    .scaledFont(size: 14)
-                                    .lineSpacing(6)
-                                    .italic()
-                                    .padding(20)
-                                    .background(Color.elevateLightGray.opacity(0.5))
-                                    .cornerRadius(8)
                             }
-                            .padding(20)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                        }
-                        
-                        // INTERACTION
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("INTERACTION")
-                                .scaledFont(size: 10)
-                                .fontWeight(.bold)
-                                .foregroundColor(.elevateTextGray)
                             
-                            VStack(spacing: 0) {
-                                AccessToggleRow(title: "Haptic Feedback", desc: "Vibration for interface interactions", icon: "hand.tap", isOn: $settings.hapticFeedback)
+                            // VISION SUPPORT
+                            VStack(alignment: .leading, spacing: 12) {
+                                sectionHeader("VISION SUPPORT")
+                                AccessibleCard {
+                                    AccessToggleRow(
+                                        title: "High Contrast Mode",
+                                        desc: "Enhance visibility of UI elements",
+                                        icon: "circle.lefthalf.fill",
+                                        isOn: $settings.isHighContrast
+                                    )
+                                    .padding(-20)
+                                }
                             }
-                            .background(Color.white)
-                            .cornerRadius(12)
+                            
+                            // TYPOGRAPHY
+                            VStack(alignment: .leading, spacing: 12) {
+                                sectionHeader("TYPOGRAPHY")
+                                
+                                AccessibleCard {
+                                    VStack(spacing: 24) {
+                                        HStack {
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .fill(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateDarkGreen.opacity(0.1))
+                                                    .frame(width: 38, height: 38)
+                                                Image(systemName: "textformat")
+                                                    .font(.system(size: 18, weight: .semibold))
+                                                    .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
+                                            }
+                                            
+                                            Text("Text Size Adjustment")
+                                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                                .foregroundColor(settings.isHighContrast ? .white : .black)
+                                            
+                                            Spacer()
+                                            
+                                            Text("DEFAULT")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateDarkGreen.opacity(0.1))
+                                                .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
+                                                .cornerRadius(8)
+                                        }
+                                        
+                                        HStack(spacing: 16) {
+                                            Text("A").font(.system(size: 12, weight: .bold)).foregroundColor(settings.isHighContrast ? .white : .gray)
+                                            Slider(value: $settings.textSize, in: 0...1)
+                                                .tint(settings.isHighContrast ? .white : .elevateDarkGreen)
+                                            Text("A").font(.system(size: 20, weight: .bold)).foregroundColor(settings.isHighContrast ? .white : .gray)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 12) {
+                                            Text("PREVIEW")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .foregroundColor(settings.isHighContrast ? .white : .gray)
+                                                .tracking(1)
+                                            
+                                            Text("\"The Precise Monolith aesthetic combines Swiss editorial design with modern glassmorphism.\"")
+                                                .font(.system(size: settings.getScaledFontSize(14), weight: .medium, design: .serif))
+                                                .italic()
+                                                .lineSpacing(6)
+                                                .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(20)
+                                                .background(settings.isHighContrast ? Color.white.opacity(0.1) : Color.elevateDarkGreen.opacity(0.05))
+                                                .cornerRadius(12)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                                )
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // INTERACTION
+                            VStack(alignment: .leading, spacing: 12) {
+                                sectionHeader("INTERACTION")
+                                AccessibleCard {
+                                    AccessToggleRow(
+                                        title: "Haptic Feedback",
+                                        desc: "Vibration for interface interactions",
+                                        icon: "hand.tap",
+                                        isOn: $settings.hapticFeedback
+                                    )
+                                    .padding(-20)
+                                }
+                            }
                         }
-                        
+                        .padding(.horizontal, 24)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 40)
                 }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 96)
-                }
+                .scrollBounceBehavior(.basedOnSize)
             }
-            
         }
         .navigationBarHidden(true)
         .speakOnAppear("Accessibility Settings")
     }
-}
-
-struct AccessToggleRow: View {
-    var title: String
-    var desc: String
-    var icon: String
-    @Binding var isOn: Bool
     
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(.elevateDarkGreen)
-                .frame(width: 40, height: 40)
-                .background(Color.elevateLightGray.opacity(0.5))
-                .cornerRadius(8)
-                .accessibilityHidden(true)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .scaledFont(size: 14)
-                    .fontWeight(.bold)
-                Text(desc)
-                    .scaledFont(size: 12)
-                    .foregroundColor(.gray)
-            }
-            Spacer()
-            
-            Toggle("", isOn: Binding(
-                get: { isOn },
-                set: { newValue in
-                    isOn = newValue
-                    HapticManager.shared.playSelection()
-                }
-            ))
-            .tint(.elevateDarkGreen)
-            .labelsHidden()
-        }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
-        .accessibilityValue(isOn ? "On" : "Off")
-        .accessibilityHint(desc)
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundColor(.elevateTextGray)
+            .tracking(1.2)
+            .padding(.horizontal, 4)
     }
 }
+
+#Preview {
+    TechnicianAccessibilityView()
+}
+
 
 #Preview {
     TechnicianAccessibilityView()

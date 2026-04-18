@@ -20,128 +20,114 @@ struct ManagerProfileView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
                         
-                        // User Details
-                        VStack(spacing: 12) {
-                            if let user = appSession.currentUser {
-                                ProfilePhotoView(userId: user.id, size: 100)
-                                    .accessibilityLabel("Profile photo of \(displayName)")
-                                    .accessibilityHint("Go to Edit Profile to change your photo")
-                            } else {
-                                Circle()
-                                    .fill(Color.elevateDarkGreen)
-                                    .frame(width: 100, height: 100)
-                                    .overlay(
-                                        Image(systemName: "person.fill")
-                                            .font(.system(size: 44))
-                                            .foregroundColor(.white)
-                                    )
-                                    .clipShape(Circle())
-                                    .accessibilityLabel("Profile photo placeholder")
-                            }
-                            
-                            Text(displayName)
-                                .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                .accessibilityAddTraits(.isHeader)
-                            
-                            Button(action: {
-                                router.currentScreen = .editProfile
-                                router.selectedTab = .profile
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "square.and.pencil")
-                                        .font(.system(size: 10, weight: .black))
-                                    Text("EDIT PROFILE")
+                        // USER HEADER SECTION
+                        VStack(spacing: 16) {
+                            ZStack(alignment: .bottomTrailing) {
+                                if let user = appSession.currentUser {
+                                    ProfilePhotoView(userId: user.id, size: 110)
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
                                 }
-                                .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .background(Color.elevateDarkGreen)
-                                .cornerRadius(20)
+                                
+                                Button(action: {
+                                    router.currentScreen = .editProfile
+                                    router.selectedTab = .profile
+                                }) {
+                                    Image(systemName: "pencil")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 34, height: 34)
+                                        .background(Color.elevateDarkGreen)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                }
+                                .offset(x: 2, y: 2)
                             }
-                            .accessibilityLabel("Edit profile")
-                            .accessibilityHint("Double tap to edit your profile details")
+                            
+                            VStack(spacing: 4) {
+                                Text(displayName)
+                                    .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                
+                                Text(appSession.currentUser?.role.uppercased() ?? "MANAGER")
+                                    .scaledFont(size: 10, weight: .black)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(Color.elevateDarkGreen)
+                                    .cornerRadius(6)
+                                    .tracking(1)
+                            }
                         }
-                        .padding(.top, 32)
+                        .padding(.top, 24)
                         
                         // ORGANIZATION DETAILS CARD
+                        // ADMINISTRATIVE HUB (Organization Hub)
                         Button(action: {
                             router.currentScreen = .organization
                             router.selectedTab = .profile
                         }) {
-                        
-                            VStack(alignment: .leading, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 20) {
                                 HStack {
-                                    Text("ORGANIZATION DETAILS")
+                                    Text("ADMINISTRATIVE HUB")
                                         .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(.elevateTextGray)
+                                        .tracking(1)
                                     Spacer()
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "building.2")
-                                            .foregroundColor(.gray)
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 12, weight: .bold))
-                                            .foregroundColor(.gray)
-                                    }
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(organizationName)
-                                        .scaledFont(size: 18, weight: .bold)
+                                    Image(systemName: "shield.lefthalf.filled")
+                                        .font(.system(size: 12))
                                         .foregroundColor(.elevateDarkGreen)
-                                    Text(organizationCode)
-                                        .scaledFont(size: 12)
                                 }
+                                .padding(.horizontal, 4)
                                 
-                                Divider().padding(.vertical, 4)
-                                
-                                HStack {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "person.text.rectangle")
+                                HStack(spacing: 16) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.elevateDarkGreen.opacity(0.05))
+                                            .frame(width: 50, height: 50)
+                                        Image(systemName: "building.2.fill")
                                             .foregroundColor(.elevateDarkGreen)
-                                        Text("ORGANIZATION MANAGER")
+                                            .font(.system(size: 20))
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(organizationName)
+                                            .scaledFont(size: 16, weight: .bold)
+                                            .foregroundColor(.black)
+                                        Text("MANAGE ORGANIZATION")
+                                            .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(.elevateDarkGreen)
                                     }
-                                    .scaledFont(size: 10, weight: .bold)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color.elevateLightGray)
-                                    .cornerRadius(10)
-
+                                    
                                     Spacer()
-
-                                    Text("MANAGE")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateDarkGreen)
-                                        .padding(.vertical, 6)
-                                        .padding(.horizontal, 10)
-                                        .background(Color.elevateLightGray)
-                                        .cornerRadius(10)
+                                    
+                                    Image(systemName: "chevron.right.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.elevateDarkGreen.opacity(0.8))
                                 }
+                                .padding(16)
+                                .background(Color.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                             }
-                            .padding(20)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.elevateLightGray, lineWidth: 1)
-                            )
                         }
+                        .buttonStyle(.plain)
                         .buttonStyle(.plain)
                         .accessibilityLabel("Organization: \(organizationName)")
                         .accessibilityHint("Double tap to view organization details")
                         
                         // APP SETTINGS
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("APP SETTINGS")
-                                .scaledFont(size: 12, weight: .bold)
+                        // PREFERENCES & SETTINGS
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("ADMINISTRATIVE SETTINGS")
+                                .scaledFont(size: 10, weight: .bold)
                                 .foregroundColor(.elevateTextGray)
+                                .tracking(1)
+                                .padding(.horizontal, 4)
                             
                             VStack(spacing: 0) {
-                                AppSettingToggleRow(title: "Enable Face ID", subtitle: "Secure biometric login", icon: "faceid", isOn: $biometricLoginEnabled)
+                                AppSettingToggleRow(title: "Face ID Authentication", subtitle: "Secure your sessions", icon: "faceid", isOn: $biometricLoginEnabled)
                                 Divider().padding(.leading, 64)
-                                AppSettingToggleRow(title: "Notification Preferences", subtitle: "Manage push alerts", icon: "bell", isOn: $pushNotificationsEnabled)
+                                AppSettingToggleRow(title: "Push Notifications", subtitle: "Manage push alerts", icon: "bell.fill", isOn: $pushNotificationsEnabled)
                                 Divider().padding(.leading, 64)
                                 
                                 Button(action: {
@@ -149,48 +135,55 @@ struct ManagerProfileView: View {
                                     router.selectedTab = .profile
                                 }) {
                                     HStack(spacing: 16) {
-                                        Image(systemName: "figure.arms.open")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.elevateDarkGreen)
-                                            .frame(width: 32, height: 32)
-                                            .background(Color.elevateLightGray)
-                                            .cornerRadius(6)
-                                            .accessibilityHidden(true)
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Color.elevateDarkGreen.opacity(0.05))
+                                                .frame(width: 36, height: 36)
+                                            Image(systemName: "figure.arms.open")
+                                                .foregroundColor(.elevateDarkGreen)
+                                                .font(.system(size: 16, weight: .bold))
+                                        }
                                         
-                                        Text("Accessibility Settings")
-                                            .scaledFont(size: 16, weight: .semibold)
-                                            .foregroundColor(.black)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Accessibility")
+                                                .scaledFont(size: 15, weight: .semibold)
+                                                .foregroundColor(.black)
+                                            Text("Optimize for your needs")
+                                                .scaledFont(size: 11)
+                                                .foregroundColor(.elevateTextGray)
+                                        }
                                         
                                         Spacer()
                                         
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(.gray)
-                                            .accessibilityHidden(true)
+                                            .foregroundColor(.elevateDarkGreen.opacity(0.6))
                                     }
-                                    .padding(.vertical, 16)
-                                    .padding(.horizontal, 20)
+                                    .padding(16)
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Accessibility Settings")
-                                .accessibilityHint("Double tap to open accessibility options")
                             }
                             .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+                            .cornerRadius(16)
+                            .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
                         
-                        // LOGOUT
-                        Button(action: { showLogoutConfirmation = true }) {
-                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
-                                .scaledFont(size: 16, weight: .semibold)
+                        // ACCOUNT ACTIONS
+                        VStack(spacing: 16) {
+                            Button(action: { showLogoutConfirmation = true }) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    Text("Log Out")
+                                        .scaledFont(size: 15, weight: .bold)
+                                }
+                                .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.red.opacity(0.05))
+                                .cornerRadius(16)
+                            }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .tint(.red)
-                        .accessibilityLabel("Log out")
-                        .accessibilityHint("Double tap to sign out of your account")
+                        .padding(.top, 8)
                         
                     }
                     .padding(.horizontal, 24)

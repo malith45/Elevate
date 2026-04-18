@@ -42,7 +42,7 @@ struct AccessibleCaption: View {
     var body: some View {
         Text(text)
             .font(.system(size: settings.getScaledFontSize(size)))
-            .foregroundColor(settings.isHighContrast ? Color.gray.opacity(0.7) : .gray)
+            .foregroundColor(settings.isHighContrast ? .white : .gray)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(text)
     }
@@ -144,5 +144,59 @@ struct AccessibleCard<Content: View>: View {
                     )
             )
             .accessibilityElement(children: .contain)
+    }
+}
+
+// MARK: - Accessible Toggle Row
+struct AccessToggleRow: View {
+    var title: String
+    var desc: String
+    var icon: String
+    @Binding var isOn: Bool
+    
+    @ObservedObject private var settings = AccessibilitySettings.shared
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateDarkGreen.opacity(0.1))
+                    .frame(width: 38, height: 38)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
+            }
+            .accessibilityHidden(true)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(settings.isHighContrast ? .white : .black)
+                Text(desc)
+                    .font(.system(size: 11))
+                    .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            Toggle("", isOn: Binding(
+                get: { isOn },
+                set: { newValue in
+                    isOn = newValue
+                    HapticManager.shared.playSelection()
+                }
+            ))
+            .tint(.elevateDarkGreen)
+            .labelsHidden()
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityHint(desc)
     }
 }

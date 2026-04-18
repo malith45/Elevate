@@ -93,7 +93,7 @@ struct ManagerJobDetailsView: View {
                                     
                                     Map(position: $cameraPosition) {
                                         Marker("Site", systemImage: "mappin.circle.fill", coordinate: siteCoord)
-                                            .tint(.elevateDarkGreen)
+                                            .tint(Color.elevateDarkGreen)
                                         
                                         if let techCoord = viewModel.technicianLocation {
                                             Marker("Technician", systemImage: "person.circle.fill", coordinate: techCoord)

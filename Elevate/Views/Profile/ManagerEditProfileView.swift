@@ -340,15 +340,15 @@ struct ManagerEditProfileView: View {
         guard let user = appSession.currentUser else { return }
         if !password.isEmpty || !confirmPassword.isEmpty {
             guard password == confirmPassword else {
-                viewModel.errorMessage = "Passwords do not match."
+                viewModel.errorMessage = "Passwords do not match"
                 return
             }
-            guard password.count >= 6 else {
-                viewModel.errorMessage = "Password must be at least 6 characters."
+            let validation = PasswordValidator.validate(password)
+            guard validation.isValid else {
+                viewModel.errorMessage = validation.message ?? "Invalid password"
                 return
             }
         }
-
         viewModel.updateProfile(user: user, username: username, displayName: displayName, email: email, phone: phone, password: password.isEmpty ? nil : password) { updated in
             if let updated = updated {
                 appSession.updateCurrentUser(updated)

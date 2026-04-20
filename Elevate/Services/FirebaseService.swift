@@ -50,7 +50,13 @@ final class FirebaseService {
                 ProfileImageCache.shared.saveRemoteUrl(photoUrl, for: doc.documentID)
             }
 
-            // Optional: validate password against auth provider or a hashed field.
+            // Validate password against stored field.
+            let storedPassword = data["password"] as? String ?? ""
+            if storedPassword != password {
+                completion(.failure(NSError(domain: "Auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Incorrect password."])))
+                return
+            }
+
             completion(.success(user))
         }
     }

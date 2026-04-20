@@ -48,8 +48,9 @@ final class ManagerAddMemberViewModel: ObservableObject {
             isValid = false
         }
         
-        if password.count < 8 {
-            passwordError = "Password must be at least 8 characters"
+        let validation = PasswordValidator.validate(password)
+        if !validation.isValid {
+            passwordError = validation.message
             isValid = false
         }
         

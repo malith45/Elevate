@@ -28,8 +28,10 @@ final class SignUpViewModel: ObservableObject {
             completion(nil)
             return
         }
-        guard password.count >= 8 else {
-            errorMessage = "Password must be at least 8 characters."
+        
+        let validation = PasswordValidator.validate(password)
+        guard validation.isValid else {
+            errorMessage = validation.message
             completion(nil)
             return
         }

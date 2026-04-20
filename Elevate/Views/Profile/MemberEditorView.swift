@@ -291,8 +291,9 @@ struct MemberEditorView: View {
         }
         
         if !password.isEmpty {
-            if password.count < 8 {
-                passwordError = "Minimum 8 characters"
+            let validation = PasswordValidator.validate(password)
+            if !validation.isValid {
+                passwordError = validation.message
                 isValid = false
             }
             if password != confirmPassword {

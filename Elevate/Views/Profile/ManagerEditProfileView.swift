@@ -33,123 +33,140 @@ struct ManagerEditProfileView: View {
                 .background(Color.white)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 32) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text("Edit Profile")
-                                .scaledFont(size: 22, weight: .bold, design: .rounded)
-                            Text("Update your account details")
-                                .scaledFont(size: 12)
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .foregroundColor(.black)
+                            Text("Update your administrative account details and credentials.")
+                                .scaledFont(size: 15)
                                 .foregroundColor(.elevateTextGray)
+                                .lineSpacing(4)
                         }
                         .padding(.horizontal, 24)
-                        .padding(.top, 4)
+                        .padding(.top, 24)
+
+                        VStack(spacing: 28) {
+                            profilePhotoSection
+
+                            VStack(alignment: .leading, spacing: 24) {
+                                
+                                // IDENTITY SECTION
+                                sectionCard(title: "MEMBER IDENTITY", icon: "person.text.rectangle") {
+                                    VStack(spacing: 20) {
+                                        CustomTextField(
+                                            title: "Username",
+                                            placeholder: "Manager username",
+                                            iconName: "person.fill",
+                                            text: $username
+                                        )
+                                        .focused($focusedField, equals: .username)
+                                        .submitLabel(.next)
+                                        .onSubmit { focusedField = .displayName }
+
+                                        CustomTextField(
+                                            title: "Display Name",
+                                            placeholder: "Full Name",
+                                            iconName: "textformat",
+                                            text: $displayName
+                                        )
+                                        .focused($focusedField, equals: .displayName)
+                                        .submitLabel(.next)
+                                        .onSubmit { focusedField = .email }
+                                    }
+                                }
+
+                                // CONTACT SECTION
+                                sectionCard(title: "CONTACT INFORMATION", icon: "envelope.badge") {
+                                    VStack(spacing: 20) {
+                                        CustomTextField(
+                                            title: "Email Address",
+                                            placeholder: "Email address",
+                                            iconName: "envelope.fill",
+                                            text: $email
+                                        )
+                                        .focused($focusedField, equals: .email)
+                                        .submitLabel(.next)
+                                        .onSubmit { focusedField = .phone }
+                                        .keyboardType(.emailAddress)
+
+                                        CustomTextField(
+                                            title: "Phone Number",
+                                            placeholder: "Phone Number",
+                                            iconName: "phone.fill",
+                                            text: $phone
+                                        )
+                                        .focused($focusedField, equals: .phone)
+                                        .submitLabel(.next)
+                                        .onSubmit { focusedField = .password }
+                                        .keyboardType(.phonePad)
+                                    }
+                                }
+
+                                // SECURITY SECTION
+                                sectionCard(title: "SECURITY ACCESS", icon: "lock.shield") {
+                                    VStack(spacing: 20) {
+                                        SecureCustomTextField(
+                                            title: "New Password",
+                                            placeholder: "Leave blank to keep current",
+                                            iconName: "lock.fill",
+                                            text: $password
+                                        )
+                                        .focused($focusedField, equals: .password)
+                                        .submitLabel(.next)
+                                        .onSubmit { focusedField = .confirmPassword }
+
+                                        SecureCustomTextField(
+                                            title: "Confirm Password",
+                                            placeholder: "••••••••",
+                                            iconName: "lock.shield.fill",
+                                            text: $confirmPassword
+                                        )
+                                        .focused($focusedField, equals: .confirmPassword)
+                                        .submitLabel(.done)
+                                        .onSubmit { focusedField = nil; saveChanges() }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 24)
 
                         VStack(spacing: 16) {
-                            profilePhotoCard
-
-                            CustomTextField(
-                                title: "USERNAME",
-                                placeholder: "Manager username",
-                                iconName: "person",
-                                text: $username
-                            )
-                            .focused($focusedField, equals: .username)
-                            .submitLabel(.next)
-                            .onSubmit { focusedField = .displayName }
-
-                            CustomTextField(
-                                title: "DISPLAY NAME",
-                                placeholder: "Full Name",
-                                iconName: "person.text.rectangle",
-                                text: $displayName
-                            )
-                            .focused($focusedField, equals: .displayName)
-                            .submitLabel(.next)
-                            .onSubmit { focusedField = .email }
-
-                            CustomTextField(
-                                title: "EMAIL",
-                                placeholder: "Email address",
-                                iconName: "envelope",
-                                text: $email
-                            )
-                            .focused($focusedField, equals: .email)
-                            .submitLabel(.next)
-                            .onSubmit { focusedField = .phone }
-                            .keyboardType(.emailAddress)
-
-                            CustomTextField(
-                                title: "PHONE",
-                                placeholder: "Phone Number",
-                                iconName: "phone",
-                                text: $phone
-                            )
-                            .focused($focusedField, equals: .phone)
-                            .submitLabel(.next)
-                            .onSubmit { focusedField = .password }
-                            .keyboardType(.phonePad)
-
-                            SecureCustomTextField(
-                                title: "NEW PASSWORD",
-                                placeholder: "Leave blank to keep current",
-                                iconName: "lock",
-                                text: $password
-                            )
-                            .focused($focusedField, equals: .password)
-                            .submitLabel(.next)
-                            .onSubmit { focusedField = .confirmPassword }
-
-                            SecureCustomTextField(
-                                title: "CONFIRM PASSWORD",
-                                placeholder: "••••••••",
-                                iconName: "lock.fill",
-                                text: $confirmPassword
-                            )
-                            .focused($focusedField, equals: .confirmPassword)
-                            .submitLabel(.done)
-                            .onSubmit { focusedField = nil; saveChanges() }
+                            PrimaryButton(title: "Save Changes", iconName: "checkmark.circle.fill") {
+                                focusedField = nil
+                                saveChanges()
+                            }
+                            
+                            if appSession.currentUser?.role == "OWNER" {
+                                Button(action: { showDropOrgConfirm = true }) {
+                                    HStack {
+                                        Image(systemName: "trash.fill")
+                                        Text("Delete Organization")
+                                    }
+                                    .scaledFont(size: 15, weight: .bold)
+                                    .foregroundColor(.red)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(Color.red.opacity(0.05))
+                                    .cornerRadius(16)
+                                }
+                            } else {
+                                Button(action: { showDeleteProfileConfirm = true }) {
+                                    HStack {
+                                        Image(systemName: "person.badge.minus.fill")
+                                        Text("Delete Account")
+                                    }
+                                    .scaledFont(size: 15, weight: .bold)
+                                    .foregroundColor(.red)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(Color.red.opacity(0.05))
+                                    .cornerRadius(16)
+                                }
+                            }
                         }
                         .padding(.horizontal, 24)
-
-                        PrimaryButton(title: "Save Changes", iconName: nil) {
-                            focusedField = nil
-                            saveChanges()
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 16)
-
-                        if appSession.currentUser?.role == "OWNER" {
-                            Button(action: {
-                                showDropOrgConfirm = true
-                            }) {
-                                HStack {
-                                    Text("Delete Account & Organization")
-                                }
-                                .scaledFont(size: 14, weight: .bold)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.red)
-                                .cornerRadius(12)
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 24)
-                        } else {
-                            Button(action: {
-                                showDeleteProfileConfirm = true
-                            }) {
-                                HStack {
-                                    Text("Delete My Profile")
-                                }
-                                .scaledFont(size: 14, weight: .bold)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.red)
-                                .cornerRadius(12)
-                            }
-                            .padding(.horizontal, 24)
-                        }
+                        .padding(.bottom, 40)
                     }
                 }
                 .scrollBounceBehavior(.basedOnSize)
@@ -232,56 +249,91 @@ struct ManagerEditProfileView: View {
         }
     }
 
-    private var profilePhotoCard: some View {
-        VStack(spacing: 16) {
-            ZStack(alignment: .bottomTrailing) {
-                Circle()
-                    .fill(Color.elevateDarkGreen)
-                    .frame(width: 100, height: 100)
-                    .overlay(
-                        Group {
-                            if let image = profileImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .clipShape(Circle())
-                            } else {
-                                Image(systemName: "person.crop.circle")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                    )
-                    .clipShape(Circle())
+    private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: @escaping () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.elevateDarkGreen)
+                Text(title)
+                    .scaledFont(size: 11, weight: .bold)
+                    .foregroundColor(.elevateTextGray)
+                    .tracking(1)
+            }
+            .padding(.horizontal, 4)
 
-                if isUploadingPhoto {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .frame(width: 32, height: 32)
-                        .background(Color.elevateDarkGreen)
+            VStack(spacing: 20) {
+                content()
+            }
+            .padding(20)
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
+        }
+    }
+
+    private var profilePhotoSection: some View {
+        VStack(spacing: 16) {
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                ZStack(alignment: .bottomTrailing) {
+                    Circle()
+                        .fill(Color.elevateLightGray.opacity(0.5))
+                        .frame(width: 110, height: 110)
+                        .overlay(
+                            Group {
+                                if let image = profileImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFill()
+                                } else {
+                                    Image(systemName: "person.fill.viewfinder")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.elevateDarkGreen.opacity(0.4))
+                                }
+                            }
+                        )
                         .clipShape(Circle())
-                        .offset(x: 4, y: 4)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                        .shadow(color: Color.black.opacity(0.08), radius: 15, x: 0, y: 8)
+                    
+                    if isUploadingPhoto {
+                        Circle()
+                            .fill(Color.elevateDarkGreen)
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            )
+                            .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    } else {
+                        Circle()
+                            .fill(Color.elevateDarkGreen)
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                            )
+                            .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    }
                 }
             }
+            .buttonStyle(.plain)
 
-            VStack(spacing: 8) {
-                Text("PROFILE PHOTO")
-                    .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
-                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    Text(isUploadingPhoto ? "Uploading…" : "Change Photo")
-                        .scaledFont(size: 12, weight: .bold)
-                        .foregroundColor(.elevateDarkGreen)
-                }
-                .buttonStyle(.plain)
-                .disabled(isUploadingPhoto)
+            VStack(spacing: 4) {
+                Text("Tap to change photo")
+                    .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(.elevateDarkGreen)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
+        .padding(.vertical, 24)
         .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+        .cornerRadius(24)
+        .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
     }
 
     private func saveChanges() {

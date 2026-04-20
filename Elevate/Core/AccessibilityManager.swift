@@ -1,11 +1,13 @@
 import SwiftUI
 import Combine
-import AVFoundation
+@preconcurrency import AVFoundation
 
 // MARK: - Voice Over Narrator
-class VoiceOverManager: NSObject, AVSpeechSynthesizerDelegate {
+@MainActor
+class VoiceOverManager: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
     static let shared = VoiceOverManager()
-    private let synthesizer = AVSpeechSynthesizer()
+    @MainActor private let synthesizer = AVSpeechSynthesizer()
+
     
     var isEnabled: Bool = UserDefaults.standard.bool(forKey: "isVoiceOverApp") {
         didSet {

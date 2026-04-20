@@ -170,15 +170,12 @@ struct TechnicianDashboardView: View {
             }
         }
         .navigationBarHidden(true)
-        .background(
-            NavigationLink(
-                destination: navigationDestination,
-                isActive: Binding(
-                    get: { navigationJobId != nil },
-                    set: { if !$0 { navigationJobId = nil } }
-                )
-            ) { EmptyView() }
-        )
+        .navigationDestination(isPresented: Binding(
+            get: { navigationJobId != nil },
+            set: { if !$0 { navigationJobId = nil } }
+        )) {
+            navigationDestination
+        }
         .speakOnAppear("Welcome to your Technician Dashboard")
         .onAppear {
             if let user = appSession.currentUser {

@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import CoreLocation
 
+@MainActor
 final class AppSession: ObservableObject {
     @Published private(set) var currentUser: User?
 

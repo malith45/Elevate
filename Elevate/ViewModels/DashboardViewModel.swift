@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 final class DashboardViewModel: ObservableObject {
     @Published var jobs: [Job] = []
     @Published var totalJobsToday = 0
@@ -18,8 +19,8 @@ final class DashboardViewModel: ObservableObject {
         }
 
         SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
-            let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId) ?? []
-            DispatchQueue.main.async {
+            Task { @MainActor in
+                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId) ?? []
                 self?.applyJobs(refreshed)
                 completion?()
             }

@@ -114,6 +114,35 @@ class AccessibilitySettings: ObservableObject {
         default: return .xxxLarge
         }
     }
+
+    // MARK: - Semantic Theme Tokens
+    var appBackground: Color {
+        isHighContrast ? .black : Color.elevateLightGray.opacity(0.3)
+    }
+    
+    var surfaceColor: Color {
+        isHighContrast ? .black : .white
+    }
+    
+    var primaryText: Color {
+        isHighContrast ? .white : .black
+    }
+    
+    var secondaryText: Color {
+        isHighContrast ? .white : Color.elevateTextGray
+    }
+    
+    var accentColor: Color {
+        isHighContrast ? .white : Color.elevateDarkGreen
+    }
+    
+    var cardStroke: Color {
+        isHighContrast ? .white : .clear
+    }
+    
+    var cardStrokeWidth: CGFloat {
+        isHighContrast ? 3 : 0
+    }
 }
 
 // MARK: - Accessibility Environment Key
@@ -136,6 +165,7 @@ struct GlobalAccessibilityModifier: ViewModifier {
         content
             .environment(\.accessibilitySettings, settings)
             .environment(\.dynamicTypeSize, settings.getDynamicTypeSize())
+            .background(settings.isHighContrast ? Color.black : Color.clear)
     }
 }
 

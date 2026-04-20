@@ -8,12 +8,13 @@ struct JobIssueReportView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = JobIssueReportViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var selectedTab: TabItem = .jobs
     @State private var showCamera = false
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -24,13 +25,13 @@ struct JobIssueReportView: View {
                         
                         Text("Report Issue")
                             .scaledFont(size: 32, weight: .bold, design: .rounded)
-                            .foregroundColor(.elevateDarkGreen)
+                            .foregroundColor(settings.accentColor)
                         
                         // Issue Description
                         VStack(alignment: .leading, spacing: 12) {
                             Text("ISSUE DESCRIPTION")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                             
                             ZStack(alignment: .topLeading) {
                                 if viewModel.issueText.isEmpty {
@@ -44,11 +45,12 @@ struct JobIssueReportView: View {
                                     .padding(8)
                                     .frame(height: 180)
                                     .scrollContentBackground(.hidden)
-                                    .background(Color.white)
+                                    .background(settings.surfaceColor)
+                                    .foregroundColor(settings.primaryText)
                                     .cornerRadius(12)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.elevateLightGray, lineWidth: 1)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                             }
                         }
@@ -57,7 +59,7 @@ struct JobIssueReportView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("PRIORITY LEVEL")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                             
                             HStack(spacing: 16) {
                                 PriorityButton(title: "LOW", isSelected: viewModel.priority == "LOW") { viewModel.priority = "LOW" }
@@ -70,7 +72,7 @@ struct JobIssueReportView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("PHOTO UPLOAD")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
 
                             if !viewModel.attachmentUrls.isEmpty {
                                 ScrollView(.horizontal, showsIndicators: false) {
@@ -100,9 +102,9 @@ struct JobIssueReportView: View {
                                         Text("ADD PHOTO")
                                             .scaledFont(size: 10, weight: .bold)
                                     }
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                     .frame(width: 80, height: 80)
-                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(style: StrokeStyle(lineWidth: 1, dash: [4])).foregroundColor(.elevateTextGray))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(style: StrokeStyle(lineWidth: 1, dash: [4])).foregroundColor(settings.secondaryText))
                                 }
                             }
                         }
@@ -114,8 +116,12 @@ struct JobIssueReportView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                                 .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                )
                         }
                         .padding(.top, 16)
                         
@@ -157,19 +163,20 @@ struct PriorityButton: View {
     var title: String
     var isSelected: Bool
     var action: () -> Void
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         Button(action: action) {
             Text(title)
                 .scaledFont(size: 12, weight: .bold)
-                .foregroundColor(isSelected ? .white : .black)
+                .foregroundColor(isSelected ? .white : settings.primaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(isSelected ? Color.elevateDarkGreen : Color.white)
+                .background(isSelected ? (settings.isHighContrast ? Color.black : Color.elevateDarkGreen) : settings.surfaceColor)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? Color.clear : Color.elevateLightGray, lineWidth: 1)
+                        .stroke(isSelected ? (settings.isHighContrast ? Color.white : Color.clear) : settings.cardStroke, lineWidth: isSelected ? 2 : settings.cardStrokeWidth)
                 )
                 .shadow(color: isSelected ? Color.elevateDarkGreen.opacity(0.3) : Color.clear, radius: 5, x: 0, y: 3)
         }

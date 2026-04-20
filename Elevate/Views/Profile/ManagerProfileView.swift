@@ -4,6 +4,7 @@ import UIKit
 struct ManagerProfileView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ProfileViewModel()
+    @ObservedObject var settings = AccessibilitySettings.shared
     @Environment(\.managerTabRouter) private var router
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
@@ -11,11 +12,12 @@ struct ManagerProfileView: View {
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
                 BrandHeaderNav(showOnlineStatus: false, isManager: true)
+                    .background(settings.isHighContrast ? Color.black : Color.clear)
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
@@ -92,10 +94,10 @@ struct ManagerProfileView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(organizationName)
                                             .scaledFont(size: 16, weight: .bold)
-                                            .foregroundColor(.black)
+                                            .foregroundColor(settings.isHighContrast ? .white : .black)
                                         Text("MANAGE ORGANIZATION")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
+                                            .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
                                     }
                                     
                                     Spacer()
@@ -105,8 +107,12 @@ struct ManagerProfileView: View {
                                         .foregroundColor(.elevateDarkGreen.opacity(0.8))
                                 }
                                 .padding(16)
-                                .background(Color.white)
+                                .background(settings.isHighContrast ? Color.black : Color.white)
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                                )
                                 .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                             }
                         }
@@ -147,10 +153,10 @@ struct ManagerProfileView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Accessibility")
                                                 .scaledFont(size: 15, weight: .semibold)
-                                                .foregroundColor(.black)
+                                                .foregroundColor(settings.isHighContrast ? .white : .black)
                                             Text("Optimize for your needs")
                                                 .scaledFont(size: 11)
-                                                .foregroundColor(.elevateTextGray)
+                                                .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
                                         }
                                         
                                         Spacer()
@@ -163,8 +169,12 @@ struct ManagerProfileView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .background(Color.white)
+                            .background(settings.isHighContrast ? Color.black : Color.white)
                             .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                            )
                             .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
                         

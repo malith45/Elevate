@@ -10,6 +10,7 @@ struct ManagerDashboardView: View {
     @State private var isRefreshing = false
     @State private var showLastSynced = false
     @State private var technicianCount = 0
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
@@ -20,7 +21,7 @@ struct ManagerDashboardView: View {
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.1).ignoresSafeArea() // very light bg
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Bar
@@ -34,10 +35,11 @@ struct ManagerDashboardView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(todayString())
                                 .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                             
                             Text("Good morning, \(appSession.currentUser?.displayName ?? "Marcus")")
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                         }
 
                         if shouldShowSyncStatus {
@@ -62,10 +64,10 @@ struct ManagerDashboardView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("TOTAL JOBS TODAY")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                 Text("\(viewModel.totalJobsToday)")
                                     .scaledFont(size: 40, weight: .bold, design: .rounded)
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .foregroundColor(settings.accentColor)
                             }
                             Spacer()
                             Button(action: {
@@ -84,8 +86,12 @@ struct ManagerDashboardView: View {
                             .buttonStyle(.plain)
                         }
                         .padding(24)
-                        .background(Color.white)
+                        .background(settings.surfaceColor)
                         .cornerRadius(24)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
                         .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         
                         // Pending and Urgent
@@ -94,15 +100,19 @@ struct ManagerDashboardView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("PENDING")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                 Text("\(pendingJobsCount())")
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                    .foregroundColor(.black)
+                                    .foregroundColor(settings.primaryText)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(24)
-                            .background(Color.white)
+                            .background(settings.surfaceColor)
                             .cornerRadius(24)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                            )
                             .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                             
                             // Urgent
@@ -114,10 +124,14 @@ struct ManagerDashboardView: View {
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
                                     .foregroundColor(.red)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(24)
-                            .background(Color.red.opacity(0.1))
+                            .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
                             .cornerRadius(24)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                            )
                         }
 
                         // Technician Availability Map Shortcut
@@ -160,12 +174,17 @@ struct ManagerDashboardView: View {
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(.white.opacity(0.7))
                             }
-                            .padding(24)
+                             .padding(24)
                             .background(
-                                LinearGradient(gradient: Gradient(colors: [Color.elevateDarkGreen, Color.elevateDarkGreen.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                                settings.isHighContrast ? AnyView(Color.black) : 
+                                AnyView(LinearGradient(gradient: Gradient(colors: [Color.elevateDarkGreen, Color.elevateDarkGreen.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing))
                             )
                             .cornerRadius(24)
-                            .shadow(color: Color.elevateDarkGreen.opacity(0.3), radius: 10, x: 0, y: 6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                            )
+                            .shadow(color: settings.isHighContrast ? .clear : Color.elevateDarkGreen.opacity(0.3), radius: 10, x: 0, y: 6)
                         }
                         .buttonStyle(PlainButtonStyle())
                         
@@ -191,10 +210,10 @@ struct ManagerDashboardView: View {
                         
                         // Today's Tasks
                         VStack(alignment: .leading, spacing: 16) {
-                            HStack {
+                             HStack {
                                 Text("TODAY'S TASKS")
                                     .scaledFont(size: 14, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                 Spacer()
                                 Button(action: {
                                     router.currentScreen = .jobs
@@ -202,7 +221,7 @@ struct ManagerDashboardView: View {
                                 }) {
                                     Text("View All")
                                         .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(.elevateDarkGreen)
+                                        .foregroundColor(settings.accentColor)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -260,9 +279,9 @@ struct ManagerDashboardView: View {
                         }
                     }
                 }
-                .background(Color.white) // Ensure scroll container matches aesthetic
+                .background(settings.appBackground) // Ensure scroll container matches aesthetic
             }
-            .background(Color.white)
+            .background(settings.appBackground)
             
         }
         .navigationBarHidden(true)
@@ -389,23 +408,30 @@ struct ManagerShortcutItem: View {
             VStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.white)
+                        .fill(AccessibilitySettings.shared.surfaceColor)
                         .frame(maxWidth: .infinity, minHeight: 72)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+                        )
                         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
                     
                     VStack(spacing: 8) {
                         Circle()
-                            .fill(color)
+                            .fill(AccessibilitySettings.shared.isHighContrast ? Color.black : color)
                             .frame(width: 40, height: 40)
+                            .overlay(
+                                Circle().stroke(Color.white, lineWidth: AccessibilitySettings.shared.isHighContrast ? 2 : 0)
+                            )
                             .overlay(
                                 Image(systemName: icon)
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(iconColor)
+                                    .foregroundColor(AccessibilitySettings.shared.isHighContrast ? .white : iconColor)
                             )
                         
                         Text(title)
                             .scaledFont(size: 9, weight: .bold)
-                            .foregroundColor(.black)
+                            .foregroundColor(AccessibilitySettings.shared.primaryText)
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)

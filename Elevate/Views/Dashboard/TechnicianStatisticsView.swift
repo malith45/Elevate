@@ -6,10 +6,11 @@ struct TechnicianStatisticsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = StatisticsViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -22,10 +23,11 @@ struct TechnicianStatisticsView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("PERFORMANCE ANALYTICS")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                             
                             Text("Your Performance")
                                 .scaledFont(size: 28, weight: .medium, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                         }
                         .padding(.horizontal, 24)
                         
@@ -35,14 +37,15 @@ struct TechnicianStatisticsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Jobs Completed")
                                         .scaledFont(size: 14, weight: .bold)
+                                        .foregroundColor(settings.primaryText)
                                     Text("Last 30 Days")
                                         .scaledFont(size: 12)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
                                 Spacer()
                                 Text("\(viewModel.weeklyStats.reduce(0) { $0 + $1.completed })")
                                     .scaledFont(size: 28, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .foregroundColor(settings.accentColor)
                             }
                             
                             Chart {
@@ -53,7 +56,7 @@ struct TechnicianStatisticsView: View {
                                         y: .value("Total", item.total),
                                         width: .ratio(0.8)
                                     )
-                                    .foregroundStyle(Color.elevateLightGray)
+                                    .foregroundStyle(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateLightGray)
                                     .cornerRadius(8)
                                     
                                     // Foreground dark green bar
@@ -62,7 +65,7 @@ struct TechnicianStatisticsView: View {
                                         y: .value("Completed", item.completed),
                                         width: .ratio(0.4)
                                     )
-                                    .foregroundStyle(Color.elevateDarkGreen)
+                                    .foregroundStyle(settings.accentColor)
                                     .cornerRadius(8)
                                 }
                             }
@@ -73,7 +76,7 @@ struct TechnicianStatisticsView: View {
                                         if let week = value.as(String.self) {
                                             Text(week)
                                                 .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(.elevateTextGray)
+                                                .foregroundColor(settings.secondaryText)
                                         }
                                     }
                                 }
@@ -81,8 +84,12 @@ struct TechnicianStatisticsView: View {
                             .chartYAxis(.hidden)
                         }
                         .padding(24)
-                        .background(Color.white)
+                        .background(settings.surfaceColor)
                         .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
                         .padding(.horizontal, 24)
                         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         
@@ -135,8 +142,12 @@ struct TechnicianStatisticsView: View {
                             .chartYScale(domain: 40...90) // To give some headroom matching the image
                         }
                         .padding(24)
-                        .background(Color.white)
+                        .background(settings.surfaceColor)
                         .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
                         .padding(.horizontal, 24)
                         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         
@@ -179,25 +190,31 @@ struct StatCard: View {
     var icon: String
     var value: String
     var title: String
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(.elevateDarkGreen)
+                .foregroundColor(settings.accentColor)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .scaledFont(size: 24, weight: .regular)
+                    .foregroundColor(settings.primaryText)
                 Text(title)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
     }
 }

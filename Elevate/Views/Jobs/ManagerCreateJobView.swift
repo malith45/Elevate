@@ -7,6 +7,7 @@ struct ManagerCreateJobView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerCreateJobViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var selectedTechnicianId: String?
     @State private var jobTitle = ""
     @State private var location = ""
@@ -23,24 +24,24 @@ struct ManagerCreateJobView: View {
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
                     router.currentScreen = .jobs
                     router.selectedTab = .jobs
                 })
-                .background(Color.white)
+                .background(settings.surfaceColor)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 32) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Create Job")
                                 .scaledFont(size: 34, weight: .black, design: .rounded)
-                                .foregroundColor(.black)
+                                .foregroundColor(settings.primaryText)
                             Text("Dispatch a new field assignment to your technical team.")
                                 .scaledFont(size: 15)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
@@ -52,7 +53,7 @@ struct ManagerCreateJobView: View {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("ASSIGN TECHNICIAN")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateTextGray)
+                                            .foregroundColor(settings.secondaryText)
                                             .tracking(1)
                                         
                                         Menu {
@@ -64,58 +65,73 @@ struct ManagerCreateJobView: View {
                                         } label: {
                                             HStack {
                                                 Image(systemName: "person.badge.shield.checkmark")
-                                                    .foregroundColor(.elevateDarkGreen)
+                                                    .foregroundColor(settings.accentColor)
                                                     .font(.system(size: 14))
                                                 Text(selectedTechnicianLabel())
                                                     .scaledFont(size: 15, weight: .medium)
-                                                    .foregroundColor(selectedTechnicianId == nil ? .elevateTextGray : .black)
+                                                    .foregroundColor(selectedTechnicianId == nil ? settings.secondaryText : settings.primaryText)
                                                 Spacer()
                                                 Image(systemName: "chevron.up.chevron.down")
                                                     .font(.system(size: 12))
-                                                    .foregroundColor(.elevateTextGray)
+                                                    .foregroundColor(settings.secondaryText)
                                             }
                                             .padding(14)
-                                            .background(Color.elevateLightGray.opacity(0.4))
+                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
                                             .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                            )
                                         }
                                     }
 
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("JOB TITLE")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateTextGray)
+                                            .foregroundColor(settings.secondaryText)
                                             .tracking(1)
                                         
                                         TextField("e.g. Annual HVAC Maintenance", text: $jobTitle)
                                             .scaledFont(size: 15)
+                                            .foregroundColor(settings.primaryText)
                                             .padding(14)
-                                            .background(Color.elevateLightGray.opacity(0.4))
+                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
                                             .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                            )
                                     }
 
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("DESCRIPTION")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateTextGray)
+                                            .foregroundColor(settings.secondaryText)
                                             .tracking(1)
                                         
                                         TextEditor(text: $descriptionText)
                                             .frame(height: 100)
                                             .scaledFont(size: 14)
                                             .padding(10)
-                                            .background(Color.elevateLightGray.opacity(0.4))
+                                            .scrollContentBackground(.hidden)
+                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
+                                            .foregroundColor(settings.primaryText)
                                             .cornerRadius(12)
                                             .overlay(
                                                 Group {
                                                     if descriptionText.isEmpty {
                                                         Text("Additional notes or job scope...")
                                                             .scaledFont(size: 14)
-                                                            .foregroundColor(.elevateTextGray.opacity(0.6))
+                                                            .foregroundColor(settings.secondaryText.opacity(0.6))
                                                             .padding(.leading, 14)
                                                             .padding(.top, 14)
                                                     }
                                                 },
                                                 alignment: .topLeading
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                     }
                                 }
@@ -207,20 +223,23 @@ struct ManagerCreateJobView: View {
                                         HStack(spacing: 12) {
                                             ZStack {
                                                 Circle()
-                                                    .fill(isUrgent ? Color.red.opacity(0.1) : Color.elevateLightGray.opacity(0.4))
+                                                    .fill(isUrgent ? Color.red.opacity(0.1) : (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4)))
                                                     .frame(width: 32, height: 32)
+                                                    .overlay(
+                                                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                                                    )
                                                 Image(systemName: "exclamationmark.triangle.fill")
                                                     .font(.system(size: 14))
-                                                    .foregroundColor(isUrgent ? .red : .elevateTextGray)
+                                                    .foregroundColor(isUrgent ? .red : settings.secondaryText)
                                             }
                                             
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text("HIGH PRIORITY")
                                                     .scaledFont(size: 13, weight: .bold)
-                                                    .foregroundColor(isUrgent ? .red : .black)
+                                                    .foregroundColor(isUrgent ? .red : settings.primaryText)
                                                 Text("Mark as urgent")
                                                     .scaledFont(size: 11)
-                                                    .foregroundColor(.elevateTextGray)
+                                                    .foregroundColor(settings.secondaryText)
                                             }
                                         }
                                     }
@@ -262,20 +281,25 @@ struct ManagerCreateJobView: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(settings.accentColor)
                 Text(title)
                     .scaledFont(size: 11, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
                     .tracking(1)
             }
             .padding(.horizontal, 4)
+            .speakOnAppear(title)
 
             VStack(spacing: 20) {
                 content()
             }
             .padding(20)
-            .background(Color.white)
+            .background(settings.surfaceColor)
             .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            )
             .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
         }
     }
@@ -321,11 +345,9 @@ struct ManagerCreateJobView: View {
                     if let request = MKReverseGeocodingRequest(location: location) {
                         let mapItems = try await request.mapItems
                         if let mapItem = mapItems.first {
-                            let placemark = mapItem.placemark
-                            let parts = [placemark.name, placemark.locality, placemark.administrativeArea]
-                            let address = parts.compactMap { $0 }.joined(separator: ", ")
+                            let name = mapItem.name ?? "Pinned location"
                             await MainActor.run {
-                                self.location = address.isEmpty ? "Pinned location" : address
+                                self.location = name
                             }
                         }
                     } else {

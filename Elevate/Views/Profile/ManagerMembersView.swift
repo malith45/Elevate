@@ -4,6 +4,7 @@ struct ManagerMembersView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerMembersViewModel()
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var editingMember: User?
     @State private var searchText = ""
 
@@ -16,23 +17,24 @@ struct ManagerMembersView: View {
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
                     router.currentScreen = .organization
                     router.selectedTab = .profile
                 })
-                .background(Color.white)
+                .background(settings.surfaceColor)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 28) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Team Members")
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                             Text("Manage and coordinate your active personnel.")
                                 .scaledFont(size: 14)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
@@ -54,8 +56,12 @@ struct ManagerMembersView: View {
                                     .foregroundColor(.white)
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 12)
-                                    .background(Color.elevateDarkGreen)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                                     .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -113,23 +119,23 @@ struct ManagerMembersView: View {
             ProfilePhotoView(userId: member.id, size: 54)
                 .overlay(
                     Circle()
-                        .stroke(Color.elevateLightGray.opacity(0.5), lineWidth: 1)
+                        .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 1)
                 )
 
             // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
                     .scaledFont(size: 15, weight: .bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(settings.primaryText)
                 
                 HStack(spacing: 4) {
                     Image(systemName: member.role.uppercased() == "MANAGER" ? "person.badge.shield.fill" : "hammer.fill")
                         .font(.system(size: 9))
-                        .foregroundColor(.elevateDarkGreen)
+                        .foregroundColor(settings.accentColor)
                     
                     Text(role)
                         .scaledFont(size: 11, weight: .semibold)
-                        .foregroundColor(.elevateTextGray)
+                        .foregroundColor(settings.secondaryText)
                 }
             }
 
@@ -142,23 +148,31 @@ struct ManagerMembersView: View {
                 }) {
                     Text("Edit")
                         .scaledFont(size: 11, weight: .bold)
-                        .foregroundColor(.elevateDarkGreen)
+                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
                         .padding(.vertical, 6)
                         .padding(.horizontal, 12)
-                        .background(Color.elevateDarkGreen.opacity(0.1))
+                        .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
                         .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                        )
                 }
                 .buttonStyle(.plain)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.elevateLightGray.opacity(0.5))
+                    .foregroundColor(settings.secondaryText.opacity(0.5))
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.01), radius: 5, x: 0, y: 2)
         .onTapGesture {
             HapticManager.shared.playNotification(type: .success)

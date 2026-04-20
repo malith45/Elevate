@@ -5,13 +5,14 @@ struct ManagerInventoryView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = InventoryViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var searchText = ""
     @State private var isEditorPresented = false
     @State private var editingItem: InventoryItem?
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
@@ -24,7 +25,7 @@ struct ManagerInventoryView: View {
                         searchBar
 
                         HStack(spacing: 16) {
-                            statCard(title: "TOTAL ITEMS", value: "\(viewModel.items.count)", valueColor: .elevateDarkGreen)
+                            statCard(title: "TOTAL ITEMS", value: "\(viewModel.items.count)", valueColor: settings.accentColor)
                             statCard(title: "CRITICAL STOCK", value: "\(criticalItems.count)", valueColor: .red)
                         }
                         .padding(.horizontal, 24)
@@ -34,11 +35,11 @@ struct ManagerInventoryView: View {
                                 HStack {
                                     Text(category.uppercased())
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateDarkGreen)
+                                        .foregroundColor(settings.accentColor)
                                     Spacer()
                                     Text("\(items.count) ITEMS")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
 
                                 ForEach(items, id: \.id) { item in
@@ -70,9 +71,12 @@ struct ManagerInventoryView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(Color.elevateDarkGreen)
+                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                     .clipShape(Circle())
-                    .shadow(color: Color.elevateDarkGreen.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                    )
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
             }
             .padding(.trailing, 24)
             .padding(.bottom, 110)
@@ -138,15 +142,19 @@ struct ManagerInventoryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(.elevateTextGray)
+                .foregroundColor(settings.secondaryText)
             Text(value)
                 .scaledFont(size: 22, weight: .bold)
                 .foregroundColor(valueColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
     }
 
@@ -166,13 +174,14 @@ struct ManagerInventoryView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
                     .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(settings.primaryText)
                     .lineLimit(1)
                 Text("SKU: \(skuText)")
                     .scaledFont(size: 10)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
                 Text("\(item.quantity) units")
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(settings.accentColor)
             }
 
             Spacer()
@@ -190,17 +199,25 @@ struct ManagerInventoryView: View {
                 isEditorPresented = true
             }) {
                 Image(systemName: "square.and.pencil")
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
                     .frame(width: 32, height: 32)
-                    .background(Color.white)
+                    .background(settings.isHighContrast ? Color.black : Color.white)
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                    )
                     .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
         }
         .padding(14)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
     }
 

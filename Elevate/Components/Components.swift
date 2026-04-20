@@ -9,6 +9,7 @@ struct CustomTextField: View {
     var titleAction: AnyView? = nil
     
     @FocusState private var isFocused: Bool
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -33,7 +34,7 @@ struct CustomTextField: View {
                 
                 TextField(placeholder, text: $text)
                     .scaledFont(size: 15)
-                    .foregroundColor(.black)
+                    .foregroundColor(settings.primaryText)
                     .autocapitalization(.none)
                     .focused($isFocused)
             }
@@ -41,13 +42,13 @@ struct CustomTextField: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.elevateLightGray.opacity(isFocused ? 0.5 : 1))
+                    .fill(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(isFocused ? 0.5 : 1))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        errorMessage != nil ? Color.red : (isFocused ? Color.elevateDarkGreen : Color.clear),
-                        lineWidth: 1.5
+                        errorMessage != nil ? Color.red : (isFocused ? settings.accentColor : settings.cardStroke),
+                        lineWidth: settings.isHighContrast ? 3 : (errorMessage != nil || isFocused ? 1.5 : 0)
                     )
             )
             .shadow(color: isFocused ? Color.elevateDarkGreen.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
@@ -158,9 +159,13 @@ struct PrimaryButton: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.elevateDarkGreen)
+            .background(AccessibilitySettings.shared.isHighContrast ? Color.black : Color.elevateDarkGreen)
             .cornerRadius(10)
-            .shadow(color: Color.elevateDarkGreen.opacity(0.3), radius: 5, x: 0, y: 3)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white, lineWidth: AccessibilitySettings.shared.isHighContrast ? 3 : 0)
+            )
+            .shadow(color: AccessibilitySettings.shared.isHighContrast ? .clear : Color.elevateDarkGreen.opacity(0.3), radius: 5, x: 0, y: 3)
         }
     }
 }
@@ -183,12 +188,12 @@ struct SecondaryButton: View {
             .scaledFont(size: 16, weight: .bold)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.white)
+            .background(AccessibilitySettings.shared.isHighContrast ? Color.black : Color.white)
             .cornerRadius(10)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .shadow(color: AccessibilitySettings.shared.isHighContrast ? .clear : Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.elevateLightGray, lineWidth: 1)
+                    .stroke(AccessibilitySettings.shared.isHighContrast ? Color.white : Color.elevateLightGray, lineWidth: AccessibilitySettings.shared.isHighContrast ? 3 : 1)
             )
         }
     }
@@ -209,8 +214,12 @@ struct EmptyStateView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
+        .background(AccessibilitySettings.shared.surfaceColor)
         .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
     }

@@ -8,6 +8,7 @@ struct ManagerJobDetailsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = JobDetailsViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var reportCount = 0
     @State private var cameraPosition: MapCameraPosition = .automatic
 
@@ -15,7 +16,7 @@ struct ManagerJobDetailsView: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
@@ -29,6 +30,7 @@ struct ManagerJobDetailsView: View {
                             HStack {
                                 Text("Job Details")
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                    .foregroundColor(settings.primaryText)
 
                                 Spacer()
 
@@ -51,9 +53,13 @@ struct ManagerJobDetailsView: View {
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
-                                    .background(Color.red.opacity(0.1))
-                                    .foregroundColor(.red)
+                                    .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
+                                    .foregroundColor(settings.isHighContrast ? .white : .red)
                                     .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -62,30 +68,40 @@ struct ManagerJobDetailsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("PROJECT SITE")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                     Text(job.location)
                                         .scaledFont(size: 24, weight: .bold)
-                                        .foregroundColor(.elevateDarkGreen)
+                                        .foregroundColor(settings.accentColor)
                                 }
                                 Spacer()
                                 Text("ID\n\(String(job.id.prefix(8)).uppercased())")
                                     .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                    .foregroundColor(settings.primaryText)
                                     .multilineTextAlignment(.leading)
                                     .padding(12)
-                                    .background(Color.elevateLightGray)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                    )
                             }
 
                             Text(job.notes ?? "No description provided.")
                                 .scaledFont(size: 14)
-                                .foregroundColor(.black.opacity(0.8))
+                                .foregroundColor(settings.primaryText.opacity(0.8))
 
                             Text("Assigned: \(viewModel.assignedTechnician?.displayName ?? job.assignedUserId)")
                                 .scaledFont(size: 12, weight: .bold)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(Color.elevateLightGray)
+                                .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                                .foregroundColor(settings.primaryText)
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                )
 
                             ZStack(alignment: .bottomTrailing) {
                                 if let siteLat = viewModel.job?.siteLatitude, let siteLon = viewModel.job?.siteLongitude {
@@ -204,7 +220,7 @@ struct ManagerJobDetailsView: View {
                                 } else {
                                     Text("No photos submitted yet.")
                                         .scaledFont(size: 12)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
                             }
 
@@ -213,11 +229,15 @@ struct ManagerJobDetailsView: View {
                                     Button(action: { updateStatus(jobId: job.id, status: "HOLD") }) {
                                         Text("Hold Job")
                                             .scaledFont(size: 14, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
+                                            .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 14)
-                                            .background(Color.elevateLightGray)
+                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                                             .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                                            )
                                     }
 
                                     Button(action: { updateStatus(jobId: job.id, status: "CANCELLED") }) {
@@ -237,14 +257,18 @@ struct ManagerJobDetailsView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
-                                        .background(Color.elevateDarkGreen)
+                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                                         .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                        )
                                 }
                             }
                         } else {
                             Text("Loading job details...")
                                 .scaledFont(size: 14)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                         }
                     }
                     .padding(.horizontal, 24)
@@ -280,11 +304,15 @@ struct ManagerJobDetailsView: View {
             Text(title)
                 .scaledFont(size: 10, weight: .bold)
         }
-        .foregroundColor(.elevateDarkGreen)
+        .foregroundColor(settings.isHighContrast ? (title.contains("Site") ? settings.accentColor : .blue) : settings.accentColor)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color.white)
+        .background(settings.isHighContrast ? Color.black : Color.white)
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+        )
     }
 }
 

@@ -6,6 +6,7 @@ struct NotificationBell: View {
     private let localStorage = LocalStorageService.shared
     var isManager: Bool = false
     @Environment(\.managerTabRouter) private var router
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         Group {
@@ -33,7 +34,7 @@ struct NotificationBell: View {
         ZStack(alignment: .topTrailing) {
             Image(systemName: "bell")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.elevateDarkGreen)
+                .foregroundColor(settings.accentColor)
             if unreadCount > 0 {
                 Text("\(min(unreadCount, 99))")
                     .scaledFont(size: 9, weight: .bold)
@@ -63,12 +64,13 @@ struct BrandHeaderNav: View {
     var showOnlineStatus: Bool = false
     var isOnline: Bool = true
     var isManager: Bool = false
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack {
             Text("elevate")
                 .scaledFont(size: 24, weight: .black, design: .rounded)
-                .foregroundColor(.elevateDarkGreen)
+                .foregroundColor(settings.accentColor)
             
             Spacer()
             
@@ -92,7 +94,13 @@ struct BrandHeaderNav: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(Color.white)
+        .background(settings.surfaceColor)
+        .overlay(
+            VStack {
+                Spacer()
+                Rectangle().fill(settings.cardStroke).frame(height: 1)
+            }
+        )
     }
 }
 
@@ -100,6 +108,7 @@ struct BackHeaderNav: View {
     @Environment(\.presentationMode) var presentationMode
     var isManager: Bool = false
     var onBack: (() -> Void)? = nil
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack {
@@ -116,14 +125,20 @@ struct BackHeaderNav: View {
                     Text("Back")
                         .scaledFont(size: 16, weight: .bold)
                 }
-                .foregroundColor(.elevateDarkGreen)
+                .foregroundColor(settings.accentColor)
             }
             Spacer()
             NotificationBell(isManager: isManager)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(Color.white)
+        .background(settings.surfaceColor)
+        .overlay(
+            VStack {
+                Spacer()
+                Rectangle().fill(settings.cardStroke).frame(height: 1)
+            }
+        )
     }
 }
 

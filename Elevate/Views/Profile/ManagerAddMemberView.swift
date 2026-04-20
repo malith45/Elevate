@@ -6,6 +6,7 @@ struct ManagerAddMemberView: View {
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerAddMemberViewModel()
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var selectedRole = "Technician"
     @State private var username = ""
     @State private var displayName = ""
@@ -20,24 +21,24 @@ struct ManagerAddMemberView: View {
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
                     router.currentScreen = .members
                     router.selectedTab = .profile
                 })
-                .background(Color.white)
+                .background(settings.surfaceColor)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 32) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("New Team Member")
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                .foregroundColor(.black)
+                                .foregroundColor(settings.primaryText)
                             Text("Provision a new technician or manager account with role-specific credentials.")
                                 .scaledFont(size: 15)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .lineSpacing(4)
                         }
                         .padding(.horizontal, 24)
@@ -184,88 +185,100 @@ struct ManagerAddMemberView: View {
             .padding(.vertical, 16)
             .background(isSelected ? Color.white : Color.elevateLightGray.opacity(0.2))
             .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? Color.elevateDarkGreen : Color.clear, lineWidth: 2)
-            )
-            .shadow(color: isSelected ? Color.elevateDarkGreen.opacity(0.15) : Color.clear, radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
     }
 
-    private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.elevateDarkGreen)
-                Text(title)
-                    .scaledFont(size: 11, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
-                    .tracking(1)
-            }
-            .padding(.horizontal, 4)
-
-            VStack(spacing: 20) {
-                content()
-            }
-            .padding(20)
-            .background(Color.white)
-            .cornerRadius(20)
-            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
-        }
-    }
-
     private var profilePhotoCard: some View {
         VStack(spacing: 16) {
-            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                ZStack(alignment: .bottomTrailing) {
-                    Circle()
-                        .fill(Color.elevateLightGray.opacity(0.5))
-                        .frame(width: 110, height: 110)
-                        .overlay(
-                            Group {
-                                if let data = memberPhotoData, let image = UIImage(data: data) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                } else {
-                                    Image(systemName: "person.fill.viewfinder")
-                                        .font(.system(size: 40))
-                                        .foregroundColor(.elevateDarkGreen.opacity(0.4))
-                                }
-                            }
-                        )
+            ZStack {
+                if let data = memberPhotoData, let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 4))
-                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                    
+                        .overlay(Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2))
+                } else {
                     Circle()
-                        .fill(Color.elevateDarkGreen)
-                        .frame(width: 36, height: 36)
+                        .fill(settings.isHighContrast ? Color.black : settings.accentColor)
+                        .frame(width: 100, height: 100)
                         .overlay(
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 14, weight: .bold))
+                            Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                        )
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 40))
                                 .foregroundColor(.white)
                         )
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white, lineWidth: 3)
-                        )
-                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                 }
-            }
-            .buttonStyle(.plain)
 
-            Text("Attach Profile Photo")
-                .scaledFont(size: 14, weight: .bold)
-                .foregroundColor(.elevateDarkGreen)
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    Circle()
+                        .fill(settings.isHighContrast ? Color.black : Color.white)
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                        )
+                        .overlay(
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                        )
+                        .shadow(color: Color.black.opacity(0.1), radius: 4)
+                }
+                .offset(x: 35, y: 35)
+            }
+
+            VStack(spacing: 4) {
+                Text("Account Photo")
+                    .scaledFont(size: 16, weight: .bold)
+                    .foregroundColor(settings.primaryText)
+                Text("Recommended: Square JPG or PNG")
+                    .scaledFont(size: 12)
+                    .foregroundColor(settings.secondaryText)
+            }
         }
-        .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
-        .background(Color.white)
-        .cornerRadius(24)
-        .shadow(color: Color.black.opacity(0.04), radius: 15, x: 0, y: 8)
+        .frame(maxWidth: .infinity)
+        .background(settings.surfaceColor)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
+    }
+
+    private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
+                        .frame(width: 30, height: 30)
+                        .overlay(
+                            Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                        )
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(settings.accentColor)
+                }
+
+                Text(title)
+                    .scaledFont(size: 12, weight: .bold)
+                    .foregroundColor(settings.secondaryText)
+                    .tracking(1)
+            }
+
+            content()
+        }
+        .padding(24)
+        .background(settings.surfaceColor)
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
     }
 
     private func createMember() {

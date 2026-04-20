@@ -9,11 +9,12 @@ struct JobDetailsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = JobDetailsViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var showCamera = false
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -26,6 +27,7 @@ struct JobDetailsView: View {
                             HStack {
                                 Text("Job Details")
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                    .foregroundColor(settings.primaryText)
                                 
                                 Spacer()
                                 
@@ -48,30 +50,40 @@ struct JobDetailsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("PROJECT SITE")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                     Text(job.location)
                                         .scaledFont(size: 24, weight: .bold)
-                                        .foregroundColor(.elevateDarkGreen)
+                                        .foregroundColor(settings.accentColor)
                                 }
                                 Spacer()
                                 Text("ID\n\(String(job.id.prefix(8)).uppercased())")
                                     .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                    .foregroundColor(settings.primaryText)
                                     .multilineTextAlignment(.leading)
                                     .padding(12)
-                                    .background(Color.elevateLightGray)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                    )
                             }
                             
                             Text(job.notes ?? "No description provided.")
                                 .scaledFont(size: 14)
-                                .foregroundColor(.black.opacity(0.8))
+                                .foregroundColor(settings.primaryText.opacity(0.8))
                             
                             Text("Assigned: \(viewModel.assignedTechnician?.displayName ?? job.assignedUserId)")
                                 .scaledFont(size: 12, weight: .bold)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(Color.elevateLightGray)
+                                .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                                .foregroundColor(settings.primaryText)
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                )
                         
                         // Map preview
                         ZStack(alignment: .bottomLeading) {
@@ -98,10 +110,10 @@ struct JobDetailsView: View {
                                     VStack(spacing: 8) {
                                         Image(systemName: "map.fill")
                                             .font(.system(size: 40))
-                                            .foregroundColor(.white.opacity(0.4))
+                                            .foregroundColor(settings.isHighContrast ? .white : .white.opacity(0.4))
                                         Text("Location preview unavailable")
                                             .scaledFont(size: 12, weight: .semibold)
-                                            .foregroundColor(.white.opacity(0.7))
+                                            .foregroundColor(settings.isHighContrast ? .white : .white.opacity(0.7))
                                     }
                                 }
                             }
@@ -109,11 +121,15 @@ struct JobDetailsView: View {
                             Button(action: { openInMaps(job) }) {
                                 Text("VIEW IN MAPS")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 8)
-                                    .background(Color.white)
+                                    .background(settings.isHighContrast ? Color.black : Color.white)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                    )
                             }
                             .padding(12)
                         }
@@ -123,11 +139,11 @@ struct JobDetailsView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("APPROVED COST")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                 
                                 Text(currencyString(job.approvedCost))
                                     .scaledFont(size: 16, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .foregroundColor(settings.accentColor)
                             }
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 20)
@@ -202,11 +218,15 @@ struct JobDetailsView: View {
                             Button(action: { updateStatus(jobId: job.id, status: "COMPLETED") }) {
                                 Text("Complete Job")
                                     .scaledFont(size: 16, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen.opacity(0.8))
+                                    .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen.opacity(0.8))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(Color.elevateLightGray)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                                     .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                                    )
                             }
                         }
                         

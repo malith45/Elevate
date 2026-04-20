@@ -6,10 +6,11 @@ struct JobListView: View {
     @StateObject private var viewModel = JobsViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var selectedFilter = 0
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -29,8 +30,12 @@ struct JobListView: View {
                             FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
-                        .background(Color.elevateLightGray)
+                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                         .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                        )
                         .padding(.horizontal, 24)
                         .padding(.top, 4)
                         
@@ -38,12 +43,12 @@ struct JobListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .textCase(.uppercase)
                             
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(.elevateDarkGreen)
+                                .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -157,30 +162,40 @@ struct FilterButton: View {
     var title: String
     var isSelected: Bool
     var action: () -> Void
+    @ObservedObject var settings = AccessibilitySettings.shared
     var body: some View {
         Button(action: action) {
             Text(title)
                 .scaledFont(size: 14, weight: .bold)
-                .foregroundColor(isSelected ? .elevateDarkGreen : .elevateTextGray)
+                .foregroundColor(isSelected ? settings.accentColor : settings.secondaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color.white : Color.clear)
+                .background(isSelected ? settings.surfaceColor : Color.clear)
                 .cornerRadius(6)
-                .shadow(color: isSelected ? Color.black.opacity(0.05) : Color.clear, radius: 2, x: 0, y: 1)
+                .shadow(color: isSelected && !settings.isHighContrast ? Color.black.opacity(0.05) : Color.clear, radius: 2, x: 0, y: 1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(isSelected ? settings.cardStroke : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                )
         }
     }
 }
 
 struct JobCard: View {
     var job: Job
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         NavigationLink(destination: JobDetailsView(jobId: job.id)) {
             JobCardContent(job: job)
         }
         .padding(20)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
         .padding(.horizontal, 24)
     }
@@ -194,6 +209,7 @@ struct JobCard: View {
 
 struct JobCardContent: View {
     var job: Job
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
         VStack(spacing: 16) {
@@ -203,30 +219,42 @@ struct JobCardContent: View {
                         .scaledFont(size: 10, weight: .bold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.elevateLightGray)
-                        .foregroundColor(.elevateTextGray)
+                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                        .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
                         .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(settings.isHighContrast ? .white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                        )
 
                     Text(job.title)
                         .scaledFont(size: 18, weight: .bold)
+                        .foregroundColor(settings.primaryText)
                 }
                 Spacer()
                 Text(timeString(from: job.scheduledAt))
                     .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(settings.secondaryText)
             }
 
             HStack(spacing: 12) {
                 Image(systemName: "mappin.and.ellipse")
                     .frame(width: 32, height: 32)
-                    .background(Color.elevateLightGray)
+                    .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                    .foregroundColor(settings.accentColor)
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                    )
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(job.location)
                         .scaledFont(size: 14, weight: .bold)
+                        .foregroundColor(settings.primaryText)
                     Text(job.notes ?? "")
                         .scaledFont(size: 12)
-                        .foregroundColor(.elevateTextGray)
+                        .foregroundColor(settings.secondaryText)
                 }
                 Spacer()
             }
@@ -245,26 +273,31 @@ struct StatPill: View {
     var value: String
     var title: String
     var isPrimary: Bool
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(isPrimary ? .white : .black)
+                .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .black))
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .scaledFont(size: 28, weight: .bold)
-                    .foregroundColor(isPrimary ? .white : .black)
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .black))
                 Text(title)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(isPrimary ? .white.opacity(0.8) : .elevateTextGray)
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white.opacity(0.8) : .elevateTextGray))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(isPrimary ? Color.elevateDarkGreen : Color.elevateLightGray)
+        .background(settings.isHighContrast ? Color.black : (isPrimary ? Color.elevateDarkGreen : Color.elevateLightGray))
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
     }
 }
 

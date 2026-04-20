@@ -5,6 +5,7 @@ import UIKit
 struct TechnicianProfileView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ProfileViewModel()
+    @ObservedObject var settings = AccessibilitySettings.shared
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var showLogoutConfirmation = false
@@ -12,34 +13,22 @@ struct TechnicianProfileView: View {
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
                 BrandHeaderNav(showOnlineStatus: false)
+                    .background(settings.isHighContrast ? Color.black : Color.clear)
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
                         
                         // USER HEADER SECTION
                         VStack(spacing: 16) {
-                            ZStack(alignment: .bottomTrailing) {
-                                if let user = appSession.currentUser {
-                                    ProfilePhotoView(userId: user.id, size: 110)
-                                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                                }
-                                
-                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .frame(width: 34, height: 34)
-                                        .background(Color.elevateDarkGreen)
-                                        .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                }
-                                .offset(x: 2, y: 2)
+                            if let user = appSession.currentUser {
+                                ProfilePhotoView(userId: user.id, size: 110)
+                                    .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
                             }
                             
                             VStack(spacing: 4) {
@@ -85,10 +74,10 @@ struct TechnicianProfileView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(organizationName)
                                         .scaledFont(size: 16, weight: .bold)
-                                        .foregroundColor(.black)
+                                        .foregroundColor(settings.isHighContrast ? .white : .black)
                                     Text(organizationCode)
                                         .scaledFont(size: 12, weight: .semibold, design: .monospaced)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
                                 }
                                 
                                 Spacer()
@@ -102,8 +91,12 @@ struct TechnicianProfileView: View {
                                     .cornerRadius(6)
                             }
                             .padding(16)
-                            .background(Color.white)
+                            .background(settings.isHighContrast ? Color.black : Color.white)
                             .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                            )
                             .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
                         
@@ -135,10 +128,10 @@ struct TechnicianProfileView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Accessibility")
                                                 .scaledFont(size: 15, weight: .semibold)
-                                                .foregroundColor(.black)
+                                                .foregroundColor(settings.isHighContrast ? .white : .black)
                                             Text("Optimize for your needs")
                                                 .scaledFont(size: 11)
-                                                .foregroundColor(.elevateTextGray)
+                                                .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
                                         }
                                         
                                         Spacer()
@@ -150,8 +143,12 @@ struct TechnicianProfileView: View {
                                     .padding(16)
                                 }
                             }
-                            .background(Color.white)
+                            .background(settings.isHighContrast ? Color.black : Color.white)
                             .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                            )
                             .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
                         
@@ -194,35 +191,7 @@ struct TechnicianProfileView: View {
         .onAppear {
             loadProfile()
         }
-        .onChange(of: selectedPhotoItem) { _, newValue in
-            guard let newValue, let user = appSession.currentUser else { return }
-            Task {
-                if let data = try? await newValue.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
-                    let uploadData = image.jpegData(compressionQuality: 0.85) ?? data
-                    // Save locally first
-                    _ = ProfileImageStore.shared.saveImage(uploadData, for: user.id)
-                    // Notify ProfilePhotoView to refresh
-                    NotificationCenter.default.post(
-                        name: .profilePhotoDidUpdate,
-                        object: nil,
-                        userInfo: ["userId": user.id]
-                    )
-                    ProfilePhotoService.shared.uploadProfilePhoto(data: uploadData, userId: user.id) { result in
-                        DispatchQueue.main.async {
-                            if case .success(let url) = result {
-                                ProfileImageStore.shared.saveRemoteUrl(url, for: user.id)
-                                NotificationCenter.default.post(
-                                    name: .profilePhotoDidUpdate,
-                                    object: nil,
-                                    userInfo: ["userId": user.id]
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
         .onChange(of: pushNotificationsEnabled) { _, newValue in
             guard let user = appSession.currentUser else { return }
             if newValue {
@@ -285,15 +254,16 @@ struct AppSettingToggleRow: View {
     var subtitle: String
     var icon: String
     @Binding var isOn: Bool
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack(spacing: 16) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.elevateDarkGreen.opacity(0.05))
+                    .fill(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateDarkGreen.opacity(0.05))
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
                     .font(.system(size: 16, weight: .bold))
             }
             .accessibilityHidden(true)
@@ -301,9 +271,10 @@ struct AppSettingToggleRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .scaledFont(size: 15, weight: .semibold)
+                    .foregroundColor(settings.isHighContrast ? .white : .black)
                 Text(subtitle)
                     .scaledFont(size: 11)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
             }
             Spacer()
             

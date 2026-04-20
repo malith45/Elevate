@@ -6,10 +6,11 @@ struct ManagerNotificationsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -25,12 +26,13 @@ struct ManagerNotificationsView: View {
                         HStack {
                             Text("Notifications")
                                 .scaledFont(size: 32, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                             Spacer()
                             Button("Clear All") {
                                 clearNotifications()
                             }
                             .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(.elevateDarkGreen)
+                            .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         

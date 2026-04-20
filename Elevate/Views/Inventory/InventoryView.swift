@@ -7,13 +7,14 @@ struct InventoryView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = InventoryViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var searchText: String = ""
     @State private var selectedTab: TabItem = .jobs
     @State private var navigateToQuotation = false
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -31,11 +32,11 @@ struct InventoryView: View {
                                 HStack {
                                     Text(category.uppercased())
                                         .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                     Spacer()
                                     Text("\(items.count) ITEMS AVAILABLE")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
 
                                 ForEach(items, id: \.id) { item in
@@ -58,8 +59,12 @@ struct InventoryView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                                 .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                                )
                         }
                         .padding(.horizontal, 24)
 
@@ -140,6 +145,7 @@ struct InventoryItemCard: View {
     var quantity: Int
     var onAdd: () -> Void
     var onRemove: () -> Void
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack(spacing: 16) {
@@ -153,12 +159,13 @@ struct InventoryItemCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .scaledFont(size: 16, weight: .bold)
+                    .foregroundColor(settings.primaryText)
                 Text(desc)
                     .scaledFont(size: 12)
-                    .foregroundColor(.gray)
+                    .foregroundColor(settings.secondaryText)
                 Text(price)
                     .scaledFont(size: 14, weight: .bold)
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(settings.accentColor)
                     .padding(.top, 4)
             }
             
@@ -170,12 +177,13 @@ struct InventoryItemCard: View {
                     onRemove()
                 }) {
                     Image(systemName: "minus")
-                        .foregroundColor(.black)
+                        .foregroundColor(settings.primaryText)
                         .frame(width: 32, height: 32)
                 }
                 
                 Text("\(quantity)")
                     .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(settings.primaryText)
                     .frame(width: 24)
                     .multilineTextAlignment(.center)
                 
@@ -185,15 +193,22 @@ struct InventoryItemCard: View {
                     Image(systemName: "plus")
                         .foregroundColor(.white)
                         .frame(width: 32, height: 32)
-                        .background(Color.elevateDarkGreen)
+                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                        .overlay(
+                            Rectangle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                        )
                 }
             }
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.elevateLightGray, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(settings.isHighContrast ? Color.white : Color.elevateLightGray, lineWidth: 1))
             .cornerRadius(6)
         }
         .padding(16)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
     }
 }

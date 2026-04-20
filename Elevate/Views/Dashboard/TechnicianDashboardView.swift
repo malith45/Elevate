@@ -9,6 +9,7 @@ struct TechnicianDashboardView: View {
     @State private var isRefreshing = false
     @State private var showLastSynced = false
     @State private var navigationJobId: String?
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
         _selectedTab = selectedTab
@@ -16,7 +17,7 @@ struct TechnicianDashboardView: View {
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Bar
@@ -30,10 +31,11 @@ struct TechnicianDashboardView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(todayString())
                                 .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                             
                             Text("Good morning, \(appSession.currentUser?.displayName ?? "Technician")")
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                         }
 
                         if shouldShowSyncStatus {
@@ -84,8 +86,12 @@ struct TechnicianDashboardView: View {
                                         .foregroundColor(.white)
                                 }
                                 .padding()
-                                .background(Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                                 .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white, lineWidth: settings.isHighContrast ? 3 : 0)
+                                )
                             }
                             .buttonStyle(.plain)
                         }
@@ -115,12 +121,12 @@ struct TechnicianDashboardView: View {
                             HStack {
                                 Text("TODAY'S TASKS")
                                     .scaledFont(size: 14, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                 Spacer()
                                 NavigationLink(destination: JobListView()) {
                                     Text("View All")
                                         .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(.elevateDarkGreen)
+                                        .foregroundColor(settings.accentColor)
                                 }
                             }
                             
@@ -314,15 +320,19 @@ struct ShortcutBoxInternal: View {
         VStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.elevateLightGray)
+                    .fill(AccessibilitySettings.shared.isHighContrast ? Color.black : Color.elevateLightGray)
                     .frame(height: 56)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+                    )
                 Image(systemName: icon)
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(AccessibilitySettings.shared.accentColor)
                     .font(.system(size: 20))
             }
             Text(title)
                 .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(.black)
+                .foregroundColor(AccessibilitySettings.shared.primaryText)
         }
     }
 }
@@ -340,25 +350,31 @@ struct TaskRow: View {
             VStack(spacing: 2) {
                 Text(time)
                     .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(AccessibilitySettings.shared.primaryText)
                 Text(ampm)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(AccessibilitySettings.shared.secondaryText)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .scaledFont(size: 16, weight: .bold)
+                    .foregroundColor(AccessibilitySettings.shared.primaryText)
                 Text(location)
                     .scaledFont(size: 12)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(AccessibilitySettings.shared.secondaryText)
                 
                 Text(priority)
                     .scaledFont(size: 10, weight: .bold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(color.opacity(0.1))
-                    .foregroundColor(color)
+                    .background(AccessibilitySettings.shared.isHighContrast ? Color.black : color.opacity(0.1))
+                    .foregroundColor(AccessibilitySettings.shared.isHighContrast ? .white : color)
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(AccessibilitySettings.shared.isHighContrast ? .white : Color.clear, lineWidth: AccessibilitySettings.shared.isHighContrast ? 2 : 0)
+                    )
             }
             Spacer()
         }

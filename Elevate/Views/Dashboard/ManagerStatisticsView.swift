@@ -7,11 +7,12 @@ struct ManagerStatisticsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = StatisticsViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     @State private var selectedTechnicianId: String?
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -27,7 +28,7 @@ struct ManagerStatisticsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("CHOOSE A MEMBER")
                                 .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(.gray)
+                                .foregroundColor(settings.secondaryText)
                                 .tracking(1.5)
                                 .padding(.horizontal, 24)
                             
@@ -42,19 +43,22 @@ struct ManagerStatisticsView: View {
                                 HStack(spacing: 16) {
                                     ZStack(alignment: .bottomTrailing) {
                                         Circle()
-                                            .fill(Color.elevateLightGray)
+                                            .fill(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                                             .frame(width: 64, height: 64)
+                                            .overlay(
+                                                Circle().stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                            )
                                             .overlay(
                                                 Image(systemName: selectedTechnicianId == nil ? "person.3.fill" : "person.fill")
                                                     .font(.system(size: 32))
-                                                    .foregroundColor(.elevateDarkGreen)
+                                                    .foregroundColor(settings.accentColor)
                                             )
                                         
                                         Circle()
                                             .fill(Color.green)
                                             .frame(width: 14, height: 14)
                                             .overlay(
-                                                Circle().stroke(Color.white, lineWidth: 3)
+                                                Circle().stroke(settings.isHighContrast ? .black : Color.white, lineWidth: 3)
                                             )
                                             .offset(x: -4, y: -4)
                                     }
@@ -62,15 +66,19 @@ struct ManagerStatisticsView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(selectedTechnicianLabel())
                                             .scaledFont(size: 22, weight: .bold, design: .rounded)
-                                            .foregroundColor(.black)
+                                            .foregroundColor(settings.primaryText)
                                         
                                         Text("ONLINE")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
+                                            .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(Color.elevateDarkGreen.opacity(0.15))
+                                            .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen.opacity(0.15))
                                             .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                                            )
                                     }
                                     
                                     Spacer()
@@ -81,14 +89,19 @@ struct ManagerStatisticsView: View {
                                 }
                                 .padding(.vertical, 16)
                                 .padding(.horizontal, 24)
-                                .background(Color.white)
+                                .background(settings.surfaceColor)
                                 .cornerRadius(24)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
                                 .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
                             }
                             .padding(.horizontal, 24)
                             
                             Text(selectedTechnicianId == nil ? "Team Performance" : "\(selectedTechnicianLabel())'s Performance")
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                                 .padding(.horizontal, 24)
                                 .padding(.top, 8)
                         }
@@ -99,14 +112,15 @@ struct ManagerStatisticsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Jobs Completed")
                                         .scaledFont(size: 14, weight: .bold)
+                                        .foregroundColor(settings.primaryText)
                                     Text("Last 30 Days")
                                         .scaledFont(size: 12)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
                                 Spacer()
                                 Text("\(viewModel.weeklyStats.reduce(0) { $0 + $1.completed })")
                                     .scaledFont(size: 28, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .foregroundColor(settings.accentColor)
                             }
                             
                             Chart {
@@ -117,7 +131,7 @@ struct ManagerStatisticsView: View {
                                         y: .value("Total", item.total),
                                         width: .ratio(0.8)
                                     )
-                                    .foregroundStyle(Color.elevateLightGray)
+                                    .foregroundStyle(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateLightGray)
                                     .cornerRadius(8)
                                     
                                     // Foreground dark green bar
@@ -126,7 +140,7 @@ struct ManagerStatisticsView: View {
                                         y: .value("Completed", item.completed),
                                         width: .ratio(0.4)
                                     )
-                                    .foregroundStyle(Color.elevateDarkGreen)
+                                    .foregroundStyle(settings.accentColor)
                                     .cornerRadius(8)
                                 }
                             }
@@ -137,7 +151,7 @@ struct ManagerStatisticsView: View {
                                         if let week = value.as(String.self) {
                                             Text(week)
                                                 .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(.elevateTextGray)
+                                                .foregroundColor(settings.secondaryText)
                                         }
                                     }
                                 }
@@ -145,8 +159,12 @@ struct ManagerStatisticsView: View {
                             .chartYAxis(.hidden)
                         }
                         .padding(24)
-                        .background(Color.white)
+                        .background(settings.surfaceColor)
                         .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
                         .padding(.horizontal, 24)
                         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         
@@ -156,9 +174,10 @@ struct ManagerStatisticsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Efficiency Score")
                                         .scaledFont(size: 14, weight: .bold)
+                                        .foregroundColor(settings.primaryText)
                                     Text(selectedTechnicianId == nil ? "Vs. Target Average" : "Vs. Team Average")
                                         .scaledFont(size: 12)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
                                 Spacer()
                                 HStack(spacing: 4) {
@@ -166,7 +185,7 @@ struct ManagerStatisticsView: View {
                                     Text("12%")
                                 }
                                 .scaledFont(size: 16, weight: .bold)
-                                .foregroundColor(.elevateDarkGreen)
+                                .foregroundColor(settings.accentColor)
                             }
                             
                             Chart {
@@ -199,8 +218,12 @@ struct ManagerStatisticsView: View {
                             .chartYScale(domain: 40...90) // To give some headroom matching the image
                         }
                         .padding(24)
-                        .background(Color.white)
+                        .background(settings.surfaceColor)
                         .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
                         .padding(.horizontal, 24)
                         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         

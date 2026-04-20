@@ -6,10 +6,11 @@ struct TechnicianNotificationsView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -22,12 +23,13 @@ struct TechnicianNotificationsView: View {
                         HStack {
                             Text("Notifications")
                                 .scaledFont(size: 32, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                             Spacer()
                             Button("Clear All") {
                                 clearNotifications()
                             }
                             .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(.elevateDarkGreen)
+                            .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -77,29 +79,38 @@ struct TechnicianNotificationsView: View {
 struct NotificationCard: View {
     var item: NotificationItem
     var onTap: (() -> Void)?
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Unread Indicator Bar
             Rectangle()
-                .fill(item.isRead ? Color.clear : Color.elevateDarkGreen)
+                .fill(item.isRead ? Color.clear : settings.accentColor)
                 .frame(width: 4)
                 .cornerRadius(2)
+                .overlay(
+                    Rectangle()
+                        .stroke(settings.isHighContrast && !item.isRead ? Color.white : Color.clear, lineWidth: 1)
+                )
             
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
                     Text(item.title)
                         .scaledFont(size: 16, weight: .bold)
+                        .foregroundColor(settings.primaryText)
                     Spacer()
                     HStack(spacing: 8) {
                         Text(timeAgo(from: item.createdAt))
                             .scaledFont(size: 10, weight: .bold)
-                            .foregroundColor(.elevateTextGray)
+                            .foregroundColor(settings.secondaryText)
                         
                         if !item.isRead {
                             Circle()
-                                .fill(Color.elevateDarkGreen)
+                                .fill(settings.accentColor)
                                 .frame(width: 8, height: 8)
+                                .overlay(
+                                    Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                )
                         } else {
                             Circle()
                                 .fill(Color.clear)
@@ -110,14 +121,18 @@ struct NotificationCard: View {
                 
                 Text(item.body)
                     .scaledFont(size: 14)
-                    .foregroundColor(Color.gray)
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : Color.gray)
                     .lineSpacing(4)
             }
             .padding(.vertical, 16)
             .padding(.trailing, 16)
         }
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
         .onTapGesture {
@@ -144,13 +159,14 @@ struct NotificationSection: View {
     let items: [NotificationItem]
     var onTap: ((NotificationItem) -> Void)?
     var destinationProvider: ((NotificationItem) -> AnyView?)? = nil
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
         if !items.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
                 Text(title)
                     .scaledFont(size: 12, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
                     .padding(.horizontal, 24)
 
                 ForEach(items) { item in

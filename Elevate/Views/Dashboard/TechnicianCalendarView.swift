@@ -4,13 +4,14 @@ import EventKit
 struct TechnicianCalendarView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = CalendarViewModel()
+    @ObservedObject var settings = AccessibilitySettings.shared
     private let localStorage = LocalStorageService.shared
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -23,6 +24,7 @@ struct TechnicianCalendarView: View {
                         HStack {
                             Text(monthTitle(from: viewModel.currentMonth))
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
 
                             Spacer()
 
@@ -39,7 +41,7 @@ struct TechnicianCalendarView: View {
                                 }
                             }
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.elevateDarkGreen)
+                            .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -52,11 +54,15 @@ struct TechnicianCalendarView: View {
                         }) {
                             Text("Today")
                                 .scaledFont(size: 14, weight: .medium)
-                                .foregroundColor(.elevateDarkGreen)
+                                .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 6)
-                                .background(Color.elevateDarkGreen.opacity(0.1))
+                                .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                )
                         }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 24)
@@ -64,7 +70,7 @@ struct TechnicianCalendarView: View {
                         if viewModel.authorizationStatus == .denied || viewModel.authorizationStatus == .restricted {
                             Text("Enable Calendar access to see your events.")
                                 .scaledFont(size: 14)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .padding(.horizontal, 24)
                         }
 
@@ -75,7 +81,7 @@ struct TechnicianCalendarView: View {
                                 ForEach(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"], id: \.self) { day in
                                     Text(day)
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                         .frame(maxWidth: .infinity)
                                 }
                             }
@@ -89,17 +95,25 @@ struct TechnicianCalendarView: View {
                                         VStack(spacing: 4) {
                                             Text("\(Calendar.current.component(.day, from: date))")
                                                 .scaledFont(size: 16)
-                                                .foregroundColor(isSelected ? .white : .black)
+                                                .foregroundColor(isSelected ? .white : settings.primaryText)
                                                 .frame(width: 32, height: 32)
-                                                .background(isSelected ? Color.elevateDarkGreen : Color.clear)
+                                                .background(isSelected ? (settings.isHighContrast ? Color.black : settings.accentColor) : Color.clear)
                                                 .cornerRadius(16)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(isSelected && settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                                )
                                                 .onTapGesture {
                                                     viewModel.selectedDate = date
                                                 }
 
                                             Circle()
-                                                .fill(viewModel.hasEvents(on: date) ? Color.elevateDarkGreen : Color.clear)
+                                                .fill(viewModel.hasEvents(on: date) ? settings.accentColor : Color.clear)
                                                 .frame(width: 4, height: 4)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(viewModel.hasEvents(on: date) && settings.isHighContrast ? Color.white : Color.clear, lineWidth: 0.5)
+                                                )
                                         }
                                     } else {
                                         Color.clear
@@ -119,7 +133,7 @@ struct TechnicianCalendarView: View {
                             HStack {
                                 Text(dayHeader(from: viewModel.selectedDate))
                                     .scaledFont(size: 12, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
 
                                 Spacer()
 
@@ -127,9 +141,13 @@ struct TechnicianCalendarView: View {
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(Color.elevateDarkGreen.opacity(0.1))
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
+                                    .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                    )
                             }
 
                             if events.isEmpty {
@@ -137,7 +155,7 @@ struct TechnicianCalendarView: View {
                                     Spacer()
                                     Text("No events scheduled for this day")
                                         .scaledFont(size: 14)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                     Spacer()
                                 }
                             } else {
@@ -149,7 +167,7 @@ struct TechnicianCalendarView: View {
                                             ampm: timeParts.ampm,
                                             title: event.title,
                                             location: event.location ?? "No location",
-                                            dotColor: .elevateDarkGreen
+                                            dotColor: settings.accentColor
                                         )
                                     }
                                 }
@@ -183,27 +201,30 @@ struct JobCalendarRow: View {
     var title: String
     var location: String
     var dotColor: Color
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(spacing: 2) {
                 Text(time)
                     .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(settings.primaryText)
                 Text(ampm)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .scaledFont(size: 16, weight: .bold)
+                    .foregroundColor(settings.primaryText)
                 HStack(spacing: 4) {
                     Image(systemName: "mappin.and.ellipse")
                         .font(.system(size: 10))
                     Text(location)
                         .scaledFont(size: 12)
                 }
-                .foregroundColor(.elevateTextGray)
+                .foregroundColor(settings.secondaryText)
             }
             Spacer()
             
@@ -211,7 +232,7 @@ struct JobCalendarRow: View {
                 Circle().fill(dotColor).frame(width: 8, height: 8)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
             }
         }
     }

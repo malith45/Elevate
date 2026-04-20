@@ -15,8 +15,9 @@ struct MemberEditorView: View {
     var onSave: (MemberEditorDraft) -> Void
     var onDelete: (() -> Void)?
 
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     @State private var displayName: String
     @State private var role: String
@@ -63,19 +64,20 @@ struct MemberEditorView: View {
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
                 HStack {
                     Button("Cancel") { dismiss() }
                         .scaledFont(size: 15, weight: .semibold)
-                        .foregroundColor(.elevateTextGray)
+                        .foregroundColor(settings.secondaryText)
 
                     Spacer()
 
                     Text("Edit Profile")
                         .scaledFont(size: 17, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.primaryText)
 
                     Spacer()
 
@@ -85,13 +87,13 @@ struct MemberEditorView: View {
                         }
                     }
                     .scaledFont(size: 15, weight: .bold)
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
                     .opacity(member.role == "OWNER" && currentUserRole != "OWNER" ? 0.5 : 1.0)
                     .disabled(member.role == "OWNER" && currentUserRole != "OWNER")
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .background(Color.white)
+                .background(settings.surfaceColor)
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
 
                 ScrollView(showsIndicators: false) {
@@ -108,6 +110,7 @@ struct MemberEditorView: View {
                                         .clipShape(Circle())
                                 } else {
                                     ProfilePhotoView(userId: member.id, size: 100)
+                                        .overlay(Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2))
                                 }
                                 
                                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
@@ -115,9 +118,9 @@ struct MemberEditorView: View {
                                         .font(.system(size: 14, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, height: 32)
-                                        .background(Color.elevateDarkGreen)
+                                        .background(settings.isHighContrast ? Color.black : settings.accentColor)
                                         .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                        .overlay(Circle().stroke(settings.isHighContrast ? Color.white : Color.white, lineWidth: 2))
                                 }
                                 .offset(x: 2, y: 2)
                             }
@@ -134,9 +137,10 @@ struct MemberEditorView: View {
                             VStack(spacing: 4) {
                                 Text(displayName.isEmpty ? member.username : displayName)
                                     .scaledFont(size: 18, weight: .bold)
+                                    .foregroundColor(settings.primaryText)
                                 Text(member.username.uppercased())
                                     .scaledFont(size: 12, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                     .tracking(1)
                             }
                         }
@@ -146,7 +150,7 @@ struct MemberEditorView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("ACCOUNT ROLE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .padding(.leading, 4)
 
                             HStack(spacing: 12) {
@@ -162,7 +166,7 @@ struct MemberEditorView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             Text("PERSONAL INFORMATION")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .padding(.leading, 4)
 
                             VStack(spacing: 16) {
@@ -182,7 +186,7 @@ struct MemberEditorView: View {
                             VStack(alignment: .leading, spacing: 20) {
                                 Text("SECURITY")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                     .padding(.leading, 4)
 
                                 VStack(spacing: 16) {
@@ -199,7 +203,7 @@ struct MemberEditorView: View {
                                     .foregroundColor(.orange)
                                 Text("Password management is restricted for other Managers.")
                                     .scaledFont(size: 11, weight: .medium)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                             }
                             .padding(.horizontal, 24)
                         }
@@ -217,8 +221,12 @@ struct MemberEditorView: View {
                                 .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(Color.red.opacity(0.1))
+                                .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.isHighContrast ? Color.red : Color.clear, lineWidth: 1)
+                                )
                             }
                             .padding(.horizontal, 20)
                             .padding(.top, 12)
@@ -251,15 +259,15 @@ struct MemberEditorView: View {
                 Text(option.capitalized)
                     .scaledFont(size: 13, weight: .bold)
             }
-            .foregroundColor(isSelected ? .white : .elevateDarkGreen)
+            .foregroundColor(isSelected ? .white : settings.accentColor)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(isSelected ? Color.elevateDarkGreen : Color.white)
+            .background(isSelected ? (settings.isHighContrast ? Color.black : settings.accentColor) : (settings.isHighContrast ? Color.black : settings.surfaceColor))
             .cornerRadius(12)
-            .shadow(color: isSelected ? Color.elevateDarkGreen.opacity(0.2) : Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+            .shadow(color: isSelected ? Color.black.opacity(0.0) : Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : Color.elevateLightGray.opacity(0.5), lineWidth: 1)
+                    .stroke(isSelected ? (settings.isHighContrast ? Color.white : Color.clear) : settings.cardStroke, lineWidth: isSelected ? 2 : settings.cardStrokeWidth)
             )
         }
         .buttonStyle(.plain)

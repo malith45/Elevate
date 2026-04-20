@@ -9,20 +9,21 @@ struct ManagerMemberDetailView: View {
     @State private var editingMember: User?
     @State private var errorMessage: String?
     @ObservedObject private var network = NetworkService.shared
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
                     router.currentScreen = .members
                     router.selectedTab = .profile
                 })
-                .background(Color.white)
+                .background(settings.surfaceColor)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
@@ -77,8 +78,11 @@ struct ManagerMemberDetailView: View {
                 ProfilePhotoView(userId: member.id, size: 80)
             } else {
                 Circle()
-                    .fill(Color.elevateDarkGreen)
+                    .fill(settings.isHighContrast ? Color.black : settings.accentColor)
                     .frame(width: 80, height: 80)
+                    .overlay(
+                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                    )
                     .overlay(
                         Image(systemName: "person.fill")
                             .font(.system(size: 32))
@@ -88,19 +92,28 @@ struct ManagerMemberDetailView: View {
 
             Text(displayName)
                 .scaledFont(size: 22, weight: .bold, design: .rounded)
+                .foregroundColor(settings.primaryText)
 
             Text("ID: \(shortId)")
                 .scaledFont(size: 12, weight: .bold)
-                .foregroundColor(.elevateTextGray)
+                .foregroundColor(settings.isHighContrast ? .white : settings.secondaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color.elevateLightGray)
+                .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                 .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                )
         }
         .frame(maxWidth: .infinity)
         .padding(24)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
         .padding(.horizontal, 24)
     }
@@ -112,8 +125,12 @@ struct ManagerMemberDetailView: View {
             detailRow(label: "Phone", value: member?.phone ?? "-")
         }
         .padding(20)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
         .padding(.horizontal, 24)
     }
@@ -122,10 +139,11 @@ struct ManagerMemberDetailView: View {
         HStack {
             Text(label.uppercased())
                 .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(.elevateTextGray)
+                .foregroundColor(settings.secondaryText)
             Spacer()
             Text(value)
                 .scaledFont(size: 12, weight: .bold)
+                .foregroundColor(settings.primaryText)
         }
     }
 

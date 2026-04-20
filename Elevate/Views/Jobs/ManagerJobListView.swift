@@ -6,10 +6,11 @@ struct ManagerJobListView: View {
     @StateObject private var viewModel = JobsViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var selectedFilter = 0
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
         ZStack {
-            Color.elevateLightGray.opacity(0.3).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Top Nav
@@ -29,8 +30,12 @@ struct ManagerJobListView: View {
                             FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
-                        .background(Color.elevateLightGray)
+                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                         .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                        )
                         .padding(.horizontal, 24)
                         .padding(.top, 4)
 
@@ -38,12 +43,12 @@ struct ManagerJobListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .textCase(.uppercase)
-
+                            
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(.elevateDarkGreen)
+                                .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
 
@@ -151,7 +156,7 @@ struct ManagerJobListView: View {
                 .foregroundColor(.gray.opacity(0.3))
             Text("No jobs found for this filter")
                 .scaledFont(size: 14)
-                .foregroundColor(.gray)
+                .foregroundColor(settings.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -177,12 +182,17 @@ struct ManagerJobListView: View {
 
 private struct ManagerJobCard: View {
     let job: Job
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
         JobCardContent(job: job)
         .padding(20)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
         .padding(.horizontal, 24)
     }

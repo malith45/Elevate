@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct ManagerInventoryView: View {
     @Environment(\.managerTabRouter) private var router
@@ -79,7 +81,7 @@ struct ManagerInventoryView: View {
                     .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
             }
             .padding(.trailing, 24)
-            .padding(.bottom, 110)
+            .padding(.bottom, 24)
         }
         .navigationBarHidden(true)
         .speakOnAppear("Inventory Management Dashboard")
@@ -94,16 +96,24 @@ struct ManagerInventoryView: View {
             }
         }
         .sheet(isPresented: $isEditorPresented) {
-            InventoryEditorView(item: editingItem) { draft in
+            InventoryEditorView(item: editingItem, onDelete: { item in
+                guard let user = appSession.currentUser else { return }
+                viewModel.deleteItem(item, userId: user.id, isOnline: network.isOnline) { _ in
+                    viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
+                }
+            }) { draft in
                 guard let user = appSession.currentUser else { return }
                 if let item = editingItem {
                     viewModel.updateItem(
                         item,
+                        userId: user.id,
                         name: draft.name,
                         category: draft.category,
                         quantity: draft.quantity,
                         unitPrice: draft.unitPrice,
                         sku: draft.sku,
+                        imageUrl: draft.imageUrl,
+                        imageData: draft.imageData,
                         isOnline: network.isOnline
                     ) { _ in
                         viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
@@ -111,11 +121,13 @@ struct ManagerInventoryView: View {
                 } else {
                     viewModel.createItem(
                         organizationId: user.organizationId,
+                        userId: user.id,
                         name: draft.name,
                         category: draft.category,
                         quantity: draft.quantity,
                         unitPrice: draft.unitPrice,
                         sku: draft.sku,
+                        imageData: draft.imageData,
                         isOnline: network.isOnline
                     ) { _ in
                         viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
@@ -163,13 +175,7 @@ struct ManagerInventoryView: View {
 
         return HStack(spacing: 12) {
             let skuText = item.sku ?? "N/A"
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.elevateLightGray.opacity(0.8))
-                .frame(width: 56, height: 56)
-                .overlay(
-                    Image(systemName: "cube.box")
-                        .foregroundColor(.elevateDarkGreen)
-                )
+            inventoryImageView(urlString: item.imageUrl)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -239,6 +245,45 @@ struct ManagerInventoryView: View {
         }
         return ("IN STOCK", Color.elevateLightGray, .elevateDarkGreen)
     }
+
+    private func inventoryImageView(urlString: String?) -> some View {
+        let frame = CGSize(width: 56, height: 56)
+        if let urlString = urlString, let url = URL(string: urlString) {
+            return AnyView(
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        placeholderImage
+                    case .empty:
+                        placeholderImage
+                    @unknown default:
+                        placeholderImage
+                    }
+                }
+                .frame(width: frame.width, height: frame.height)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            )
+        }
+
+        return AnyView(
+            placeholderImage
+                .frame(width: frame.width, height: frame.height)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+        )
+    }
+
+    private var placeholderImage: some View {
+        RoundedRectangle(cornerRadius: 10)
+            .fill(Color.elevateLightGray.opacity(0.8))
+            .overlay(
+                Image(systemName: "cube.box")
+                    .foregroundColor(.elevateDarkGreen)
+            )
+    }
 }
 
 private struct InventoryEditorDraft {
@@ -247,10 +292,13 @@ private struct InventoryEditorDraft {
     var quantity: Int
     var unitPrice: Double
     var sku: String?
+    var imageUrl: String?
+    var imageData: Data?
 }
 
 private struct InventoryEditorView: View {
     let item: InventoryItem?
+    var onDelete: ((InventoryItem) -> Void)?
     var onSave: (InventoryEditorDraft) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -259,14 +307,18 @@ private struct InventoryEditorView: View {
     @State private var quantityText: String
     @State private var unitPriceText: String
     @State private var sku: String
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedPhotoData: Data?
+    @State private var isDeleteAlertPresented = false
 
-    init(item: InventoryItem?, onSave: @escaping (InventoryEditorDraft) -> Void) {
+    init(item: InventoryItem?, onDelete: ((InventoryItem) -> Void)? = nil, onSave: @escaping (InventoryEditorDraft) -> Void) {
         self.item = item
+        self.onDelete = onDelete
         self.onSave = onSave
         _name = State(initialValue: item?.name ?? "")
         _category = State(initialValue: item?.category ?? "")
         _quantityText = State(initialValue: item.map { String($0.quantity) } ?? "0")
-        _unitPriceText = State(initialValue: item.map { String(format: "%.2f", $0.unitPrice) } ?? "0")
+        _unitPriceText = State(initialValue: item.map { String(format: "%.2f", $0.unitPrice) } ?? "")
         _sku = State(initialValue: item?.sku ?? "")
     }
 
@@ -277,13 +329,33 @@ private struct InventoryEditorView: View {
                     TextField("Name", text: $name)
                     TextField("Category", text: $category)
                     TextField("SKU", text: $sku)
+                    TextField("Unit Price (LKR)", text: $unitPriceText)
+                        .keyboardType(.decimalPad)
+                }
+
+                Section(header: Text("PHOTO")) {
+                    HStack(spacing: 16) {
+                        photoPreview
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                            Text(selectedPhotoData == nil ? "Add Photo" : "Change Photo")
+                        }
+                    }
                 }
 
                 Section(header: Text("STOCK")) {
                     TextField("Quantity", text: $quantityText)
                         .keyboardType(.numberPad)
-                    TextField("Unit Price", text: $unitPriceText)
-                        .keyboardType(.decimalPad)
+                }
+
+                if item != nil {
+                    Section {
+                        Button(role: .destructive) {
+                            isDeleteAlertPresented = true
+                        } label: {
+                            Text("Delete Item")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
                 }
             }
             .navigationTitle(item == nil ? "Add Item" : "Edit Item")
@@ -295,7 +367,79 @@ private struct InventoryEditorView: View {
                     Button("Save") { save() }
                 }
             }
+            .alert("Delete Item", isPresented: $isDeleteAlertPresented) {
+                Button("Delete", role: .destructive) {
+                    guard let item = item else { return }
+                    onDelete?(item)
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will remove the item from inventory.")
+            }
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                guard let newItem else {
+                    selectedPhotoData = nil
+                    return
+                }
+                Task {
+                    if let data = try? await newItem.loadTransferable(type: Data.self) {
+                        await MainActor.run {
+                            selectedPhotoData = data
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    private var photoPreview: some View {
+        let size = CGSize(width: 64, height: 64)
+        if let selectedPhotoData, let uiImage = UIImage(data: selectedPhotoData) {
+            return AnyView(
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size.width, height: size.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            )
+        }
+
+        if let urlString = item?.imageUrl, let url = URL(string: urlString) {
+            return AnyView(
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        photoPlaceholder
+                    case .empty:
+                        photoPlaceholder
+                    @unknown default:
+                        photoPlaceholder
+                    }
+                }
+                .frame(width: size.width, height: size.height)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            )
+        }
+
+        return AnyView(
+            photoPlaceholder
+                .frame(width: size.width, height: size.height)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+        )
+    }
+
+    private var photoPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 10)
+            .fill(Color.elevateLightGray.opacity(0.6))
+            .overlay(
+                Image(systemName: "photo")
+                    .foregroundColor(.gray)
+            )
     }
 
     private func save() {
@@ -306,7 +450,9 @@ private struct InventoryEditorView: View {
             category: category,
             quantity: quantity,
             unitPrice: unitPrice,
-            sku: sku.isEmpty ? nil : sku
+            sku: sku.isEmpty ? nil : sku,
+            imageUrl: item?.imageUrl,
+            imageData: selectedPhotoData
         )
         onSave(draft)
         dismiss()

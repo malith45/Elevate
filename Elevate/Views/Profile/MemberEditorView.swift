@@ -192,6 +192,8 @@ struct MemberEditorView: View {
                                 VStack(spacing: 16) {
                                     SecureCustomTextField(title: "RESET PASSWORD", placeholder: "Enter new password", iconName: "lock", text: $password, errorMessage: passwordError)
                                     
+                                    PasswordRequirementsView(password: password)
+
                                     SecureCustomTextField(title: "CONFIRM PASSWORD", placeholder: "Re-enter password", iconName: "lock.fill", text: $confirmPassword, errorMessage: confirmPasswordError)
                                 }
                             }

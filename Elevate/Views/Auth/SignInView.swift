@@ -7,6 +7,8 @@ struct SignInView: View {
     @State private var showAuthError = false
     @State private var authErrorMessage = ""
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
+    private let sessionStore = SessionStore.shared
+    private let localStorage = LocalStorageService.shared
     
     var body: some View {
         NavigationStack {
@@ -119,20 +121,18 @@ struct SignInView: View {
         context.evaluatePolicy(policy, localizedReason: reason) { success, authError in
             DispatchQueue.main.async {
                 if success {
-                    if appSession.currentUser == nil {
-                        let tempUser = User(
-                            id: UUID().uuidString,
-                            organizationId: "LOCAL-AUTH",
-                            username: "biometric.user",
-                            displayName: "Biometric User",
-                            role: "technician",
-                            email: nil,
-                            phone: nil,
-                            latitude: nil,
-                            longitude: nil
-                        )
-                        appSession.signIn(user: tempUser)
+                    if appSession.currentUser != nil {
+                        return
                     }
+
+                    guard let userId = sessionStore.getUserId(),
+                          let user = localStorage.fetchUser(id: userId)
+                    else {
+                        showAuthError(message: "No saved session found. Please sign in with your password first.")
+                        return
+                    }
+
+                    appSession.signIn(user: user)
                 } else {
                     showAuthError(message: authError?.localizedDescription ?? "Authentication failed.")
                 }

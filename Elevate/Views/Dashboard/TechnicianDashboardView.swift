@@ -239,10 +239,19 @@ struct TechnicianDashboardView: View {
     }
 
     private func lastSyncedText() -> String {
-        if network.isOnline {
-            return "Last synced now"
+        guard let lastSyncAt = syncManager.lastSyncAt else {
+            return network.isOnline ? "Last synced just now" : "Last synced -"
         }
-        return "Last synced 4m ago"
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        let relative = formatter.localizedString(for: lastSyncAt, relativeTo: Date())
+
+        if abs(lastSyncAt.timeIntervalSinceNow) < 60 {
+            return "Last synced just now"
+        }
+
+        return "Last synced \(relative)"
     }
 
     private func syncStatusColor() -> Color {

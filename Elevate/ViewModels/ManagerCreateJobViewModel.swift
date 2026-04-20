@@ -27,7 +27,7 @@ final class ManagerCreateJobViewModel: ObservableObject {
         }
     }
 
-    func createJob(organizationId: String, assignedUserId: String, title: String, location: String, scheduledAt: Date, notes: String?, isUrgent: Bool, siteLatitude: Double?, siteLongitude: Double?, isOnline: Bool, completion: @escaping (Job?) -> Void) {
+    func createJob(organizationId: String, userId: String, assignedUserId: String, title: String, location: String, scheduledAt: Date, notes: String?, isUrgent: Bool, siteLatitude: Double?, siteLongitude: Double?, isOnline: Bool, completion: @escaping (Job?) -> Void) {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
@@ -76,6 +76,7 @@ final class ManagerCreateJobViewModel: ObservableObject {
         }
 
         guard isOnline else {
+            SyncManager.shared.enqueueCreateJob(job, organizationId: organizationId, userId: userId)
             isSaving = false
             completion(job)
             return

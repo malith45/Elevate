@@ -11,7 +11,16 @@ final class CoreDataStack {
         container = NSPersistentContainer(name: "ElevateModel")
         container.loadPersistentStores { _, error in
             if let error = error {
-                fatalError("Failed to load Core Data store: \(error)")
+                let memoryStore = NSPersistentStoreDescription()
+                memoryStore.type = NSInMemoryStoreType
+                self.container.persistentStoreDescriptions = [memoryStore]
+                self.container.loadPersistentStores { _, fallbackError in
+                    if let fallbackError = fallbackError {
+                        print("Failed to load Core Data store: \(error). Fallback failed: \(fallbackError)")
+                    } else {
+                        print("Failed to load Core Data store: \(error). Using in-memory store.")
+                    }
+                }
             }
         }
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy

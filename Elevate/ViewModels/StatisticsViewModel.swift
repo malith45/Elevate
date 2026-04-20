@@ -21,6 +21,9 @@ final class StatisticsViewModel: ObservableObject {
     @Published var efficiencyStats: [DailyEfficiencyStat] = []
     @Published var completionRate: Double = 0
     @Published var onScheduleRate: Double = 0
+    @Published var comparisonLabel: String = "Vs. Team Average"
+    @Published var comparisonDelta: Double = 0
+    @Published var comparisonIsPositive: Bool = true
 
     private let localStorage = LocalStorageService.shared
 
@@ -29,6 +32,7 @@ final class StatisticsViewModel: ObservableObject {
         technicians = localStorage.fetchUsers(organizationId: organizationId)
             .filter { $0.role.uppercased() == "TECHNICIAN" }
         computeStats(from: jobs)
+        computeComparison(organizationId: organizationId, technicianId: technicianId)
 
         guard isOnline else { return }
         SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
@@ -37,6 +41,7 @@ final class StatisticsViewModel: ObservableObject {
             DispatchQueue.main.async(execute: DispatchWorkItem(block: {
                 self.jobs = refreshed
                 self.computeStats(from: refreshed)
+                self.computeComparison(organizationId: organizationId, technicianId: technicianId)
                 self.technicians = self.localStorage.fetchUsers(organizationId: organizationId)
                     .filter { $0.role.uppercased() == "TECHNICIAN" }
             }))
@@ -53,12 +58,33 @@ final class StatisticsViewModel: ObservableObject {
         weeklyStats = makeWeeklyStats(from: jobs)
         efficiencyStats = makeEfficiencyStats(from: jobs)
 
-        let total = jobs.count
-        let completed = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
-        completionRate = total == 0 ? 0 : Double(completed) / Double(total)
+        completionRate = completionRate(for: jobs)
 
         let scheduled = jobs.filter { $0.status.uppercased() != "CANCELLED" }.count
+        let completed = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
         onScheduleRate = scheduled == 0 ? 0 : Double(completed) / Double(scheduled)
+    }
+
+    private func computeComparison(organizationId: String, technicianId: String?) {
+        let allJobs = localStorage.fetchJobs(organizationId: organizationId)
+        let teamRate = completionRate(for: allJobs)
+        let targetRate = 0.8
+
+        if technicianId == nil {
+            comparisonLabel = "Vs. Target Average"
+            comparisonDelta = completionRate - targetRate
+        } else {
+            comparisonLabel = "Vs. Team Average"
+            comparisonDelta = completionRate - teamRate
+        }
+
+        comparisonIsPositive = comparisonDelta >= 0
+    }
+
+    private func completionRate(for jobs: [Job]) -> Double {
+        let total = jobs.count
+        let completed = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+        return total == 0 ? 0 : Double(completed) / Double(total)
     }
 
     private func makeWeeklyStats(from jobs: [Job]) -> [WeeklyJobStat] {

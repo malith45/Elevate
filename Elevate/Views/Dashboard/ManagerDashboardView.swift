@@ -273,10 +273,7 @@ struct ManagerDashboardView: View {
                             finishSync()
                         }
                     } else {
-                        // Mock sync for testing without login
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            finishSync()
-                        }
+                        isRefreshing = false
                     }
                 }
                 .background(settings.appBackground) // Ensure scroll container matches aesthetic
@@ -290,20 +287,6 @@ struct ManagerDashboardView: View {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
                 loadTechnicians(organizationId: user.organizationId)
-            } else {
-                // Trigger an initial fake sync for testing without login
-                isRefreshing = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    isRefreshing = false
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                        showLastSynced = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            showLastSynced = false
-                        }
-                    }
-                }
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
@@ -376,10 +359,19 @@ struct ManagerDashboardView: View {
     }
 
     private func lastSyncedText() -> String {
-        if network.isOnline {
-            return "Last synced now"
+        guard let lastSyncAt = syncManager.lastSyncAt else {
+            return network.isOnline ? "Last synced just now" : "Last synced -"
         }
-        return "Last synced 4m ago"
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        let relative = formatter.localizedString(for: lastSyncAt, relativeTo: Date())
+
+        if abs(lastSyncAt.timeIntervalSinceNow) < 60 {
+            return "Last synced just now"
+        }
+
+        return "Last synced \(relative)"
     }
 
     private func syncStatusColor() -> Color {

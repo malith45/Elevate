@@ -435,6 +435,53 @@ final class FirebaseService {
             }
     }
 
+    func listenToJobs(organizationId: String, assignedUserId: String, completion: @escaping ([Job]) -> Void) -> ListenerRegistration {
+        db.collection("jobs")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .whereField("assignedUserId", isEqualTo: assignedUserId)
+            .addSnapshotListener { snapshot, error in
+                guard error == nil, let documents = snapshot?.documents else { return }
+
+                let jobs = documents.compactMap { doc -> Job? in
+                    let data = doc.data()
+                    guard let title = data["title"] as? String,
+                          let location = data["location"] as? String,
+                          let status = data["status"] as? String,
+                          let priority = data["priority"] as? String,
+                          let assignedUserId = data["assignedUserId"] as? String,
+                          let timestamp = data["scheduledAt"] as? Timestamp
+                    else { return nil }
+
+                    let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? timestamp.dateValue()
+                    let quotationItems = self.mapQuotationItems(data["quotationItems"] as? [[String: Any]])
+
+                    return Job(
+                        id: doc.documentID,
+                        organizationId: data["organizationId"] as? String ?? "",
+                        title: title,
+                        location: location,
+                        siteLatitude: data["siteLatitude"] as? Double,
+                        siteLongitude: data["siteLongitude"] as? Double,
+                        scheduledAt: timestamp.dateValue(),
+                        status: status,
+                        priority: priority,
+                        isUrgent: data["isUrgent"] as? Bool ?? false,
+                        isOnHold: data["isOnHold"] as? Bool ?? false,
+                        holdReason: data["holdReason"] as? String,
+                        cancelledAt: (data["cancelledAt"] as? Timestamp)?.dateValue(),
+                        assignedUserId: assignedUserId,
+                        notes: data["notes"] as? String,
+                        quotationItems: quotationItems,
+                        approvedCost: data["approvedCost"] as? Double,
+                        photoUrls: data["photoUrls"] as? [String] ?? [],
+                        updatedAt: updatedAt
+                    )
+                }
+
+                completion(jobs)
+            }
+    }
+
     func fetchJob(jobId: String, completion: @escaping (Result<Job, Error>) -> Void) {
         db.collection("jobs").document(jobId).getDocument { snapshot, error in
             if let error = error {
@@ -547,6 +594,12 @@ final class FirebaseService {
         }
     }
 
+    func uploadInventoryPhoto(data: Data, fileName: String, itemId: String, completion: @escaping (Result<String, Error>) -> Void) {
+        supabaseStorage.uploadPublicFile(data: data, path: "inventoryPhotos/\(itemId)/\(fileName)") { result in
+            completion(result)
+        }
+    }
+
     func fetchInventoryItems(organizationId: String, completion: @escaping (Result<[InventoryItem], Error>) -> Void) {
         db.collection("inventory")
             .whereField("organizationId", isEqualTo: organizationId)
@@ -570,7 +623,8 @@ final class FirebaseService {
                         category: category,
                         quantity: quantity,
                         unitPrice: unitPrice,
-                        sku: data["sku"] as? String
+                        sku: data["sku"] as? String,
+                        imageUrl: data["imageUrl"] as? String
                     )
                 } ?? []
 
@@ -586,6 +640,7 @@ final class FirebaseService {
             "quantity": item.quantity,
             "unitPrice": item.unitPrice,
             "sku": item.sku as Any,
+            "imageUrl": item.imageUrl as Any,
             "updatedAt": Timestamp(date: Date())
         ]
 
@@ -602,6 +657,16 @@ final class FirebaseService {
         var payload = fields
         payload["updatedAt"] = Timestamp(date: Date())
         db.collection("inventory").document(itemId).updateData(payload) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    func deleteInventoryItem(itemId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("inventory").document(itemId).delete { error in
             if let error = error {
                 completion(.failure(error))
             } else {
@@ -858,6 +923,33 @@ final class FirebaseService {
                 completion(.success(()))
             }
         }
+    }
+
+    func clearNotifications(organizationId: String, userId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("notifications")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .whereField("userId", isEqualTo: userId)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
+                    completion(.success(()))
+                    return
+                }
+
+                let batch = self.db.batch()
+                documents.forEach { batch.deleteDocument($0.reference) }
+                batch.commit { commitError in
+                    if let commitError = commitError {
+                        completion(.failure(commitError))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
+            }
     }
 
     func saveFcmToken(userId: String, token: String) {

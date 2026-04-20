@@ -320,6 +320,7 @@ struct ManagerCreateJobView: View {
         let assignedId = selectedTechnicianId ?? ""
         viewModel.createJob(
             organizationId: user.organizationId,
+            userId: user.id,
             assignedUserId: assignedId,
             title: jobTitle,
             location: location,

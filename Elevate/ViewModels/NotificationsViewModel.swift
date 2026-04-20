@@ -38,6 +38,12 @@ final class NotificationsViewModel: ObservableObject {
     func clearAll(organizationId: String, userId: String) {
         localStorage.clearNotifications(organizationId: organizationId, userId: userId)
         notifications = []
+
+        if NetworkService.shared.isOnline {
+            firebase.clearNotifications(organizationId: organizationId, userId: userId) { _ in }
+        } else {
+            SyncManager.shared.enqueueClearNotifications(organizationId: organizationId, userId: userId)
+        }
     }
 
     func markRead(_ item: NotificationItem, isOnline: Bool) {
@@ -60,7 +66,10 @@ final class NotificationsViewModel: ObservableObject {
             return current
         }
 
-        guard isOnline else { return }
+        guard isOnline else {
+            SyncManager.shared.enqueueNotificationRead(notificationId: item.id, isRead: true, organizationId: item.organizationId, userId: item.userId)
+            return
+        }
         firebase.updateNotificationRead(notificationId: item.id, isRead: true) { _ in }
     }
 }

@@ -18,12 +18,15 @@ struct QuotationStatusView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Quotation Status")
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
+                            Text("Track approved and pending items")
+                                .scaledFont(size: 13, weight: .semibold)
+                                .foregroundColor(settings.secondaryText)
+                        }
                         
-                        Text("Quotation Status")
-                            .scaledFont(size: 32, weight: .bold, design: .rounded)
-                            .foregroundColor(settings.primaryText)
-                        
-                        // APPROVED ITEMS
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("APPROVED ITEMS")
@@ -45,7 +48,7 @@ struct QuotationStatusView: View {
 
                             ForEach(viewModel.approvedItems, id: \.id) { item in
                                 QuotationItemCard(
-                                    icon: "checkmark.circle",
+                                    icon: "checkmark.circle.fill",
                                     title: item.name,
                                     price: currencyString(Double(item.quantity) * item.unitPrice),
                                     statusText: item.status.uppercased(),
@@ -54,7 +57,6 @@ struct QuotationStatusView: View {
                             }
                         }
                         
-                        // PENDING APPROVAL
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("PENDING APPROVAL")
@@ -65,8 +67,8 @@ struct QuotationStatusView: View {
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
-                                    .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
-                                    .foregroundColor(settings.isHighContrast ? .white : .red)
+                                    .background(settings.isHighContrast ? Color.black : Color.orange.opacity(0.15))
+                                    .foregroundColor(settings.isHighContrast ? .white : .orange)
                                     .cornerRadius(12)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
@@ -76,7 +78,7 @@ struct QuotationStatusView: View {
 
                             ForEach(viewModel.pendingItems, id: \.id) { item in
                                 QuotationItemCard(
-                                    icon: "clock",
+                                    icon: "hourglass",
                                     title: item.name,
                                     price: currencyString(Double(item.quantity) * item.unitPrice),
                                     statusText: item.status.uppercased(),
@@ -85,7 +87,6 @@ struct QuotationStatusView: View {
                             }
                         }
                         
-                        // Bottom Metrics + Action
                         VStack(spacing: 16) {
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading, spacing: 8) {
@@ -99,9 +100,9 @@ struct QuotationStatusView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(20)
                                 .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                .cornerRadius(12)
+                                .cornerRadius(14)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: 14)
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                                 
@@ -116,15 +117,15 @@ struct QuotationStatusView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(20)
                                 .background(settings.surfaceColor)
-                                .cornerRadius(12)
+                                .cornerRadius(14)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: 14)
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                                 .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
                             }
                             
-                            HStack(spacing: 16) {
+                            HStack(spacing: 12) {
                                 Button(action: {}) {
                                     Text("CONFIRM")
                                         .scaledFont(size: 14, weight: .bold)
@@ -132,27 +133,27 @@ struct QuotationStatusView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
                                         .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                        .cornerRadius(8)
+                                        .cornerRadius(12)
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 8)
+                                            RoundedRectangle(cornerRadius: 12)
                                                 .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
                                         )
                                 }
-                                
+
                                 NavigationLink(destination: InventoryView(jobId: jobId)) {
                                     HStack(spacing: 6) {
                                         Image(systemName: "plus.circle")
                                         Text("ADD ITEMS")
                                     }
                                     .scaledFont(size: 14, weight: .bold)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(settings.accentColor)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                    .cornerRadius(8)
+                                    .background(settings.surfaceColor)
+                                    .cornerRadius(12)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
                             }
@@ -201,15 +202,15 @@ struct QuotationItemCard: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(.elevateDarkGreen)
-                .frame(width: 48, height: 48)
-                .background(Color.elevateLightGray)
-                .cornerRadius(8)
-            
-            VStack(alignment: .leading, spacing: 4) {
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(isApproved ? Color.elevateDarkGreen : Color.orange)
+                .frame(width: 40, height: 40)
+                .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                .cornerRadius(10)
+
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .scaledFont(size: 16, weight: .bold)
                     .foregroundColor(settings.primaryText)
@@ -218,28 +219,29 @@ struct QuotationItemCard: View {
                     .scaledFont(size: 12, weight: .bold)
                     .foregroundColor(settings.accentColor)
             }
+
             Spacer()
-            
+
             Text(statusText)
                 .scaledFont(size: 10, weight: .bold)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(settings.isHighContrast ? Color.black : (isApproved ? Color.green.opacity(0.2) : Color.red.opacity(0.1)))
-                .foregroundColor(settings.isHighContrast ? Color.white : (isApproved ? Color.elevateDarkGreen : .red))
+                .background(settings.isHighContrast ? Color.black : (isApproved ? Color.green.opacity(0.2) : Color.orange.opacity(0.15)))
+                .foregroundColor(settings.isHighContrast ? Color.white : (isApproved ? Color.elevateDarkGreen : .orange))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
                 )
         }
-        .padding(20)
+        .padding(16)
         .background(settings.surfaceColor)
-        .cornerRadius(12)
+        .cornerRadius(14)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 14)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
+        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
     }
 }
 

@@ -117,31 +117,31 @@ class AccessibilitySettings: ObservableObject {
 
     // MARK: - Semantic Theme Tokens
     var appBackground: Color {
-        isHighContrast ? .black : Color.elevateLightGray.opacity(0.3)
+        isHighContrast ? Color(red: 11/255, green: 11/255, blue: 13/255) : Color.elevateLightGray.opacity(0.3)
     }
     
     var surfaceColor: Color {
-        isHighContrast ? .black : .white
+        isHighContrast ? Color(red: 28/255, green: 28/255, blue: 30/255) : .white
     }
     
     var primaryText: Color {
-        isHighContrast ? .white : .black
+        isHighContrast ? Color.white : .black
     }
     
     var secondaryText: Color {
-        isHighContrast ? .white : Color.elevateTextGray
+        isHighContrast ? Color(red: 235/255, green: 235/255, blue: 245/255).opacity(0.6) : Color.elevateTextGray
     }
     
     var accentColor: Color {
-        isHighContrast ? .white : Color.elevateDarkGreen
+        isHighContrast ? Color(red: 50/255, green: 215/255, blue: 75/255) : Color.elevateDarkGreen
     }
     
     var cardStroke: Color {
-        isHighContrast ? .white : .clear
+        isHighContrast ? Color(red: 44/255, green: 44/255, blue: 46/255) : .clear
     }
     
     var cardStrokeWidth: CGFloat {
-        isHighContrast ? 3 : 0
+        isHighContrast ? 1 : 0
     }
 }
 
@@ -165,7 +165,7 @@ struct GlobalAccessibilityModifier: ViewModifier {
         content
             .environment(\.accessibilitySettings, settings)
             .environment(\.dynamicTypeSize, settings.getDynamicTypeSize())
-            .background(settings.isHighContrast ? Color.black : Color.clear)
+            .background(settings.appBackground.ignoresSafeArea())
     }
 }
 

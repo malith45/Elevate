@@ -9,4 +9,5 @@ struct InventoryItem: Identifiable, Codable, Equatable {
     let quantity: Int
     let unitPrice: Double
     let sku: String?
+    let imageUrl: String?
 }

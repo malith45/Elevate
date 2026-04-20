@@ -57,6 +57,8 @@ struct SignUpView: View {
                         iconName: "lock",
                         text: $password
                     )
+                    
+                    PasswordRequirementsView(password: password)
 
                     SecureCustomTextField(
                         title: "CONFIRM PASSWORD",

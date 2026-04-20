@@ -2,9 +2,18 @@ import Foundation
 import Combine
 
 enum PendingActionType: String, Codable {
+    case createJob
     case updateJobStatus
     case updateJobFields
     case submitQuotationRequest
+    case updateQuotationItems
+    case createInventoryItem
+    case updateInventoryItem
+    case deleteInventoryItem
+    case updateUserProfile
+    case deleteUserProfile
+    case markNotificationRead
+    case clearNotifications
 }
 
 struct PendingAction: Identifiable, Codable, Equatable {

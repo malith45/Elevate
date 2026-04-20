@@ -97,11 +97,13 @@ struct ManagerAddMemberView: View {
                                     VStack(spacing: 20) {
                                         SecureCustomTextField(
                                             title: "Initial Password",
-                                            placeholder: "Minimum 8 characters",
+                                            placeholder: "Strong password",
                                             iconName: "lock.fill",
                                             text: $password,
                                             errorMessage: viewModel.passwordError
                                         )
+
+                                        PasswordRequirementsView(password: password)
 
                                         SecureCustomTextField(
                                             title: "Confirm Password",

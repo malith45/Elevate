@@ -38,6 +38,7 @@
         <attribute name="quantity" optional="NO" attributeType="Integer 64"/>
         <attribute name="unitPrice" optional="NO" attributeType="Double"/>
         <attribute name="sku" optional="YES" attributeType="String"/>
+        <attribute name="imageUrl" optional="YES" attributeType="String"/>
     </entity>
     <entity name="IssueReportEntity" representedClassName="IssueReportEntity" syncable="YES">
         <attribute name="id" optional="NO" attributeType="String"/>

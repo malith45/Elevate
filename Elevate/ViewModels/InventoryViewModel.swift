@@ -94,7 +94,7 @@ final class InventoryViewModel: ObservableObject {
         return existing
     }
 
-    func createItem(organizationId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
+    func createItem(organizationId: String, userId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, imageData: Data?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
@@ -107,38 +107,68 @@ final class InventoryViewModel: ObservableObject {
             completion(nil)
             return
         }
+        let itemId = UUID().uuidString
+        let trimmedSku = sku?.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let item = InventoryItem(
-            id: UUID().uuidString,
-            organizationId: organizationId,
-            name: trimmedName,
-            category: trimmedCategory,
-            quantity: max(0, quantity),
-            unitPrice: max(0, unitPrice),
-            sku: sku?.trimmingCharacters(in: .whitespacesAndNewlines)
-        )
+        func persistItem(imageUrl: String?) {
+            let item = InventoryItem(
+                id: itemId,
+                organizationId: organizationId,
+                name: trimmedName,
+                category: trimmedCategory,
+                quantity: max(0, quantity),
+                unitPrice: max(0, unitPrice),
+                sku: trimmedSku,
+                imageUrl: imageUrl
+            )
 
-        localStorage.saveInventoryItems([item])
-        items = localStorage.fetchInventoryItems(organizationId: organizationId)
+            self.localStorage.saveInventoryItems([item])
+            self.items = self.localStorage.fetchInventoryItems(organizationId: organizationId)
 
-        guard isOnline else {
-            completion(item)
+            guard isOnline else {
+                SyncManager.shared.enqueueCreateInventoryItem(item, organizationId: organizationId, userId: userId)
+                completion(item)
+                return
+            }
+
+            self.firebase.createInventoryItem(item) { result in
+                DispatchQueue.main.async {
+                    if case .failure(let error) = result {
+                        self.errorMessage = error.localizedDescription
+                        completion(nil)
+                    } else {
+                        completion(item)
+                    }
+                }
+            }
+        }
+
+        guard let imageData = imageData else {
+            persistItem(imageUrl: nil)
             return
         }
 
-        firebase.createInventoryItem(item) { result in
+        guard isOnline else {
+            errorMessage = "Photo upload is offline. Item saved without a photo."
+            persistItem(imageUrl: nil)
+            return
+        }
+
+        let fileName = "\(itemId)_\(Int(Date().timeIntervalSince1970)).jpg"
+        firebase.uploadInventoryPhoto(data: imageData, fileName: fileName, itemId: itemId) { result in
             DispatchQueue.main.async {
-                if case .failure(let error) = result {
-                    self.errorMessage = error.localizedDescription
-                    completion(nil)
-                } else {
-                    completion(item)
+                switch result {
+                case .success(let urlString):
+                    persistItem(imageUrl: urlString)
+                case .failure:
+                    self.errorMessage = "Photo upload failed. Item saved without a photo."
+                    persistItem(imageUrl: nil)
                 }
             }
         }
     }
 
-    func updateItem(_ item: InventoryItem, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
+    func updateItem(_ item: InventoryItem, userId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, imageUrl: String?, imageData: Data?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
@@ -151,40 +181,92 @@ final class InventoryViewModel: ObservableObject {
             completion(nil)
             return
         }
+        let trimmedSku = sku?.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let updated = InventoryItem(
-            id: item.id,
-            organizationId: item.organizationId,
-            name: trimmedName,
-            category: trimmedCategory,
-            quantity: max(0, quantity),
-            unitPrice: max(0, unitPrice),
-            sku: sku?.trimmingCharacters(in: .whitespacesAndNewlines)
-        )
+        func persistItem(updatedImageUrl: String?) {
+            let updated = InventoryItem(
+                id: item.id,
+                organizationId: item.organizationId,
+                name: trimmedName,
+                category: trimmedCategory,
+                quantity: max(0, quantity),
+                unitPrice: max(0, unitPrice),
+                sku: trimmedSku,
+                imageUrl: updatedImageUrl
+            )
 
-        localStorage.saveInventoryItems([updated])
-        items = localStorage.fetchInventoryItems(organizationId: item.organizationId)
+            self.localStorage.saveInventoryItems([updated])
+            self.items = self.localStorage.fetchInventoryItems(organizationId: item.organizationId)
 
-        guard isOnline else {
-            completion(updated)
+            let fields: [String: Any] = [
+                "name": updated.name,
+                "category": updated.category,
+                "quantity": updated.quantity,
+                "unitPrice": updated.unitPrice,
+                "sku": updated.sku as Any,
+                "imageUrl": updated.imageUrl as Any
+            ]
+
+            guard isOnline else {
+                SyncManager.shared.enqueueUpdateInventoryItem(itemId: updated.id, fields: fields, organizationId: updated.organizationId, userId: userId)
+                completion(updated)
+                return
+            }
+
+            self.firebase.updateInventoryItem(itemId: item.id, fields: fields) { result in
+                DispatchQueue.main.async {
+                    if case .failure(let error) = result {
+                        self.errorMessage = error.localizedDescription
+                        completion(nil)
+                    } else {
+                        completion(updated)
+                    }
+                }
+            }
+        }
+
+        guard let imageData = imageData else {
+            persistItem(updatedImageUrl: imageUrl)
             return
         }
 
-        let fields: [String: Any] = [
-            "name": updated.name,
-            "category": updated.category,
-            "quantity": updated.quantity,
-            "unitPrice": updated.unitPrice,
-            "sku": updated.sku as Any
-        ]
+        guard isOnline else {
+            errorMessage = "Photo upload is offline. Item saved without a new photo."
+            persistItem(updatedImageUrl: imageUrl)
+            return
+        }
 
-        firebase.updateInventoryItem(itemId: item.id, fields: fields) { result in
+        let fileName = "\(item.id)_\(Int(Date().timeIntervalSince1970)).jpg"
+        firebase.uploadInventoryPhoto(data: imageData, fileName: fileName, itemId: item.id) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let urlString):
+                    persistItem(updatedImageUrl: urlString)
+                case .failure:
+                    self.errorMessage = "Photo upload failed. Item saved without a new photo."
+                    persistItem(updatedImageUrl: imageUrl)
+                }
+            }
+        }
+    }
+
+    func deleteItem(_ item: InventoryItem, userId: String, isOnline: Bool, completion: @escaping (Bool) -> Void) {
+        localStorage.deleteInventoryItem(id: item.id)
+        items = localStorage.fetchInventoryItems(organizationId: item.organizationId)
+
+        guard isOnline else {
+            SyncManager.shared.enqueueDeleteInventoryItem(itemId: item.id, organizationId: item.organizationId, userId: userId)
+            completion(true)
+            return
+        }
+
+        firebase.deleteInventoryItem(itemId: item.id) { result in
             DispatchQueue.main.async {
                 if case .failure(let error) = result {
                     self.errorMessage = error.localizedDescription
-                    completion(nil)
+                    completion(false)
                 } else {
-                    completion(updated)
+                    completion(true)
                 }
             }
         }

@@ -79,6 +79,15 @@ final class LocalStorageService {
         }
     }
 
+    func deleteUser(id: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "UserEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        guard let item = try? context.fetch(request).first else { return }
+        context.delete(item)
+        saveContext(context)
+    }
+
     func saveJobs(_ jobs: [Job]) {
         let context = stack.newBackgroundContext()
         context.perform {
@@ -225,6 +234,7 @@ final class LocalStorageService {
                 entity.setValue(item.quantity, forKey: "quantity")
                 entity.setValue(item.unitPrice, forKey: "unitPrice")
                 entity.setValue(item.sku, forKey: "sku")
+                entity.setValue(item.imageUrl, forKey: "imageUrl")
             }
             self.saveContext(context)
         }
@@ -242,8 +252,19 @@ final class LocalStorageService {
                 category: item.value(forKey: "category") as? String ?? "",
                 quantity: Int(item.value(forKey: "quantity") as? Int64 ?? 0),
                 unitPrice: item.value(forKey: "unitPrice") as? Double ?? 0,
-                sku: item.value(forKey: "sku") as? String
+                sku: item.value(forKey: "sku") as? String,
+                imageUrl: item.value(forKey: "imageUrl") as? String
             )
+        }
+    }
+
+    func deleteInventoryItem(id: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "InventoryItemEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        if let item = try? context.fetch(request).first {
+            context.delete(item)
+            saveContext(context)
         }
     }
 

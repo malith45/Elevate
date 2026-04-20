@@ -46,6 +46,7 @@ struct InventoryView: View {
                                         desc: item.category,
                                         price: currencyString(item.unitPrice),
                                         quantity: viewModel.quantity(for: item.id),
+                                        imageUrl: item.imageUrl,
                                         onAdd: { viewModel.increment(itemId: item.id) },
                                         onRemove: { viewModel.decrement(itemId: item.id) }
                                     )
@@ -143,18 +144,14 @@ struct InventoryItemCard: View {
     var desc: String
     var price: String
     var quantity: Int
+    var imageUrl: String?
     var onAdd: () -> Void
     var onRemove: () -> Void
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(.gray)
-                .frame(width: 60, height: 60)
-                .background(Color.elevateLightGray.opacity(0.5))
-                .cornerRadius(8)
+            inventoryImageView
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -210,6 +207,46 @@ struct InventoryItemCard: View {
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
+    }
+
+    private var inventoryImageView: some View {
+        let size = CGSize(width: 60, height: 60)
+        if let urlString = imageUrl, let url = URL(string: urlString) {
+            return AnyView(
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        placeholderImage
+                    case .empty:
+                        placeholderImage
+                    @unknown default:
+                        placeholderImage
+                    }
+                }
+                .frame(width: size.width, height: size.height)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            )
+        }
+
+        return AnyView(
+            placeholderImage
+                .frame(width: size.width, height: size.height)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        )
+    }
+
+    private var placeholderImage: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.elevateLightGray.opacity(0.5))
+            .overlay(
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundColor(.gray)
+            )
     }
 }
 

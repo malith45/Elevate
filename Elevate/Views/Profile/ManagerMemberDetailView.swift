@@ -55,7 +55,8 @@ struct ManagerMemberDetailView: View {
                 updateMember(editMember, draft: draft)
             }, onDelete: {
                 let viewModel = ManagerMembersViewModel()
-                viewModel.deleteMember(editMember, isOnline: network.isOnline) { success in
+                guard let user = appSession.currentUser else { return }
+                viewModel.deleteMember(editMember, actorUserId: user.id, isOnline: network.isOnline) { success in
                     if success {
                         router.currentScreen = .members
                     }
@@ -179,8 +180,10 @@ struct ManagerMemberDetailView: View {
 
     private func updateMember(_ member: User, draft: MemberEditorDraft) {
         let viewModel = ManagerMembersViewModel()
+        guard let user = appSession.currentUser else { return }
         viewModel.updateMember(
             member,
+            actorUserId: user.id,
             displayName: draft.displayName,
             role: draft.role,
             email: draft.email,

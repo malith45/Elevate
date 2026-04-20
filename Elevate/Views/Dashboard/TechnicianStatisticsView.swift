@@ -99,17 +99,17 @@ struct TechnicianStatisticsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Efficiency Score")
                                         .scaledFont(size: 14, weight: .bold)
-                                    Text("Vs. Team Average")
+                                    Text(viewModel.comparisonLabel)
                                         .scaledFont(size: 12)
                                         .foregroundColor(.elevateTextGray)
                                 }
                                 Spacer()
                                 HStack(spacing: 4) {
-                                    Image(systemName: "arrow.up.right")
-                                    Text("12%")
+                                    Image(systemName: viewModel.comparisonIsPositive ? "arrow.up.right" : "arrow.down.right")
+                                    Text(comparisonPercentString())
                                 }
                                 .scaledFont(size: 16, weight: .bold)
-                                .foregroundColor(.elevateDarkGreen)
+                                .foregroundColor(viewModel.comparisonIsPositive ? settings.accentColor : .red)
                             }
                             
                             Chart {
@@ -183,6 +183,12 @@ struct TechnicianStatisticsView: View {
     private func ratingString() -> String {
         let rating = max(3.0, min(5.0, 5.0 * viewModel.completionRate))
         return String(format: "%.1f", rating)
+    }
+
+    private func comparisonPercentString() -> String {
+        let delta = abs(viewModel.comparisonDelta)
+        let percent = Int((delta * 100).rounded())
+        return "\(percent)%"
     }
 }
 

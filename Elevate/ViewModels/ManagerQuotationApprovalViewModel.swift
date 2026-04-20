@@ -6,11 +6,14 @@ final class ManagerQuotationApprovalViewModel: ObservableObject {
     @Published var items: [QuotationItem] = []
     @Published var errorMessage: String?
 
+    private var actorUserId: String?
+
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
     private let network = NetworkService.shared
 
-    func load(jobId: String) {
+    func load(jobId: String, actorUserId: String) {
+        self.actorUserId = actorUserId
         job = localStorage.fetchJob(id: jobId)
         items = job?.quotationItems ?? []
     }
@@ -74,7 +77,16 @@ final class ManagerQuotationApprovalViewModel: ObservableObject {
         self.items = items
 
         guard network.isOnline else {
-            errorMessage = "You are offline. Connect to update quotations."
+            if let actorUserId = actorUserId {
+                SyncManager.shared.enqueueQuotationItemsUpdate(
+                    jobId: job.id,
+                    organizationId: job.organizationId,
+                    userId: actorUserId,
+                    items: items,
+                    approvedCost: approvedCost
+                )
+            }
+            errorMessage = "Offline. Changes will sync when online."
             return
         }
 

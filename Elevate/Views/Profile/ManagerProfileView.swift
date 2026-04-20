@@ -250,7 +250,7 @@ struct ManagerProfileView: View {
         if let user = appSession.currentUser {
             return user.organizationId
         }
-        return "Skyline Corp" // Dummy placeholder for mock review
+        return "Unknown organization"
     }
 
     private var organizationCode: String {
@@ -260,7 +260,7 @@ struct ManagerProfileView: View {
         if let user = appSession.currentUser {
             return user.organizationId
         }
-        return "ORG-1024-SV" // Dummy placeholder for mock review
+        return "Unknown code"
     }
 
     private func loadProfile() {

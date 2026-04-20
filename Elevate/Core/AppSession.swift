@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import CoreLocation
+import FirebaseFirestore
 
 @MainActor
 final class AppSession: ObservableObject {
@@ -11,11 +12,14 @@ final class AppSession: ObservableObject {
     private var locationSubscriber: AnyCancellable?
     private var lastSyncedLocation: CLLocationCoordinate2D?
     private var lastSyncTime: Date?
+    private var jobsListener: ListenerRegistration?
+    private let calendarSync = CalendarSyncService.shared
 
     init() {
         if let userId = sessionStore.getUserId(), let user = localStorage.fetchUser(id: userId) {
             currentUser = user
             setupLocationTracking()
+            setupJobSync()
             if let token = NotificationService.shared.notificationToken() {
                 FirebaseService.shared.saveFcmToken(userId: user.id, token: token)
             }
@@ -26,6 +30,7 @@ final class AppSession: ObservableObject {
         sessionStore.saveUserId(user.id)
         currentUser = user
         setupLocationTracking()
+        setupJobSync()
         if let token = NotificationService.shared.notificationToken() {
             FirebaseService.shared.saveFcmToken(userId: user.id, token: token)
         }
@@ -34,11 +39,14 @@ final class AppSession: ObservableObject {
     func updateCurrentUser(_ user: User) {
         localStorage.saveUser(user)
         currentUser = user
+        setupJobSync()
     }
 
     @MainActor
     func signOut() {
         locationSubscriber?.cancel()
+        jobsListener?.remove()
+        jobsListener = nil
         sessionStore.clear()
         currentUser = nil
         ManagerTabRouter.shared.currentScreen = .dashboard
@@ -54,6 +62,19 @@ final class AppSession: ObservableObject {
                 guard let self = self, let location = location else { return }
                 self.handleLocationUpdate(location)
             }
+    }
+
+    private func setupJobSync() {
+        jobsListener?.remove()
+        guard let user = currentUser, user.role == "TECHNICIAN" else { return }
+
+        jobsListener = FirebaseService.shared.listenToJobs(organizationId: user.organizationId, assignedUserId: user.id) { [weak self] jobs in
+            Task { @MainActor in
+                guard let self = self else { return }
+                self.localStorage.saveJobs(jobs)
+                self.calendarSync.syncJobsIfAuthorized(jobs)
+            }
+        }
     }
 
     private func handleLocationUpdate(_ location: CLLocationCoordinate2D) {

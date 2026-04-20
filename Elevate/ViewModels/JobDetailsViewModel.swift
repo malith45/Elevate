@@ -32,13 +32,14 @@ final class JobDetailsViewModel: ObservableObject {
         locationListener?.remove()
     }
 
-    func updateStatus(jobId: String, status: String, user: User, isOnline: Bool) {
+    func updateStatus(jobId: String, status: String, user: User, isOnline: Bool, holdReasonOverride: String? = nil) {
         guard let current = localStorage.fetchJob(id: jobId) else { return }
 
         let updatedAt = Date()
         let normalized = status.uppercased()
         let isOnHold = normalized == "HOLD"
-        let holdReason = isOnHold ? (current.holdReason ?? "On hold") : nil
+        let trimmedHoldReason = holdReasonOverride?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let holdReason = isOnHold ? (trimmedHoldReason?.isEmpty == false ? trimmedHoldReason : (current.holdReason ?? "On hold")) : nil
         let cancelledAt = normalized == "CANCELLED" ? updatedAt : current.cancelledAt
 
         let updatedJob = Job(

@@ -4,6 +4,7 @@ struct ManagerQuotationApprovalView: View {
     let jobId: String
 
     @Environment(\.managerTabRouter) private var router
+    @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerQuotationApprovalViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
 
@@ -19,9 +20,14 @@ struct ManagerQuotationApprovalView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
-                        Text("Approve Quotations")
-                            .scaledFont(size: 28, weight: .bold, design: .rounded)
-                            .foregroundColor(settings.accentColor)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Approve Quotations")
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
+                            Text("Review and approve item requests")
+                                .scaledFont(size: 13, weight: .semibold)
+                                .foregroundColor(settings.secondaryText)
+                        }
 
                         if viewModel.items.isEmpty {
                             VStack(spacing: 12) {
@@ -52,11 +58,11 @@ struct ManagerQuotationApprovalView: View {
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(16)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
-                                .cornerRadius(12)
+                                .background(settings.surfaceColor)
+                                .cornerRadius(14)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
 
                                 Button(action: { viewModel.approveAll() }) {
@@ -66,9 +72,9 @@ struct ManagerQuotationApprovalView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
                                         .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                        .cornerRadius(12)
+                                        .cornerRadius(14)
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
+                                            RoundedRectangle(cornerRadius: 14)
                                                 .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
                                         )
                                 }
@@ -84,7 +90,10 @@ struct ManagerQuotationApprovalView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear { viewModel.load(jobId: jobId) }
+            .onAppear {
+                let actorUserId = appSession.currentUser?.id ?? ""
+                viewModel.load(jobId: jobId, actorUserId: actorUserId)
+            }
         .alert("Quotation", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { _ in viewModel.errorMessage = nil }
@@ -100,7 +109,7 @@ struct ManagerQuotationApprovalView: View {
         let isApproved = status == "APPROVED"
         let isRejected = status == "REJECTED"
 
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.name)
@@ -126,14 +135,14 @@ struct ManagerQuotationApprovalView: View {
                 Button(action: { viewModel.updateStatus(itemId: item.id, status: "APPROVED") }) {
                     Text("Approve")
                         .scaledFont(size: 12, weight: .bold)
-                        .foregroundColor(isApproved ? .white : (settings.isHighContrast ? .white : .elevateDarkGreen))
+                        .foregroundColor(isApproved ? .white : (settings.isHighContrast ? .white : settings.accentColor))
                         .padding(.vertical, 8)
                         .padding(.horizontal, 12)
-                        .background(isApproved ? (settings.isHighContrast ? Color.black : Color.elevateDarkGreen) : (settings.isHighContrast ? Color.black : Color.elevateLightGray))
+                        .background(isApproved ? (settings.isHighContrast ? Color.black : Color.elevateDarkGreen) : settings.surfaceColor)
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                 }
                 .buttonStyle(.plain)
@@ -156,12 +165,12 @@ struct ManagerQuotationApprovalView: View {
         }
         .padding(16)
         .background(settings.surfaceColor)
-        .cornerRadius(12)
+        .cornerRadius(14)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 14)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
     }
 
     private func statusPill(_ status: String) -> some View {

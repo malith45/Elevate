@@ -94,8 +94,10 @@ struct ManagerMembersView: View {
         }
         .sheet(item: $editingMember) { member in
             MemberEditorView(member: member, onSave: { draft in
+                guard let user = appSession.currentUser else { return }
                 viewModel.updateMember(
                     member,
+                    actorUserId: user.id,
                     displayName: draft.displayName,
                     role: draft.role,
                     email: draft.email,
@@ -105,7 +107,8 @@ struct ManagerMembersView: View {
                     isOnline: NetworkService.shared.isOnline
                 )
             }, onDelete: {
-                viewModel.deleteMember(member, isOnline: NetworkService.shared.isOnline) { _ in }
+                guard let user = appSession.currentUser else { return }
+                viewModel.deleteMember(member, actorUserId: user.id, isOnline: NetworkService.shared.isOnline) { _ in }
             })
         }
     }

@@ -3,9 +3,10 @@ import Foundation
 final class SupabaseStorageService {
     static let shared = SupabaseStorageService()
 
-    private let baseURL: URL
-    private let anonKey: String
-    private let bucket: String
+    private let baseURL: URL?
+    private let anonKey: String?
+    private let bucket: String?
+    private let isConfigured: Bool
 
     private init() {
         guard let configUrl = Bundle.main.url(forResource: "SupabaseConfig", withExtension: "plist"),
@@ -17,17 +18,31 @@ final class SupabaseStorageService {
               let bucket = dict["SupabaseBucket"] as? String,
               let baseURL = URL(string: urlString)
         else {
-            fatalError("SupabaseConfig.plist is missing or invalid.")
+            self.baseURL = nil
+            self.anonKey = nil
+            self.bucket = nil
+            self.isConfigured = false
+            return
         }
 
         self.baseURL = baseURL
         self.anonKey = anonKey
         self.bucket = bucket
+        self.isConfigured = true
     }
 
     func uploadPublicFile(data: Data, path: String, completion: @escaping (Result<String, Error>) -> Void) {
+        guard isConfigured else {
+            completion(.failure(SupabaseStorageError.missingConfiguration))
+            return
+        }
         guard let uploadURL = makeStorageURL(path: "storage/v1/object", objectPath: path) else {
             completion(.failure(SupabaseStorageError.invalidURL))
+            return
+        }
+
+        guard let anonKey = anonKey else {
+            completion(.failure(SupabaseStorageError.missingConfiguration))
             return
         }
 
@@ -66,7 +81,9 @@ final class SupabaseStorageService {
     }
 
     private func makeStorageURL(path: String, objectPath: String) -> URL? {
-        var url = baseURL
+        guard var url = baseURL, let bucket = bucket, !bucket.isEmpty else {
+            return nil
+        }
         let pathComponents = path.split(separator: "/").map(String.init)
         pathComponents.forEach { url.appendPathComponent($0) }
         url.appendPathComponent(bucket)
@@ -78,6 +95,7 @@ final class SupabaseStorageService {
 }
 
 enum SupabaseStorageError: Error {
+    case missingConfiguration
     case invalidURL
     case invalidResponse
     case requestFailed(status: Int)

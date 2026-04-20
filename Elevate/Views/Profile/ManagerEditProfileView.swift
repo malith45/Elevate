@@ -116,6 +116,8 @@ struct ManagerEditProfileView: View {
                                         .submitLabel(.next)
                                         .onSubmit { focusedField = .confirmPassword }
 
+                                        PasswordRequirementsView(password: password)
+
                                         SecureCustomTextField(
                                             title: "Confirm Password",
                                             placeholder: "••••••••",

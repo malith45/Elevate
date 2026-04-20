@@ -64,6 +64,24 @@ final class SyncManager: ObservableObject {
         }
     }
 
+    func enqueueCreateJob(_ job: Job, organizationId: String, userId: String) {
+        var payload = jobPayload(job)
+        payload["organizationId"] = organizationId
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .createJob,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
     func enqueueJobFieldsUpdate(jobId: String, fields: [String: Any], organizationId: String, userId: String) {
         var payload: [String: Any] = [
             "jobId": jobId,
@@ -129,6 +147,173 @@ final class SyncManager: ObservableObject {
         }
     }
 
+    func enqueueQuotationItemsUpdate(jobId: String, organizationId: String, userId: String, items: [QuotationItem], approvedCost: Double) {
+        let itemsPayload: [[String: Any]] = items.map {
+            [
+                "id": $0.id,
+                "name": $0.name,
+                "unitPrice": $0.unitPrice,
+                "quantity": $0.quantity,
+                "status": $0.status
+            ]
+        }
+
+        let payload: [String: Any] = [
+            "jobId": jobId,
+            "items": itemsPayload,
+            "approvedCost": approvedCost,
+            "updatedAt": Date().timeIntervalSince1970
+        ]
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .updateQuotationItems,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
+    func enqueueCreateInventoryItem(_ item: InventoryItem, organizationId: String, userId: String) {
+        let payload: [String: Any] = [
+            "id": item.id,
+            "organizationId": item.organizationId,
+            "name": item.name,
+            "category": item.category,
+            "quantity": item.quantity,
+            "unitPrice": item.unitPrice,
+            "sku": item.sku as Any,
+            "imageUrl": item.imageUrl as Any
+        ]
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .createInventoryItem,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
+    func enqueueUpdateInventoryItem(itemId: String, fields: [String: Any], organizationId: String, userId: String) {
+        var payload = fields
+        payload["itemId"] = itemId
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .updateInventoryItem,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
+    func enqueueDeleteInventoryItem(itemId: String, organizationId: String, userId: String) {
+        let payload: [String: Any] = [
+            "itemId": itemId
+        ]
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .deleteInventoryItem,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
+    func enqueueUserProfileUpdate(userId: String, organizationId: String, actorUserId: String, fields: [String: Any]) {
+        var payload = fields
+        payload["userId"] = userId
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: actorUserId,
+                type: .updateUserProfile,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: actorUserId)
+        }
+    }
+
+    func enqueueUserProfileDelete(userId: String, organizationId: String, actorUserId: String) {
+        let payload: [String: Any] = ["userId": userId]
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: actorUserId,
+                type: .deleteUserProfile,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: actorUserId)
+        }
+    }
+
+    func enqueueNotificationRead(notificationId: String, isRead: Bool, organizationId: String, userId: String) {
+        let payload: [String: Any] = [
+            "notificationId": notificationId,
+            "isRead": isRead
+        ]
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .markNotificationRead,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
+    func enqueueClearNotifications(organizationId: String, userId: String) {
+        let payload: [String: Any] = ["organizationId": organizationId]
+
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .clearNotifications,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
     func syncNotifications(organizationId: String, userId: String, completion: (() -> Void)? = nil) {
         guard network.isOnline else {
             completion?()
@@ -157,6 +342,18 @@ final class SyncManager: ObservableObject {
 
         actions.forEach { action in
             switch action.type {
+            case .createJob:
+                guard let payload = decodePayload(action.payload),
+                      let job = jobFromPayload(payload)
+                else { return }
+
+                group.enter()
+                firebase.createJob(job) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
             case .updateJobStatus:
                 guard let payload = decodePayload(action.payload),
                       let jobId = payload["jobId"] as? String,
@@ -211,6 +408,30 @@ final class SyncManager: ObservableObject {
                     }
                     group.leave()
                 }
+            case .updateQuotationItems:
+                guard let payload = decodePayload(action.payload),
+                      let jobId = payload["jobId"] as? String,
+                      let itemsData = payload["items"] as? [[String: Any]]
+                else { return }
+
+                let approvedCost = payload["approvedCost"] as? Double ?? 0
+                let items: [QuotationItem] = itemsData.compactMap { item in
+                    guard let id = item["id"] as? String,
+                          let name = item["name"] as? String,
+                          let unitPrice = item["unitPrice"] as? Double,
+                          let quantity = item["quantity"] as? Int,
+                          let status = item["status"] as? String
+                    else { return nil }
+                    return QuotationItem(id: id, name: name, unitPrice: unitPrice, quantity: quantity, status: status)
+                }
+
+                group.enter()
+                firebase.updateQuotationItems(jobId: jobId, items: items, approvedCost: approvedCost) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
             case .updateJobFields:
                 guard let payload = decodePayload(action.payload),
                       let jobId = payload["jobId"] as? String,
@@ -251,6 +472,93 @@ final class SyncManager: ObservableObject {
                     case .failure:
                         group.leave()
                     }
+                }
+            case .createInventoryItem:
+                guard let payload = decodePayload(action.payload),
+                      let item = inventoryItemFromPayload(payload)
+                else { return }
+
+                group.enter()
+                firebase.createInventoryItem(item) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
+            case .updateInventoryItem:
+                guard let payload = decodePayload(action.payload),
+                      let itemId = payload["itemId"] as? String
+                else { return }
+
+                var fields = payload
+                fields.removeValue(forKey: "itemId")
+
+                group.enter()
+                firebase.updateInventoryItem(itemId: itemId, fields: fields) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
+            case .deleteInventoryItem:
+                guard let payload = decodePayload(action.payload),
+                      let itemId = payload["itemId"] as? String
+                else { return }
+
+                group.enter()
+                firebase.deleteInventoryItem(itemId: itemId) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
+            case .updateUserProfile:
+                guard let payload = decodePayload(action.payload),
+                      let userId = payload["userId"] as? String
+                else { return }
+
+                var fields = payload
+                fields.removeValue(forKey: "userId")
+
+                group.enter()
+                firebase.updateUserProfile(userId: userId, fields: fields) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
+            case .deleteUserProfile:
+                guard let payload = decodePayload(action.payload),
+                      let userId = payload["userId"] as? String
+                else { return }
+
+                group.enter()
+                firebase.deleteUserProfile(userId: userId) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
+            case .markNotificationRead:
+                guard let payload = decodePayload(action.payload),
+                      let notificationId = payload["notificationId"] as? String,
+                      let isRead = payload["isRead"] as? Bool
+                else { return }
+
+                group.enter()
+                firebase.updateNotificationRead(notificationId: notificationId, isRead: isRead) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
+            case .clearNotifications:
+                group.enter()
+                firebase.clearNotifications(organizationId: action.organizationId, userId: action.userId) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
                 }
             }
         }
@@ -354,5 +662,126 @@ final class SyncManager: ObservableObject {
 
     private func decodePayload(_ data: Data) -> [String: Any]? {
         (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any]
+    }
+
+    private func jobPayload(_ job: Job) -> [String: Any] {
+        var payload: [String: Any] = [
+            "id": job.id,
+            "organizationId": job.organizationId,
+            "title": job.title,
+            "location": job.location,
+            "scheduledAt": job.scheduledAt.timeIntervalSince1970,
+            "status": job.status,
+            "priority": job.priority,
+            "isUrgent": job.isUrgent,
+            "isOnHold": job.isOnHold,
+            "assignedUserId": job.assignedUserId,
+            "notes": job.notes as Any,
+            "approvedCost": job.approvedCost as Any,
+            "photoUrls": job.photoUrls,
+            "updatedAt": job.updatedAt.timeIntervalSince1970,
+            "quotationItems": quotationItemsPayload(job.quotationItems)
+        ]
+
+        if let siteLatitude = job.siteLatitude {
+            payload["siteLatitude"] = siteLatitude
+        }
+        if let siteLongitude = job.siteLongitude {
+            payload["siteLongitude"] = siteLongitude
+        }
+        if let holdReason = job.holdReason {
+            payload["holdReason"] = holdReason
+        }
+        if let cancelledAt = job.cancelledAt {
+            payload["cancelledAt"] = cancelledAt.timeIntervalSince1970
+        }
+
+        return payload
+    }
+
+    private func jobFromPayload(_ payload: [String: Any]) -> Job? {
+        guard let id = payload["id"] as? String,
+              let organizationId = payload["organizationId"] as? String,
+              let title = payload["title"] as? String,
+              let location = payload["location"] as? String,
+              let scheduledAtValue = payload["scheduledAt"] as? TimeInterval,
+              let status = payload["status"] as? String,
+              let priority = payload["priority"] as? String,
+              let isUrgent = payload["isUrgent"] as? Bool,
+              let isOnHold = payload["isOnHold"] as? Bool,
+              let assignedUserId = payload["assignedUserId"] as? String,
+              let updatedAtValue = payload["updatedAt"] as? TimeInterval
+        else { return nil }
+
+        let quotationItems = quotationItemsFromPayload(payload["quotationItems"] as? [[String: Any]])
+        let cancelledAtValue = payload["cancelledAt"] as? TimeInterval
+
+        return Job(
+            id: id,
+            organizationId: organizationId,
+            title: title,
+            location: location,
+            siteLatitude: payload["siteLatitude"] as? Double,
+            siteLongitude: payload["siteLongitude"] as? Double,
+            scheduledAt: Date(timeIntervalSince1970: scheduledAtValue),
+            status: status,
+            priority: priority,
+            isUrgent: isUrgent,
+            isOnHold: isOnHold,
+            holdReason: payload["holdReason"] as? String,
+            cancelledAt: cancelledAtValue.map { Date(timeIntervalSince1970: $0) },
+            assignedUserId: assignedUserId,
+            notes: payload["notes"] as? String,
+            quotationItems: quotationItems,
+            approvedCost: payload["approvedCost"] as? Double,
+            photoUrls: payload["photoUrls"] as? [String] ?? [],
+            updatedAt: Date(timeIntervalSince1970: updatedAtValue)
+        )
+    }
+
+    private func quotationItemsPayload(_ items: [QuotationItem]) -> [[String: Any]] {
+        items.map {
+            [
+                "id": $0.id,
+                "name": $0.name,
+                "unitPrice": $0.unitPrice,
+                "quantity": $0.quantity,
+                "status": $0.status
+            ]
+        }
+    }
+
+    private func quotationItemsFromPayload(_ items: [[String: Any]]?) -> [QuotationItem] {
+        guard let items = items else { return [] }
+        return items.compactMap { item in
+            guard let id = item["id"] as? String,
+                  let name = item["name"] as? String,
+                  let unitPrice = item["unitPrice"] as? Double,
+                  let quantity = item["quantity"] as? Int,
+                  let status = item["status"] as? String
+            else { return nil }
+            return QuotationItem(id: id, name: name, unitPrice: unitPrice, quantity: quantity, status: status)
+        }
+    }
+
+    private func inventoryItemFromPayload(_ payload: [String: Any]) -> InventoryItem? {
+        guard let id = payload["id"] as? String,
+              let organizationId = payload["organizationId"] as? String,
+              let name = payload["name"] as? String,
+              let category = payload["category"] as? String,
+              let quantity = payload["quantity"] as? Int,
+              let unitPrice = payload["unitPrice"] as? Double
+        else { return nil }
+
+        return InventoryItem(
+            id: id,
+            organizationId: organizationId,
+            name: name,
+            category: category,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            sku: payload["sku"] as? String,
+            imageUrl: payload["imageUrl"] as? String
+        )
     }
 }

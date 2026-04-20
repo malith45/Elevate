@@ -224,3 +224,53 @@ struct EmptyStateView: View {
         .padding(.horizontal, 24)
     }
 }
+
+struct PasswordRequirementsView: View {
+    let password: String
+
+    private struct Requirement {
+        let label: String
+        let isMet: Bool
+    }
+
+    private var requirements: [Requirement] {
+        [
+            Requirement(label: "At least 8 characters", isMet: password.count >= 8),
+            Requirement(label: "One uppercase letter (A–Z)", isMet: password.range(of: "[A-Z]", options: .regularExpression) != nil),
+            Requirement(label: "One lowercase letter (a–z)", isMet: password.range(of: "[a-z]", options: .regularExpression) != nil),
+            Requirement(label: "One digit (0–9)", isMet: password.range(of: "[0-9]", options: .regularExpression) != nil),
+            Requirement(label: "One special character (!@#$…)", isMet: password.range(of: "[!@#$%^&*()\\-_=+{}|;:'\",.<>/?]", options: .regularExpression) != nil)
+        ]
+    }
+
+    var body: some View {
+        if !password.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("PASSWORD REQUIREMENTS")
+                    .scaledFont(size: 10, weight: .bold)
+                    .foregroundColor(.elevateTextGray)
+                    .padding(.horizontal, 4)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(requirements, id: \.label) { req in
+                        HStack(spacing: 8) {
+                            Image(systemName: req.isMet ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(req.isMet ? .elevateDarkGreen : Color.elevateTextGray.opacity(0.4))
+                                .animation(.easeInOut(duration: 0.2), value: req.isMet)
+                            Text(req.label)
+                                .scaledFont(size: 12)
+                                .foregroundColor(req.isMet ? .elevateDarkGreen : Color.elevateTextGray.opacity(0.7))
+                                .animation(.easeInOut(duration: 0.2), value: req.isMet)
+                        }
+                    }
+                }
+                .padding(12)
+                .background(Color.elevateLightGray.opacity(0.5))
+                .cornerRadius(10)
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
+            .animation(.easeInOut(duration: 0.2), value: password.isEmpty)
+        }
+    }
+}

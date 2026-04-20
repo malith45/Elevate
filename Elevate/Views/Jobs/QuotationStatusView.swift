@@ -4,6 +4,7 @@ struct QuotationStatusView: View {
     let jobId: String
 
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = QuotationStatusViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var selectedTab: TabItem = .jobs
@@ -48,11 +49,12 @@ struct QuotationStatusView: View {
 
                             ForEach(viewModel.approvedItems, id: \.id) { item in
                                 QuotationItemCard(
-                                    icon: "checkmark.circle.fill",
                                     title: item.name,
-                                    price: currencyString(Double(item.quantity) * item.unitPrice),
-                                    statusText: item.status.uppercased(),
-                                    isApproved: true
+                                    quantityText: "Qty: \(item.quantity)",
+                                    priceText: currencyString(Double(item.quantity) * item.unitPrice),
+                                    statusText: nil,
+                                    isApproved: true,
+                                    removeAction: nil
                                 )
                             }
                         }
@@ -78,12 +80,54 @@ struct QuotationStatusView: View {
 
                             ForEach(viewModel.pendingItems, id: \.id) { item in
                                 QuotationItemCard(
-                                    icon: "hourglass",
                                     title: item.name,
-                                    price: currencyString(Double(item.quantity) * item.unitPrice),
-                                    statusText: item.status.uppercased(),
-                                    isApproved: false
+                                    quantityText: "Qty: \(item.quantity)",
+                                    priceText: currencyString(Double(item.quantity) * item.unitPrice),
+                                    statusText: nil,
+                                    isApproved: false,
+                                    removeAction: {
+                                        guard let user = appSession.currentUser else { return }
+                                        viewModel.removePendingItem(
+                                            jobId: jobId,
+                                            itemId: item.id,
+                                            userId: user.id,
+                                            organizationId: user.organizationId
+                                        )
+                                    }
                                 )
+                            }
+                        }
+
+                        if !viewModel.rejectedItems.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("REJECTED ITEMS")
+                                        .scaledFont(size: 12, weight: .bold)
+                                        .foregroundColor(settings.secondaryText)
+                                    Spacer()
+                                    Text("\(viewModel.rejectedItems.count) ITEMS")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.15))
+                                        .foregroundColor(settings.isHighContrast ? .white : .red)
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                        )
+                                }
+
+                                ForEach(viewModel.rejectedItems, id: \.id) { item in
+                                    QuotationItemCard(
+                                        title: item.name,
+                                        quantityText: "Qty: \(item.quantity)",
+                                        priceText: currencyString(Double(item.quantity) * item.unitPrice),
+                                        statusText: nil,
+                                        isApproved: false,
+                                        removeAction: nil
+                                    )
+                                }
                             }
                         }
                         
@@ -194,45 +238,43 @@ struct QuotationStatusView: View {
 }
 
 struct QuotationItemCard: View {
-    var icon: String
     var title: String
-    var price: String
-    var statusText: String
+    var quantityText: String
+    var priceText: String
+    var statusText: String?
     var isApproved: Bool
+    var removeAction: (() -> Void)?
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(isApproved ? Color.elevateDarkGreen : Color.orange)
-                .frame(width: 40, height: 40)
-                .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
-                .cornerRadius(10)
+        HStack(spacing: 12) {
+            Text(title)
+                .scaledFont(size: 14, weight: .bold)
+                .foregroundColor(settings.primaryText)
+                .lineLimit(1)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .scaledFont(size: 16, weight: .bold)
-                    .foregroundColor(settings.primaryText)
-                    .lineLimit(2)
-                Text(price)
+            Spacer()
+
+            HStack(spacing: 12) {
+                Text(quantityText)
+                    .scaledFont(size: 11, weight: .semibold)
+                    .foregroundColor(settings.secondaryText)
+                Text(priceText)
                     .scaledFont(size: 12, weight: .bold)
                     .foregroundColor(settings.accentColor)
             }
 
-            Spacer()
-
-            Text(statusText)
-                .scaledFont(size: 10, weight: .bold)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(settings.isHighContrast ? Color.black : (isApproved ? Color.green.opacity(0.2) : Color.orange.opacity(0.15)))
-                .foregroundColor(settings.isHighContrast ? Color.white : (isApproved ? Color.elevateDarkGreen : .orange))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
-                )
+            if let removeAction = removeAction {
+                Button(action: removeAction) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.red)
+                        .frame(width: 28, height: 28)
+                        .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.12))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(16)
         .background(settings.surfaceColor)

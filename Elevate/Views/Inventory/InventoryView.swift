@@ -54,21 +54,6 @@ struct InventoryView: View {
                             }
                         }
 
-                        Button(action: submitQuotation) {
-                            Text("REQUEST QUOTATION")
-                                .scaledFont(size: 14, weight: .bold)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
-                                )
-                        }
-                        .padding(.horizontal, 24)
-
                         EmptyView()
                         
                         Spacer().frame(height: 120)
@@ -76,7 +61,7 @@ struct InventoryView: View {
                     .padding(.horizontal, 24)
                 }
                 .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 96)
+                    requestQuotationBar
                 }
                 .refreshable {
                     if let user = appSession.currentUser {
@@ -126,6 +111,28 @@ struct InventoryView: View {
         return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
     }
 
+    private var requestQuotationBar: some View {
+        VStack(spacing: 0) {
+            Button(action: submitQuotation) {
+                Text("REQUEST QUOTATION")
+                    .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                    )
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 10)
+            .padding(.bottom, 108)
+        }
+        .background(settings.appBackground)
+    }
+
     private func submitQuotation() {
         guard let user = appSession.currentUser else { return }
         viewModel.submitQuotationRequest(
@@ -134,6 +141,7 @@ struct InventoryView: View {
             organizationId: user.organizationId,
             isOnline: network.isOnline
         )
+        viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
         navigateToQuotation = true
     }
 }

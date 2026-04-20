@@ -268,6 +268,31 @@ final class LocalStorageService {
         }
     }
 
+    func fetchInventoryItem(id: String) -> InventoryItem? {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "InventoryItemEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        guard let item = try? stack.viewContext.fetch(request).first else { return nil }
+        return InventoryItem(
+            id: item.value(forKey: "id") as? String ?? "",
+            organizationId: item.value(forKey: "organizationId") as? String ?? "",
+            name: item.value(forKey: "name") as? String ?? "",
+            category: item.value(forKey: "category") as? String ?? "",
+            quantity: Int(item.value(forKey: "quantity") as? Int64 ?? 0),
+            unitPrice: item.value(forKey: "unitPrice") as? Double ?? 0,
+            sku: item.value(forKey: "sku") as? String,
+            imageUrl: item.value(forKey: "imageUrl") as? String
+        )
+    }
+
+    func updateInventoryQuantity(itemId: String, quantity: Int) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "InventoryItemEntity")
+        request.predicate = NSPredicate(format: "id == %@", itemId)
+        guard let item = try? context.fetch(request).first else { return }
+        item.setValue(Int64(max(0, quantity)), forKey: "quantity")
+        saveContext(context)
+    }
+
     func saveIssueReport(_ report: IssueReport, isSynced: Bool) {
         let context = stack.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "IssueReportEntity")

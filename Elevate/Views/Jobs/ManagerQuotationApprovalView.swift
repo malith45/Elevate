@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct ManagerQuotationApprovalView: View {
-    let jobId: String
+    let jobId: String?
 
     @Environment(\.managerTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerQuotationApprovalViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
+    @State private var showAll = false
+    private let localStorage = LocalStorageService.shared
 
     var body: some View {
         ZStack {
@@ -29,7 +31,33 @@ struct ManagerQuotationApprovalView: View {
                                 .foregroundColor(settings.secondaryText)
                         }
 
-                        if viewModel.items.isEmpty {
+                        if jobId != nil {
+                            Button(action: { showAll.toggle() }) {
+                                Text(showAll ? "VIEW THIS JOB" : "VIEW ALL QUOTATIONS")
+                                    .scaledFont(size: 11, weight: .bold)
+                                    .foregroundColor(settings.accentColor)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(settings.surfaceColor)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
+                            }
+                        }
+
+                        if showAll {
+                            if viewModel.jobs.isEmpty {
+                                emptyState
+                            } else {
+                                VStack(spacing: 16) {
+                                    ForEach(viewModel.jobs) { job in
+                                        jobSection(job)
+                                    }
+                                }
+                            }
+                        } else if viewModel.items.isEmpty {
                             VStack(spacing: 12) {
                                 Image(systemName: "doc.text")
                                     .font(.system(size: 40))
@@ -43,7 +71,7 @@ struct ManagerQuotationApprovalView: View {
                         } else {
                             VStack(spacing: 12) {
                                 ForEach(viewModel.items) { item in
-                                    quotationRow(item)
+                                    quotationRow(item, jobId: viewModel.job?.id)
                                 }
                             }
 
@@ -65,7 +93,7 @@ struct ManagerQuotationApprovalView: View {
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
 
-                                Button(action: { viewModel.approveAll() }) {
+                                Button(action: { viewModel.approveAll(jobId: viewModel.job?.id) }) {
                                     Text("Approve All")
                                         .scaledFont(size: 12, weight: .bold)
                                         .foregroundColor(.white)
@@ -91,8 +119,17 @@ struct ManagerQuotationApprovalView: View {
         }
         .navigationBarHidden(true)
             .onAppear {
+                showAll = true
                 let actorUserId = appSession.currentUser?.id ?? ""
-                viewModel.load(jobId: jobId, actorUserId: actorUserId)
+                let organizationId = appSession.currentUser?.organizationId ?? ""
+                let activeJobId = showAll ? nil : jobId
+                viewModel.load(jobId: activeJobId, organizationId: organizationId, actorUserId: actorUserId)
+            }
+            .onChange(of: showAll) { _, isAll in
+                let actorUserId = appSession.currentUser?.id ?? ""
+                let organizationId = appSession.currentUser?.organizationId ?? ""
+                let activeJobId = isAll ? nil : jobId
+                viewModel.load(jobId: activeJobId, organizationId: organizationId, actorUserId: actorUserId)
             }
         .alert("Quotation", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
@@ -104,7 +141,76 @@ struct ManagerQuotationApprovalView: View {
         }
     }
 
-    private func quotationRow(_ item: QuotationItem) -> some View {
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 40))
+                .foregroundColor(.elevateTextGray.opacity(0.5))
+            Text("No pending quotations right now.")
+                .scaledFont(size: 14)
+                .foregroundColor(settings.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
+    }
+
+    private func jobSection(_ job: Job) -> some View {
+        let technicianName = displayName(for: job.assignedUserId)
+        let pendingCount = job.quotationItems.filter { $0.status.uppercased() == "PENDING" }.count
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(job.title)
+                        .scaledFont(size: 16, weight: .bold)
+                        .foregroundColor(settings.primaryText)
+                    Text(technicianName)
+                        .scaledFont(size: 11, weight: .semibold)
+                        .foregroundColor(settings.secondaryText)
+                }
+                Spacer()
+                Text("\(pendingCount) PENDING")
+                    .scaledFont(size: 9, weight: .bold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(settings.isHighContrast ? Color.black : Color.orange.opacity(0.15))
+                    .foregroundColor(settings.isHighContrast ? .white : .orange)
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                    )
+            }
+
+            ForEach(job.quotationItems) { item in
+                quotationRow(item, jobId: job.id)
+            }
+
+            Button(action: { viewModel.approveAll(jobId: job.id) }) {
+                Text("Approve All")
+                    .scaledFont(size: 12, weight: .bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .background(settings.surfaceColor)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
+    }
+
+    private func quotationRow(_ item: QuotationItem, jobId: String?) -> some View {
         let status = item.status.uppercased()
         let isApproved = status == "APPROVED"
         let isRejected = status == "REJECTED"
@@ -132,7 +238,11 @@ struct ManagerQuotationApprovalView: View {
 
                 Spacer()
 
-                Button(action: { viewModel.updateStatus(itemId: item.id, status: "APPROVED") }) {
+                Button(action: {
+                    if let jobId = jobId {
+                        viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "APPROVED")
+                    }
+                }) {
                     Text("Approve")
                         .scaledFont(size: 12, weight: .bold)
                         .foregroundColor(isApproved ? .white : (settings.isHighContrast ? .white : settings.accentColor))
@@ -147,7 +257,11 @@ struct ManagerQuotationApprovalView: View {
                 }
                 .buttonStyle(.plain)
 
-                Button(action: { viewModel.updateStatus(itemId: item.id, status: "REJECTED") }) {
+                Button(action: {
+                    if let jobId = jobId {
+                        viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "REJECTED")
+                    }
+                }) {
                     Text("Reject")
                         .scaledFont(size: 12, weight: .bold)
                         .foregroundColor(isRejected ? .white : .red)
@@ -204,6 +318,14 @@ struct ManagerQuotationApprovalView: View {
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
         return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+    }
+
+    private func displayName(for userId: String) -> String {
+        let user = localStorage.fetchUser(id: userId)
+        if let user = user {
+            return user.displayName.isEmpty ? user.username : user.displayName
+        }
+        return "Technician"
     }
 }
 

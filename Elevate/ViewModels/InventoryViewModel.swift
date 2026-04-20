@@ -59,6 +59,7 @@ final class InventoryViewModel: ObservableObject {
 
         let mergedItems = mergeQuotationItems(jobId: jobId, newItems: selected)
         localStorage.updateJobQuotationItems(id: jobId, items: mergedItems, updatedAt: Date())
+        applyInventoryReductions(items: selected, organizationId: organizationId, userId: userId, isOnline: isOnline)
 
         if isOnline {
             firebase.submitQuotationRequest(jobId: jobId, userId: userId, items: selected) { result in
@@ -66,6 +67,8 @@ final class InventoryViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self.errorMessage = error.localizedDescription
                     }
+                } else {
+                    self.notifyManagersForQuotation(jobId: jobId, organizationId: organizationId, userId: userId)
                 }
             }
         } else {
@@ -92,6 +95,62 @@ final class InventoryViewModel: ObservableObject {
         }
 
         return existing
+    }
+
+    private func applyInventoryReductions(items: [QuotationItem], organizationId: String, userId: String, isOnline: Bool) {
+        var updatedInventory: [InventoryItem] = []
+
+        items.forEach { item in
+            guard let inventoryItem = localStorage.fetchInventoryItem(id: item.id) else { return }
+            let newQuantity = max(0, inventoryItem.quantity - item.quantity)
+            localStorage.updateInventoryQuantity(itemId: inventoryItem.id, quantity: newQuantity)
+
+            let updated = InventoryItem(
+                id: inventoryItem.id,
+                organizationId: inventoryItem.organizationId,
+                name: inventoryItem.name,
+                category: inventoryItem.category,
+                quantity: newQuantity,
+                unitPrice: inventoryItem.unitPrice,
+                sku: inventoryItem.sku,
+                imageUrl: inventoryItem.imageUrl
+            )
+            updatedInventory.append(updated)
+
+            let fields: [String: Any] = ["quantity": newQuantity]
+            if isOnline {
+                firebase.updateInventoryItem(itemId: inventoryItem.id, fields: fields) { _ in }
+            } else {
+                SyncManager.shared.enqueueUpdateInventoryItem(itemId: inventoryItem.id, fields: fields, organizationId: organizationId, userId: userId)
+            }
+        }
+
+        if !updatedInventory.isEmpty {
+            localStorage.saveInventoryItems(updatedInventory)
+            self.items = localStorage.fetchInventoryItems(organizationId: organizationId)
+        }
+    }
+
+    private func notifyManagersForQuotation(jobId: String, organizationId: String, userId: String) {
+        let managers = localStorage.fetchUsers(organizationId: organizationId)
+            .filter { $0.role.uppercased() == "MANAGER" }
+        guard !managers.isEmpty else { return }
+
+        let technicianName = localStorage.fetchUser(id: userId)?.displayName
+        let jobTitle = localStorage.fetchJob(id: jobId)?.title ?? "Job"
+        let title = "Quotation submitted"
+        let body = "\(technicianName?.isEmpty == false ? technicianName! : "Technician") sent items for \(jobTitle)."
+
+        managers.forEach { manager in
+            firebase.createNotification(
+                organizationId: organizationId,
+                userId: manager.id,
+                title: title,
+                body: body,
+                type: "QUOTATION_SUBMITTED",
+                targetId: jobId
+            ) { _ in }
+        }
     }
 
     func createItem(organizationId: String, userId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, imageData: Data?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {

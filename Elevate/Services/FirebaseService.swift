@@ -482,6 +482,100 @@ final class FirebaseService {
             }
     }
 
+    func listenToOrganizationJobs(organizationId: String, completion: @escaping ([Job]) -> Void) -> ListenerRegistration {
+        db.collection("jobs")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .addSnapshotListener { snapshot, error in
+                guard error == nil, let documents = snapshot?.documents else { return }
+
+                let jobs = documents.compactMap { doc -> Job? in
+                    let data = doc.data()
+                    guard let title = data["title"] as? String,
+                          let location = data["location"] as? String,
+                          let status = data["status"] as? String,
+                          let priority = data["priority"] as? String,
+                          let assignedUserId = data["assignedUserId"] as? String,
+                          let timestamp = data["scheduledAt"] as? Timestamp
+                    else { return nil }
+
+                    let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? timestamp.dateValue()
+                    let quotationItems = self.mapQuotationItems(data["quotationItems"] as? [[String: Any]])
+
+                    return Job(
+                        id: doc.documentID,
+                        organizationId: data["organizationId"] as? String ?? "",
+                        title: title,
+                        location: location,
+                        siteLatitude: data["siteLatitude"] as? Double,
+                        siteLongitude: data["siteLongitude"] as? Double,
+                        scheduledAt: timestamp.dateValue(),
+                        status: status,
+                        priority: priority,
+                        isUrgent: data["isUrgent"] as? Bool ?? false,
+                        isOnHold: data["isOnHold"] as? Bool ?? false,
+                        holdReason: data["holdReason"] as? String,
+                        cancelledAt: (data["cancelledAt"] as? Timestamp)?.dateValue(),
+                        assignedUserId: assignedUserId,
+                        notes: data["notes"] as? String,
+                        quotationItems: quotationItems,
+                        approvedCost: data["approvedCost"] as? Double,
+                        photoUrls: data["photoUrls"] as? [String] ?? [],
+                        updatedAt: updatedAt
+                    )
+                }
+
+                completion(jobs)
+            }
+    }
+
+    func listenToJob(jobId: String, completion: @escaping (Job?) -> Void) -> ListenerRegistration {
+        db.collection("jobs").document(jobId)
+            .addSnapshotListener { snapshot, error in
+                guard error == nil, let data = snapshot?.data() else {
+                    completion(nil)
+                    return
+                }
+
+                guard let title = data["title"] as? String,
+                      let location = data["location"] as? String,
+                      let status = data["status"] as? String,
+                      let priority = data["priority"] as? String,
+                      let assignedUserId = data["assignedUserId"] as? String,
+                      let timestamp = data["scheduledAt"] as? Timestamp
+                else {
+                    completion(nil)
+                    return
+                }
+
+                let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? timestamp.dateValue()
+                let quotationItems = self.mapQuotationItems(data["quotationItems"] as? [[String: Any]])
+
+                let job = Job(
+                    id: snapshot?.documentID ?? jobId,
+                    organizationId: data["organizationId"] as? String ?? "",
+                    title: title,
+                    location: location,
+                    siteLatitude: data["siteLatitude"] as? Double,
+                    siteLongitude: data["siteLongitude"] as? Double,
+                    scheduledAt: timestamp.dateValue(),
+                    status: status,
+                    priority: priority,
+                    isUrgent: data["isUrgent"] as? Bool ?? false,
+                    isOnHold: data["isOnHold"] as? Bool ?? false,
+                    holdReason: data["holdReason"] as? String,
+                    cancelledAt: (data["cancelledAt"] as? Timestamp)?.dateValue(),
+                    assignedUserId: assignedUserId,
+                    notes: data["notes"] as? String,
+                    quotationItems: quotationItems,
+                    approvedCost: data["approvedCost"] as? Double,
+                    photoUrls: data["photoUrls"] as? [String] ?? [],
+                    updatedAt: updatedAt
+                )
+
+                completion(job)
+            }
+    }
+
     func fetchJob(jobId: String, completion: @escaping (Result<Job, Error>) -> Void) {
         db.collection("jobs").document(jobId).getDocument { snapshot, error in
             if let error = error {
@@ -950,6 +1044,27 @@ final class FirebaseService {
                     }
                 }
             }
+    }
+
+    func createNotification(organizationId: String, userId: String, title: String, body: String, type: String, targetId: String?, completion: @escaping (Result<Void, Error>) -> Void) {
+        let payload: [String: Any] = [
+            "organizationId": organizationId,
+            "userId": userId,
+            "title": title,
+            "body": body,
+            "type": type,
+            "targetId": targetId as Any,
+            "createdAt": Timestamp(date: Date()),
+            "isRead": false
+        ]
+
+        db.collection("notifications").document().setData(payload) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
     }
 
     func saveFcmToken(userId: String, token: String) {

@@ -1,4 +1,6 @@
 import SwiftUI
+import MapKit
+import CoreLocation
 
 struct JobListView: View {
     @EnvironmentObject private var appSession: AppSession
@@ -10,7 +12,7 @@ struct JobListView: View {
     
     var body: some View {
         ZStack {
-            settings.appBackground.ignoresSafeArea()
+            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -30,12 +32,13 @@ struct JobListView: View {
                             FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
-                        .background(settings.surfaceColor)
-                        .cornerRadius(8)
+                        .background(settings.isHighContrast ? Color.black : settings.surfaceColor)
+                        .cornerRadius(16)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 16)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
+                        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         .padding(.horizontal, 24)
                         .padding(.top, 4)
                         
@@ -43,12 +46,13 @@ struct JobListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(settings.secondaryText)
+                                .foregroundColor(.elevateTextGray)
+                                .tracking(1)
                                 .textCase(.uppercase)
                             
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.accentColor)
+                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -61,8 +65,9 @@ struct JobListView: View {
                                 if !past.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("PAST JOBS")
-                                            .scaledFont(size: 12, weight: .bold)
+                                            .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(.red)
+                                            .tracking(1)
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(past) { job in
@@ -74,8 +79,9 @@ struct JobListView: View {
                                 if !future.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("UPCOMING JOBS")
-                                            .scaledFont(size: 12, weight: .bold)
+                                            .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(.elevateDarkGreen)
+                                            .tracking(1)
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(future) { job in
@@ -186,78 +192,107 @@ struct JobCard: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        NavigationLink(destination: JobDetailsView(jobId: job.id)) {
-            JobCardContent(job: job)
+        HStack(spacing: 0) {
+            // Left Status Strip
+            Rectangle()
+                .fill(statusColor)
+                .frame(width: 6)
+            
+            VStack(alignment: .leading, spacing: 16) {
+                // Top Row: Status Pill & Time
+                HStack {
+                    Text(job.status.uppercased())
+                        .scaledFont(size: 9, weight: .bold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(statusColor.opacity(0.12))
+                        .foregroundColor(statusColor)
+                        .cornerRadius(20)
+                    
+                    Spacer()
+                    
+                    Text(timeString(from: job.scheduledAt))
+                        .scaledFont(size: 14, weight: .bold)
+                        .foregroundColor(settings.secondaryText)
+                }
+                
+                // Title
+                Text(job.title)
+                    .scaledFont(size: 20, weight: .bold, design: .rounded)
+                    .foregroundColor(settings.primaryText)
+                    .lineLimit(2)
+                
+                // Location Section
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.elevateLightGray.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "mappin.and.ellipse")
+                            .foregroundColor(settings.accentColor)
+                            .font(.system(size: 18))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(job.location)
+                            .scaledFont(size: 14, weight: .bold)
+                            .foregroundColor(settings.primaryText)
+                            .lineLimit(1)
+                        if let notes = job.notes, !notes.isEmpty {
+                            Text(notes)
+                                .scaledFont(size: 12)
+                                .foregroundColor(settings.secondaryText)
+                                .lineLimit(2)
+                        }
+                    }
+                }
+                
+                // Action Row
+                HStack(spacing: 10) {
+                    NavigationLink(destination: JobDetailsView(jobId: job.id)) {
+                        Text("Open Details")
+                            .scaledFont(size: 15, weight: .bold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.elevateDarkGreen)
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button(action: {
+                        openMaps()
+                    }) {
+                        Image(systemName: "arrow.turn.up.right")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(settings.primaryText)
+                            .frame(width: 48, height: 48)
+                            .background(Color.elevateLightGray.opacity(0.3))
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.top, 4)
+            }
+            .padding(20)
         }
-        .padding(20)
-        .background(settings.surfaceColor)
-        .cornerRadius(12)
+        .background(settings.isHighContrast ? Color.black : .white)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.isHighContrast ? Color.white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.08), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
     }
 
-    private func timeString(from date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
-    }
-}
-
-struct JobCardContent: View {
-    var job: Job
-    @ObservedObject var settings = AccessibilitySettings.shared
-
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(job.status.uppercased())
-                        .scaledFont(size: 10, weight: .bold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
-                        .foregroundColor(settings.primaryText)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                        )
-
-                    Text(job.title)
-                        .scaledFont(size: 18, weight: .bold)
-                        .foregroundColor(settings.primaryText)
-                }
-                Spacer()
-                Text(timeString(from: job.scheduledAt))
-                    .scaledFont(size: 14, weight: .bold)
-                    .foregroundColor(settings.secondaryText)
-            }
-
-            HStack(spacing: 12) {
-                Image(systemName: "mappin.and.ellipse")
-                    .frame(width: 32, height: 32)
-                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
-                    .foregroundColor(settings.accentColor)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                    )
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(job.location)
-                        .scaledFont(size: 14, weight: .bold)
-                        .foregroundColor(settings.primaryText)
-                    Text(job.notes ?? "")
-                        .scaledFont(size: 12)
-                        .foregroundColor(settings.secondaryText)
-                }
-                Spacer()
-            }
+    private var statusColor: Color {
+        if job.isUrgent { return .red }
+        switch job.status.uppercased() {
+        case "COMPLETED": return .elevateDarkGreen
+        case "IN PROGRESS": return .blue
+        case "CANCELLED": return .gray
+        default: return settings.accentColor
         }
     }
 
@@ -266,7 +301,30 @@ struct JobCardContent: View {
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
     }
+    
+    private func openMaps() {
+        guard let lat = job.siteLatitude, let lon = job.siteLongitude else { return }
+        let destinationItem: MKMapItem
+        let sourceItem: MKMapItem
+        
+        let startCoord = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
+        let destCoord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        
+        if #available(iOS 26.0, *) {
+            sourceItem = MKMapItem(location: CLLocation(latitude: startCoord.latitude, longitude: startCoord.longitude), address: nil)
+            destinationItem = MKMapItem(location: CLLocation(latitude: destCoord.latitude, longitude: destCoord.longitude), address: nil)
+        } else {
+            sourceItem = MKMapItem(placemark: MKPlacemark(coordinate: startCoord))
+            destinationItem = MKMapItem(placemark: MKPlacemark(coordinate: destCoord))
+        }
+        
+        sourceItem.name = "Colombo Start"
+        destinationItem.name = job.title
+        
+        MKMapItem.openMaps(with: [sourceItem, destinationItem], launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+    }
 }
+
 
 struct StatPill: View {
     var icon: String
@@ -277,27 +335,34 @@ struct StatPill: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(settings.isHighContrast ? settings.primaryText : (isPrimary ? .white : .black))
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(settings.isHighContrast ? Color.white.opacity(0.1) : (isPrimary ? Color.white.opacity(0.1) : Color.elevateDarkGreen.opacity(0.05)))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .elevateDarkGreen))
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
-                    .scaledFont(size: 28, weight: .bold)
-                    .foregroundColor(settings.isHighContrast ? settings.primaryText : (isPrimary ? .white : .black))
+                    .scaledFont(size: 28, weight: .bold, design: .rounded)
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .black))
                 Text(title)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(settings.isHighContrast ? settings.primaryText : (isPrimary ? .white.opacity(0.8) : .elevateTextGray))
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white.opacity(0.8) : .elevateTextGray))
+                    .tracking(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(settings.isHighContrast ? settings.surfaceColor : (isPrimary ? Color.elevateDarkGreen : Color.elevateLightGray))
-        .cornerRadius(12)
+        .background(settings.isHighContrast ? Color.black : (isPrimary ? Color.elevateDarkGreen : Color.white))
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
         )
+        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
     }
 }
 

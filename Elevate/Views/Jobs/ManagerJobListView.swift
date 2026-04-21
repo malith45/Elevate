@@ -10,7 +10,7 @@ struct ManagerJobListView: View {
 
     var body: some View {
         ZStack {
-            settings.appBackground.ignoresSafeArea()
+            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Top Nav
@@ -30,12 +30,13 @@ struct ManagerJobListView: View {
                             FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
-                        .background(settings.surfaceColor)
-                        .cornerRadius(8)
+                        .background(settings.isHighContrast ? Color.black : settings.surfaceColor)
+                        .cornerRadius(16)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 16)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
+                        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         .padding(.horizontal, 24)
                         .padding(.top, 4)
 
@@ -43,12 +44,13 @@ struct ManagerJobListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(settings.secondaryText)
+                                .foregroundColor(.elevateTextGray)
+                                .tracking(1)
                                 .textCase(.uppercase)
                             
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.accentColor)
+                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                         }
                         .padding(.horizontal, 24)
 
@@ -61,8 +63,9 @@ struct ManagerJobListView: View {
                                 if !past.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("PAST JOBS")
-                                            .scaledFont(size: 12, weight: .bold)
+                                            .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(.red)
+                                            .tracking(1)
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(past) { job in
@@ -81,8 +84,9 @@ struct ManagerJobListView: View {
                                 if !future.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("UPCOMING JOBS")
-                                            .scaledFont(size: 12, weight: .bold)
+                                            .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(.elevateDarkGreen)
+                                            .tracking(1)
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(future) { job in
@@ -185,16 +189,87 @@ private struct ManagerJobCard: View {
     @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
-        JobCardContent(job: job)
-        .padding(20)
-        .background(settings.surfaceColor)
-        .cornerRadius(12)
+        HStack(spacing: 0) {
+            // Left Status Strip
+            Rectangle()
+                .fill(statusColor)
+                .frame(width: 6)
+            
+            VStack(alignment: .leading, spacing: 16) {
+                // Top Row: Status Pill & Time
+                HStack {
+                    Text(job.status.uppercased())
+                        .scaledFont(size: 9, weight: .bold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(statusColor.opacity(0.12))
+                        .foregroundColor(statusColor)
+                        .cornerRadius(20)
+                    
+                    Spacer()
+                    
+                    Text(timeString(from: job.scheduledAt))
+                        .scaledFont(size: 14, weight: .bold)
+                        .foregroundColor(settings.secondaryText)
+                }
+                
+                // Title
+                Text(job.title)
+                    .scaledFont(size: 18, weight: .bold, design: .rounded)
+                    .foregroundColor(settings.primaryText)
+                    .lineLimit(2)
+                
+                // Location Section
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.elevateLightGray.opacity(0.3))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "mappin.and.ellipse")
+                            .foregroundColor(settings.accentColor)
+                            .font(.system(size: 16))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(job.location)
+                            .scaledFont(size: 14, weight: .bold)
+                            .foregroundColor(settings.primaryText)
+                            .lineLimit(1)
+                        if let notes = job.notes, !notes.isEmpty {
+                            Text(notes)
+                                .scaledFont(size: 12)
+                                .foregroundColor(settings.secondaryText)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+            }
+            .padding(20)
+        }
+        .background(settings.isHighContrast ? Color.black : .white)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.isHighContrast ? Color.white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.08), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
+    }
+
+    private var statusColor: Color {
+        if job.isUrgent { return .red }
+        switch job.status.uppercased() {
+        case "COMPLETED": return .elevateDarkGreen
+        case "IN PROGRESS": return .blue
+        case "CANCELLED": return .gray
+        default: return settings.accentColor
+        }
+    }
+
+    private func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: date)
     }
 }
 

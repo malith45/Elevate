@@ -15,10 +15,13 @@ final class CalendarSyncService {
     }
 
     private var isAuthorized: Bool {
+        let status = EKEventStore.authorizationStatus(for: .event)
         if #available(iOS 17.0, *) {
-            return EKEventStore.authorizationStatus(for: .event) == .fullAccess
+            return status == .fullAccess || status == .writeOnly
+        } else {
+            // Use rawValue to avoid deprecation warning for .authorized in iOS 17+ compile time
+            return status.rawValue == 3 // .authorized
         }
-        return legacyIsAuthorized(EKEventStore.authorizationStatus(for: .event))
     }
 
     private func syncJobs(_ jobs: [Job]) {
@@ -102,11 +105,5 @@ final class CalendarSyncService {
         let idStart = range.upperBound
         let suffix = notes[idStart...]
         return suffix.split(separator: "\n").first.map(String.init)
-    }
-
-    @available(iOS, introduced: 13.0, deprecated: 17.0)
-    private func legacyIsAuthorized(_ status: EKAuthorizationStatus) -> Bool {
-        let legacyAuthorizedRawValue = 3
-        return status.rawValue == legacyAuthorizedRawValue
     }
 }

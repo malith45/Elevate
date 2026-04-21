@@ -151,14 +151,14 @@ struct ManagerMembersView: View {
                 }) {
                     Text("Edit")
                         .scaledFont(size: 11, weight: .bold)
-                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                         .padding(.vertical, 6)
                         .padding(.horizontal, 12)
-                        .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
+                        .background(settings.isHighContrast ? settings.appBackground : settings.accentColor.opacity(0.1))
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                 }
                 .buttonStyle(.plain)

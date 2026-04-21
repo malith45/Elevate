@@ -42,13 +42,13 @@ struct CustomTextField: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(isFocused ? 0.5 : 1))
+                    .fill(settings.surfaceColor)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         errorMessage != nil ? Color.red : (isFocused ? settings.accentColor : settings.cardStroke),
-                        lineWidth: settings.isHighContrast ? 3 : (errorMessage != nil || isFocused ? 1.5 : 0)
+                        lineWidth: settings.cardStrokeWidth
                     )
             )
             .shadow(color: isFocused ? Color.elevateDarkGreen.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
@@ -105,7 +105,7 @@ struct SecureCustomTextField: View {
                     }
                 }
                 .scaledFont(size: 15)
-                .foregroundColor(.black)
+                .foregroundColor(AccessibilitySettings.shared.primaryText)
                 .focused($isFocused)
                 
                 Button(action: {
@@ -120,13 +120,13 @@ struct SecureCustomTextField: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.elevateLightGray.opacity(isFocused ? 0.5 : 1))
+                    .fill(AccessibilitySettings.shared.surfaceColor)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        errorMessage != nil ? Color.red : (isFocused ? Color.elevateDarkGreen : Color.clear),
-                        lineWidth: 1.5
+                        errorMessage != nil ? Color.red : (isFocused ? AccessibilitySettings.shared.accentColor : AccessibilitySettings.shared.cardStroke),
+                        lineWidth: AccessibilitySettings.shared.cardStrokeWidth
                     )
             )
             .shadow(color: isFocused ? Color.elevateDarkGreen.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
@@ -159,11 +159,11 @@ struct PrimaryButton: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(AccessibilitySettings.shared.isHighContrast ? Color.black : Color.elevateDarkGreen)
+            .background(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : Color.elevateDarkGreen)
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white, lineWidth: AccessibilitySettings.shared.isHighContrast ? 3 : 0)
+                    .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
             )
             .shadow(color: AccessibilitySettings.shared.isHighContrast ? .clear : Color.elevateDarkGreen.opacity(0.3), radius: 5, x: 0, y: 3)
         }
@@ -188,12 +188,12 @@ struct SecondaryButton: View {
             .scaledFont(size: 16, weight: .bold)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(AccessibilitySettings.shared.isHighContrast ? Color.black : Color.white)
+            .background(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : Color.white)
             .cornerRadius(10)
             .shadow(color: AccessibilitySettings.shared.isHighContrast ? .clear : Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(AccessibilitySettings.shared.isHighContrast ? Color.white : Color.elevateLightGray, lineWidth: AccessibilitySettings.shared.isHighContrast ? 3 : 1)
+                    .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
             )
         }
     }

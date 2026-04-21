@@ -116,11 +116,11 @@ struct JobIssueReportView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                         }
                         .padding(.top, 16)
@@ -171,13 +171,13 @@ struct PriorityButton: View {
                 .foregroundColor(isSelected ? .white : settings.primaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(isSelected ? (settings.isHighContrast ? Color.black : Color.elevateDarkGreen) : settings.surfaceColor)
+                .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen) : settings.surfaceColor)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? (settings.isHighContrast ? Color.white : Color.clear) : settings.cardStroke, lineWidth: isSelected ? 2 : settings.cardStrokeWidth)
+                        .stroke(isSelected && settings.isHighContrast ? settings.primaryText : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                 )
-                .shadow(color: isSelected ? Color.elevateDarkGreen.opacity(0.3) : Color.clear, radius: 5, x: 0, y: 3)
+                .shadow(color: isSelected && !settings.isHighContrast ? Color.elevateDarkGreen.opacity(0.3) : Color.clear, radius: 5, x: 0, y: 3)
         }
     }
 }

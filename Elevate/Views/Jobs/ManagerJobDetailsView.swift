@@ -60,12 +60,12 @@ struct ManagerJobDetailsView: View {
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
-                                    .foregroundColor(settings.isHighContrast ? .white : .red)
+                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.red.opacity(0.1))
+                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
                                     .cornerRadius(12)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -87,11 +87,11 @@ struct ManagerJobDetailsView: View {
                                         .foregroundColor(settings.primaryText)
                                         .multilineTextAlignment(.leading)
                                         .padding(10)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
-                                                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
                                 }
 
@@ -226,11 +226,11 @@ struct ManagerJobDetailsView: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 18)
-                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -266,7 +266,7 @@ struct ManagerJobDetailsView: View {
                                     }) {
                                         Text("Hold Job")
                                             .scaledFont(size: 14, weight: .bold)
-                                            .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                                            .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 14)
                                             .background(settings.surfaceColor)
@@ -294,11 +294,11 @@ struct ManagerJobDetailsView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                         .cornerRadius(14)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 14)
-                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
                                 }
                             }
@@ -351,14 +351,14 @@ struct ManagerJobDetailsView: View {
             Text(title)
                 .scaledFont(size: 10, weight: .bold)
         }
-        .foregroundColor(settings.isHighContrast ? (title.contains("Site") ? settings.accentColor : .blue) : settings.accentColor)
+        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(settings.isHighContrast ? Color.black : Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
     }
 }

@@ -100,11 +100,11 @@ struct ManagerJobIssueReportView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 14)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                         .cornerRadius(12)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
                                 }
 
@@ -113,14 +113,14 @@ struct ManagerJobIssueReportView: View {
                                 }) {
                                     Text("Mark Resolved")
                                         .scaledFont(size: 14, weight: .bold)
-                                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 14)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
                                         .cornerRadius(12)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
                                 }
                             }
@@ -175,11 +175,11 @@ struct ManagerJobIssueReportView: View {
                             .foregroundColor(isSelected ? .white : settings.accentColor)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 8)
-                            .background(isSelected ? (settings.isHighContrast ? Color.black : settings.accentColor) : (settings.isHighContrast ? Color.black : Color.elevateLightGray))
+                            .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : settings.accentColor) : settings.surfaceColor)
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(isSelected && settings.isHighContrast ? Color.white : (settings.isHighContrast ? settings.cardStroke : Color.clear), lineWidth: 1)
+                                    .stroke(isSelected && settings.isHighContrast ? settings.primaryText : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
                         }
                         .buttonStyle(.plain)
@@ -197,14 +197,14 @@ struct ManagerJobIssueReportView: View {
 
         return HStack(spacing: 16) {
             Circle()
-                .fill(settings.isHighContrast ? Color.black : settings.accentColor)
+                .fill(settings.surfaceColor)
                 .frame(width: 56, height: 56)
                 .overlay(
-                    Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                    Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                 )
                 .overlay(
                     Image(systemName: "person.fill")
-                        .foregroundColor(.white)
+                        .foregroundColor(settings.primaryText)
                 )
 
             VStack(alignment: .leading, spacing: 6) {
@@ -233,12 +233,12 @@ struct ManagerJobIssueReportView: View {
             .scaledFont(size: 10, weight: .bold)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(settings.isHighContrast ? Color.black : (priority == "HIGH" ? Color.red.opacity(0.15) : Color.elevateLightGray))
-            .foregroundColor(settings.isHighContrast ? .white : (priority == "HIGH" ? .red : .elevateDarkGreen))
+            .background(settings.isHighContrast ? settings.surfaceColor : (priority == "HIGH" ? Color.red.opacity(0.15) : Color.elevateLightGray))
+            .foregroundColor(settings.isHighContrast ? settings.primaryText : (priority == "HIGH" ? .red : .elevateDarkGreen))
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
     }
 

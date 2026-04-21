@@ -63,11 +63,12 @@ struct ManagerPendingQuotationListView: View {
         VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(Color.green.opacity(0.1))
+                    .fill(settings.surfaceColor)
                     .frame(width: 80, height: 80)
+                    .overlay(Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 32))
-                    .foregroundColor(.green)
+                    .foregroundColor(settings.primaryText)
             }
             .padding(.top, 60)
             
@@ -119,12 +120,12 @@ struct PendingQuotationJobCard: View {
                         .scaledFont(size: 9, weight: .black)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(settings.isHighContrast ? Color.black : Color.orange.opacity(0.12))
-                        .foregroundColor(settings.isHighContrast ? .white : .orange)
+                        .background(settings.isHighContrast ? settings.surfaceColor : Color.orange.opacity(0.12))
+                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .orange)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                 }
                 

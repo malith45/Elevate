@@ -30,11 +30,11 @@ struct JobListView: View {
                             FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
-                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                        .background(settings.surfaceColor)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                         .padding(.horizontal, 24)
                         .padding(.top, 4)
@@ -219,12 +219,12 @@ struct JobCardContent: View {
                         .scaledFont(size: 10, weight: .bold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
-                        .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
+                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
+                        .foregroundColor(settings.primaryText)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(settings.isHighContrast ? .white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
 
                     Text(job.title)
@@ -240,12 +240,12 @@ struct JobCardContent: View {
             HStack(spacing: 12) {
                 Image(systemName: "mappin.and.ellipse")
                     .frame(width: 32, height: 32)
-                    .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
                     .foregroundColor(settings.accentColor)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -279,20 +279,20 @@ struct StatPill: View {
         VStack(alignment: .leading, spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .black))
+                .foregroundColor(settings.isHighContrast ? settings.primaryText : (isPrimary ? .white : .black))
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .scaledFont(size: 28, weight: .bold)
-                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .black))
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : (isPrimary ? .white : .black))
                 Text(title)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white.opacity(0.8) : .elevateTextGray))
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : (isPrimary ? .white.opacity(0.8) : .elevateTextGray))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(settings.isHighContrast ? Color.black : (isPrimary ? Color.elevateDarkGreen : Color.elevateLightGray))
+        .background(settings.isHighContrast ? settings.surfaceColor : (isPrimary ? Color.elevateDarkGreen : Color.elevateLightGray))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)

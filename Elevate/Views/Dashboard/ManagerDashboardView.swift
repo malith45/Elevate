@@ -76,11 +76,12 @@ struct ManagerDashboardView: View {
                             }) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.elevateLightGray)
+                                        .fill(settings.surfaceColor)
                                         .frame(width: 48, height: 48)
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
                                     Image(systemName: "calendar.badge.plus")
                                         .font(.system(size: 20))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(settings.primaryText)
                                 }
                             }
                             .buttonStyle(.plain)
@@ -119,10 +120,10 @@ struct ManagerDashboardView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("URGENT")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.red.opacity(0.8))
+                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : .red.opacity(0.8))
                                 Text(String(format: "%02d", viewModel.urgentJobsToday))
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                    .foregroundColor(.red)
+                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
                             }
                              .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(24)
@@ -176,13 +177,13 @@ struct ManagerDashboardView: View {
                             }
                              .padding(24)
                             .background(
-                                settings.isHighContrast ? AnyView(Color.black) : 
+                                settings.isHighContrast ? AnyView(settings.surfaceColor) : 
                                 AnyView(LinearGradient(gradient: Gradient(colors: [Color.elevateDarkGreen, Color.elevateDarkGreen.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing))
                             )
                             .cornerRadius(24)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24)
-                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
                             .shadow(color: settings.isHighContrast ? .clear : Color.elevateDarkGreen.opacity(0.3), radius: 10, x: 0, y: 6)
                         }
@@ -410,10 +411,10 @@ struct ManagerShortcutItem: View {
                     
                     VStack(spacing: 8) {
                         Circle()
-                            .fill(AccessibilitySettings.shared.isHighContrast ? Color.black : color)
+                            .fill(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : color)
                             .frame(width: 40, height: 40)
                             .overlay(
-                                Circle().stroke(Color.white, lineWidth: AccessibilitySettings.shared.isHighContrast ? 2 : 0)
+                                Circle().stroke(AccessibilitySettings.shared.primaryText, lineWidth: AccessibilitySettings.shared.isHighContrast ? 1.5 : 0)
                             )
                             .overlay(
                                 Image(systemName: icon)

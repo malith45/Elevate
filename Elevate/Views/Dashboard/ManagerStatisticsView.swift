@@ -43,10 +43,10 @@ struct ManagerStatisticsView: View {
                                 HStack(spacing: 16) {
                                     ZStack(alignment: .bottomTrailing) {
                                         Circle()
-                                            .fill(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                                            .fill(settings.surfaceColor)
                                             .frame(width: 64, height: 64)
                                             .overlay(
-                                                Circle().stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                                Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                             .overlay(
                                                 Image(systemName: selectedTechnicianId == nil ? "person.3.fill" : "person.fill")
@@ -58,7 +58,7 @@ struct ManagerStatisticsView: View {
                                             .fill(Color.green)
                                             .frame(width: 14, height: 14)
                                             .overlay(
-                                                Circle().stroke(settings.isHighContrast ? .black : Color.white, lineWidth: 3)
+                                                Circle().stroke(settings.appBackground, lineWidth: 3)
                                             )
                                             .offset(x: -4, y: -4)
                                     }
@@ -70,14 +70,14 @@ struct ManagerStatisticsView: View {
                                         
                                         Text("ONLINE")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(settings.isHighContrast ? .white : .elevateDarkGreen)
+                                            .foregroundColor(settings.primaryText)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen.opacity(0.15))
+                                            .background(settings.surfaceColor)
                                             .cornerRadius(12)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                     }
                                     
@@ -85,7 +85,7 @@ struct ManagerStatisticsView: View {
                                     
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 20, weight: .medium))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(settings.primaryText)
                                 }
                                 .padding(.vertical, 16)
                                 .padding(.horizontal, 24)
@@ -131,7 +131,7 @@ struct ManagerStatisticsView: View {
                                         y: .value("Total", item.total),
                                         width: .ratio(0.8)
                                     )
-                                    .foregroundStyle(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateLightGray)
+                                    .foregroundStyle(settings.isHighContrast ? settings.secondaryText.opacity(0.3) : Color.elevateLightGray)
                                     .cornerRadius(8)
                                     
                                     // Foreground dark green bar

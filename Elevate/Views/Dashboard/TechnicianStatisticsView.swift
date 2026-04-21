@@ -56,7 +56,7 @@ struct TechnicianStatisticsView: View {
                                         y: .value("Total", item.total),
                                         width: .ratio(0.8)
                                     )
-                                    .foregroundStyle(settings.isHighContrast ? Color.white.opacity(0.2) : Color.elevateLightGray)
+                                    .foregroundStyle(settings.isHighContrast ? settings.secondaryText.opacity(0.3) : Color.elevateLightGray)
                                     .cornerRadius(8)
                                     
                                     // Foreground dark green bar
@@ -101,7 +101,7 @@ struct TechnicianStatisticsView: View {
                                         .scaledFont(size: 14, weight: .bold)
                                     Text(viewModel.comparisonLabel)
                                         .scaledFont(size: 12)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
                                 Spacer()
                                 HStack(spacing: 4) {
@@ -109,7 +109,7 @@ struct TechnicianStatisticsView: View {
                                     Text(comparisonPercentString())
                                 }
                                 .scaledFont(size: 16, weight: .bold)
-                                .foregroundColor(viewModel.comparisonIsPositive ? settings.accentColor : .red)
+                                .foregroundColor(settings.isHighContrast ? settings.primaryText : (viewModel.comparisonIsPositive ? settings.accentColor : .red))
                             }
                             
                             Chart {

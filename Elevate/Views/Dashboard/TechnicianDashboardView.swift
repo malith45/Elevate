@@ -86,11 +86,11 @@ struct TechnicianDashboardView: View {
                                         .foregroundColor(.white)
                                 }
                                 .padding()
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.white, lineWidth: settings.isHighContrast ? 3 : 0)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -172,7 +172,7 @@ struct TechnicianDashboardView: View {
                         }
                     }
                 }
-                .background(Color.elevateLightGray.opacity(0.3)) // Subtly differentiate scroll background
+                .background(settings.appBackground)
             }
         }
         .navigationBarHidden(true)
@@ -329,7 +329,7 @@ struct ShortcutBoxInternal: View {
         VStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AccessibilitySettings.shared.isHighContrast ? Color.black : Color.elevateLightGray)
+                    .fill(AccessibilitySettings.shared.surfaceColor)
                     .frame(height: 56)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -377,12 +377,12 @@ struct TaskRow: View {
                     .scaledFont(size: 10, weight: .bold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(AccessibilitySettings.shared.isHighContrast ? Color.black : color.opacity(0.1))
-                    .foregroundColor(AccessibilitySettings.shared.isHighContrast ? .white : color)
+                    .background(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : color.opacity(0.1))
+                    .foregroundColor(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.primaryText : color)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AccessibilitySettings.shared.isHighContrast ? .white : Color.clear, lineWidth: AccessibilitySettings.shared.isHighContrast ? 2 : 0)
+                            .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
                     )
             }
             Spacer()

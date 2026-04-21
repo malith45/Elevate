@@ -87,7 +87,7 @@ struct MemberEditorView: View {
                         }
                     }
                     .scaledFont(size: 15, weight: .bold)
-                    .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                     .opacity(member.role == "OWNER" && currentUserRole != "OWNER" ? 0.5 : 1.0)
                     .disabled(member.role == "OWNER" && currentUserRole != "OWNER")
                 }
@@ -110,7 +110,7 @@ struct MemberEditorView: View {
                                         .clipShape(Circle())
                                 } else {
                                     ProfilePhotoView(userId: member.id, size: 100)
-                                        .overlay(Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2))
+                                        .overlay(Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
                                 }
                                 
                                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
@@ -118,9 +118,9 @@ struct MemberEditorView: View {
                                         .font(.system(size: 14, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, height: 32)
-                                        .background(settings.isHighContrast ? Color.black : settings.accentColor)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor)
                                         .clipShape(Circle())
-                                        .overlay(Circle().stroke(settings.isHighContrast ? Color.white : Color.white, lineWidth: 2))
+                                        .overlay(Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
                                 }
                                 .offset(x: 2, y: 2)
                             }
@@ -223,11 +223,11 @@ struct MemberEditorView: View {
                                 .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
+                                .background(settings.isHighContrast ? settings.surfaceColor : Color.red.opacity(0.1))
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? Color.red : Color.clear, lineWidth: 1)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                             }
                             .padding(.horizontal, 20)
@@ -261,15 +261,15 @@ struct MemberEditorView: View {
                 Text(option.capitalized)
                     .scaledFont(size: 13, weight: .bold)
             }
-            .foregroundColor(isSelected ? .white : settings.accentColor)
+            .foregroundColor(isSelected ? (settings.isHighContrast ? settings.primaryText : .white) : settings.accentColor)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(isSelected ? (settings.isHighContrast ? Color.black : settings.accentColor) : (settings.isHighContrast ? Color.black : settings.surfaceColor))
+            .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : settings.accentColor) : (settings.isHighContrast ? settings.surfaceColor : settings.surfaceColor))
             .cornerRadius(12)
             .shadow(color: isSelected ? Color.black.opacity(0.0) : Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? (settings.isHighContrast ? Color.white : Color.clear) : settings.cardStroke, lineWidth: isSelected ? 2 : settings.cardStrokeWidth)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
         }
         .buttonStyle(.plain)

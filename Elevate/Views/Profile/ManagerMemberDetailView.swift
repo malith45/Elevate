@@ -79,15 +79,15 @@ struct ManagerMemberDetailView: View {
                 ProfilePhotoView(userId: member.id, size: 80)
             } else {
                 Circle()
-                    .fill(settings.isHighContrast ? Color.black : settings.accentColor)
+                    .fill(settings.surfaceColor)
                     .frame(width: 80, height: 80)
                     .overlay(
-                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                        Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                     )
                     .overlay(
                         Image(systemName: "person.fill")
                             .font(.system(size: 32))
-                            .foregroundColor(.white)
+                            .foregroundColor(settings.primaryText)
                     )
             }
 
@@ -97,14 +97,14 @@ struct ManagerMemberDetailView: View {
 
             Text("ID: \(shortId)")
                 .scaledFont(size: 12, weight: .bold)
-                .foregroundColor(settings.isHighContrast ? .white : settings.secondaryText)
+                .foregroundColor(settings.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                 )
         }
         .frame(maxWidth: .infinity)

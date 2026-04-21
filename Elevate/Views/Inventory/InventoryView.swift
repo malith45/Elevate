@@ -52,9 +52,13 @@ struct InventoryView: View {
                                         .scaledFont(size: 10, weight: .bold)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 2)
-                                        .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
-                                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
+                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                                         .cornerRadius(4)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 4)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                 }
 
                                 ForEach(items, id: \.id) { item in
@@ -152,12 +156,12 @@ struct InventoryView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .padding(.horizontal, 24)
-                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                     .cornerRadius(14)
                     .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                     )
                 }
             }

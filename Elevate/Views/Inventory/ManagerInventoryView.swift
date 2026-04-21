@@ -62,9 +62,13 @@ struct ManagerInventoryView: View {
                                         .scaledFont(size: 10, weight: .bold)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
-                                        .foregroundColor(settings.accentColor)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
+                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                                         .cornerRadius(6)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                 }
                                 .padding(.horizontal, 8)
 
@@ -97,10 +101,10 @@ struct ManagerInventoryView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                     .clipShape(Circle())
                     .overlay(
-                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                        Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                     )
                     .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
             }

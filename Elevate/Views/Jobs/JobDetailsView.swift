@@ -43,12 +43,12 @@ struct JobDetailsView: View {
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.1))
-                                    .foregroundColor(settings.isHighContrast ? .white : .red)
+                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.red.opacity(0.1))
+                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
                                     .cornerRadius(12)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
                             }
@@ -69,11 +69,11 @@ struct JobDetailsView: View {
                                         .foregroundColor(settings.primaryText)
                                         .multilineTextAlignment(.leading)
                                         .padding(10)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
-                                                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
                                 }
 
@@ -133,10 +133,10 @@ struct JobDetailsView: View {
                                         VStack(spacing: 8) {
                                             Image(systemName: "map.fill")
                                                 .font(.system(size: 36))
-                                                .foregroundColor(settings.isHighContrast ? .white : .white.opacity(0.4))
+                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : .white.opacity(0.4))
                                             Text("Location preview unavailable")
                                                 .scaledFont(size: 12, weight: .semibold)
-                                                .foregroundColor(settings.isHighContrast ? .white : .white.opacity(0.7))
+                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : .white.opacity(0.7))
                                         }
                                     }
                                 }
@@ -186,11 +186,11 @@ struct JobDetailsView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 18)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                             }
                         }
@@ -242,13 +242,17 @@ struct JobDetailsView: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
                                     .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
                             }
                             Button(action: { updateStatus(jobId: job.id, status: "COMPLETED") }) {
                                 Text("Complete Job")
                                     .scaledFont(size: 16, weight: .bold)
-                                    .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
                                     .background(settings.surfaceColor)

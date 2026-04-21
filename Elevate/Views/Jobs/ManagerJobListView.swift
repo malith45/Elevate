@@ -30,11 +30,11 @@ struct ManagerJobListView: View {
                             FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
                         }
                         .padding(4)
-                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray)
+                        .background(settings.surfaceColor)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                         .padding(.horizontal, 24)
                         .padding(.top, 4)

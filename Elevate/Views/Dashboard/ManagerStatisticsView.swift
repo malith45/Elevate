@@ -3,6 +3,7 @@ import Charts
 
 struct ManagerStatisticsView: View {
     @Environment(\.managerTabRouter) private var router
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = StatisticsViewModel()
@@ -17,8 +18,7 @@ struct ManagerStatisticsView: View {
             VStack(spacing: 0) {
                 // Top Nav
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .dashboard
-                    router.selectedTab = .dashboard
+                    dismiss()
                 })
                 
                 ScrollView(showsIndicators: false) {
@@ -252,6 +252,7 @@ struct ManagerStatisticsView: View {
         viewModel.load(
             organizationId: user.organizationId,
             userId: user.id,
+            role: user.role,
             isOnline: network.isOnline,
             technicianId: selectedTechnicianId
         )

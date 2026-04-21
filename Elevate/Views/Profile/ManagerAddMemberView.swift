@@ -7,6 +7,7 @@ struct ManagerAddMemberView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerAddMemberViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedRole = "Technician"
     @State private var username = ""
     @State private var displayName = ""
@@ -25,8 +26,7 @@ struct ManagerAddMemberView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .members
-                    router.selectedTab = .profile
+                    dismiss()
                 })
                 .background(settings.surfaceColor)
 
@@ -319,8 +319,7 @@ struct ManagerAddMemberView: View {
                         _ = ProfileImageStore.shared.saveImage(data, for: created.id)
                     }
                 }
-                router.currentScreen = .members
-                router.selectedTab = .profile
+                dismiss()
             }
         }
     }

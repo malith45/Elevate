@@ -7,6 +7,7 @@ struct ManagerQuotationApprovalView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerQuotationApprovalViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
+    @Environment(\.dismiss) private var dismiss
     private let localStorage = LocalStorageService.shared
 
     var body: some View {
@@ -15,12 +16,7 @@ struct ManagerQuotationApprovalView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    if let _ = jobId {
-                        router.currentScreen = .jobDetails
-                    } else {
-                        router.currentScreen = .pendingQuotations
-                    }
-                    router.selectedTab = .jobs
+                    dismiss()
                 })
 
                 VStack(alignment: .leading, spacing: 24) {

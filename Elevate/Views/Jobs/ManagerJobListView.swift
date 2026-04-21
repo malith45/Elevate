@@ -71,8 +71,7 @@ struct ManagerJobListView: View {
                                         ForEach(past) { job in
                                             Button(action: {
                                                 router.selectedJobId = job.id
-                                                router.currentScreen = .jobDetails
-                                                router.selectedTab = .jobs
+                                                router.path.append(ManagerScreen.jobDetails)
                                             }) {
                                                 ManagerJobCard(job: job)
                                             }
@@ -92,8 +91,7 @@ struct ManagerJobListView: View {
                                         ForEach(future) { job in
                                             Button(action: {
                                                 router.selectedJobId = job.id
-                                                router.currentScreen = .jobDetails
-                                                router.selectedTab = .jobs
+                                                router.path.append(ManagerScreen.jobDetails)
                                             }) {
                                                 ManagerJobCard(job: job)
                                             }
@@ -112,8 +110,7 @@ struct ManagerJobListView: View {
                                     ForEach(viewModel.filteredJobs) { job in
                                         Button(action: {
                                             router.selectedJobId = job.id
-                                            router.currentScreen = .jobDetails
-                                            router.selectedTab = .jobs
+                                            router.path.append(ManagerScreen.jobDetails)
                                         }) {
                                             ManagerJobCard(job: job)
                                         }
@@ -143,12 +140,12 @@ struct ManagerJobListView: View {
         .speakOnAppear("Manager Job Administration")
         .onAppear {
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline)
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: isOnline)
             }
         }
     }

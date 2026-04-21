@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ManagerNotificationsView: View {
     @Environment(\.managerTabRouter) private var router
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
     @ObservedObject private var network = NetworkService.shared
@@ -15,8 +15,7 @@ struct ManagerNotificationsView: View {
             VStack(spacing: 0) {
                 // Top Nav
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .dashboard
-                    router.selectedTab = .dashboard
+                    dismiss()
                 })
                 
                 ScrollView(showsIndicators: false) {
@@ -84,11 +83,11 @@ struct ManagerNotificationsView: View {
 
         let type = item.type.uppercased()
         if type.contains("ISSUE") {
-            router.currentScreen = .jobIssueReport
+            router.path.append(ManagerScreen.jobIssueReport)
         } else if type.contains("QUOTATION") || type.contains("QUOTE") {
-            router.currentScreen = .quotationApproval
+            router.path.append(ManagerScreen.quotationApproval)
         } else {
-            router.currentScreen = .jobDetails
+            router.path.append(ManagerScreen.jobDetails)
         }
     }
 }

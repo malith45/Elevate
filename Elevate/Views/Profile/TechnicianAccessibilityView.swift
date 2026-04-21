@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct TechnicianAccessibilityView: View {
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
@@ -9,7 +10,9 @@ struct TechnicianAccessibilityView: View {
             (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
             
             VStack(spacing: 0) {
-                BackHeaderNav()
+                BackHeaderNav(onBack: {
+                    dismiss()
+                })
                 .background(settings.isHighContrast ? Color.black : Color.white)
                 
                 ScrollView(showsIndicators: false) {
@@ -154,11 +157,6 @@ struct TechnicianAccessibilityView: View {
             .padding(.horizontal, 4)
     }
 }
-
-#Preview {
-    TechnicianAccessibilityView()
-}
-
 
 #Preview {
     TechnicianAccessibilityView()

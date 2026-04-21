@@ -11,6 +11,7 @@ struct ManagerOrganizationView: View {
     @State private var isEditingIntroduction = false
     @State private var activeMembersCount = 0
     @State private var managementCount = 0
+    @Environment(\.dismiss) private var dismiss
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
 
@@ -18,8 +19,7 @@ struct ManagerOrganizationView: View {
         ZStack {
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .profile
-                    router.selectedTab = .profile
+                    dismiss()
                 })
                 .background(Color.white)
 
@@ -126,8 +126,7 @@ struct ManagerOrganizationView: View {
                             }
 
                             Button(action: {
-                                router.currentScreen = .members
-                                router.selectedTab = .profile
+                                router.path.append(ManagerScreen.members)
                             }) {
                                 HStack(spacing: 12) {
                                     Image(systemName: "person.3.fill")

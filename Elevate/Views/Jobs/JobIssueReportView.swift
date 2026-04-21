@@ -4,8 +4,8 @@ import UIKit
 struct JobIssueReportView: View {
     let jobId: String
 
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
-    @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = JobIssueReportViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
@@ -18,7 +18,9 @@ struct JobIssueReportView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav()
+                BackHeaderNav(onBack: {
+                    dismiss()
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 32) {

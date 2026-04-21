@@ -14,6 +14,7 @@ struct ManagerJobDetailsView: View {
     @State private var showHoldPrompt = false
     @State private var showDeleteConfirmation = false
     @State private var holdReasonText = ""
+    @Environment(\.dismiss) private var dismiss
 
     private let localStorage = LocalStorageService.shared
 
@@ -23,8 +24,7 @@ struct ManagerJobDetailsView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .jobs
-                    router.selectedTab = .jobs
+                    dismiss()
                 })
 
                 ScrollView(showsIndicators: false) {
@@ -43,8 +43,7 @@ struct ManagerJobDetailsView: View {
                                 Spacer()
 
                                 Button(action: {
-                                    router.currentScreen = .jobIssueReport
-                                    router.selectedTab = .jobs
+                                    router.path.append(ManagerScreen.jobIssueReport)
                                 }) {
                                     HStack(spacing: 6) {
                                         ZStack(alignment: .topTrailing) {
@@ -215,8 +214,7 @@ struct ManagerJobDetailsView: View {
                                 )
 
                                 Button(action: {
-                                    router.currentScreen = .quotationApproval
-                                    router.selectedTab = .jobs
+                                    router.path.append(ManagerScreen.quotationApproval)
                                 }) {
                                     VStack(spacing: 6) {
                                         Image(systemName: "doc.text.fill")
@@ -260,53 +258,67 @@ struct ManagerJobDetailsView: View {
                             }
 
                             VStack(spacing: 12) {
-                                HStack(spacing: 12) {
-                                    Button(action: {
-                                        holdReasonText = job.holdReason ?? ""
-                                        showHoldPrompt = true
-                                    }) {
-                                        Text("Hold Job")
-                                            .scaledFont(size: 14, weight: .bold)
-                                            .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                if job.status.uppercased() == "HOLD" {
+                                    Button(action: { updateStatus(jobId: job.id, status: "IN_PROGRESS") }) {
+                                        Text("Resume Job")
+                                            .scaledFont(size: 16, weight: .bold)
+                                            .foregroundColor(.white)
                                             .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 14)
-                                            .background(settings.surfaceColor)
+                                            .padding(.vertical, 16)
+                                            .background(settings.isHighContrast ? settings.surfaceColor : Color.blue)
                                             .cornerRadius(14)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14)
                                                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                     }
+                                } else {
+                                    HStack(spacing: 12) {
+                                        Button(action: {
+                                            holdReasonText = job.holdReason ?? ""
+                                            showHoldPrompt = true
+                                        }) {
+                                            Text("Hold Job")
+                                                .scaledFont(size: 14, weight: .bold)
+                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.vertical, 14)
+                                                .background(settings.surfaceColor)
+                                                .cornerRadius(14)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 14)
+                                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                )
+                                        }
 
-                                    Button(action: { showDeleteConfirmation = true }) {
-                                        Text("Cancel Job")
-                                            .scaledFont(size: 14, weight: .bold)
-                                            .foregroundColor(.red)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 14)
-                                            .background(Color.red.opacity(0.1))
-                                            .cornerRadius(14)
+                                        Button(action: { showDeleteConfirmation = true }) {
+                                            Text("Cancel Job")
+                                                .scaledFont(size: 14, weight: .bold)
+                                                .foregroundColor(.red)
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.vertical, 14)
+                                                .background(Color.red.opacity(0.1))
+                                                .cornerRadius(14)
+                                        }
                                     }
-                                }
 
-                                Button(action: { updateStatus(jobId: job.id, status: "IN_PROGRESS") }) {
-                                    Text("Update Job")
-                                        .scaledFont(size: 16, weight: .bold)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 16)
-                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
-                                        .cornerRadius(14)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                        )
+                                    Button(action: { updateStatus(jobId: job.id, status: "IN_PROGRESS") }) {
+                                        Text("Update Job")
+                                            .scaledFont(size: 16, weight: .bold)
+                                            .foregroundColor(.white)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 16)
+                                            .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                                            .cornerRadius(14)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 14)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                            )
+                                    }
                                 }
                             }
                         } else {
-                            Text("Loading job details...")
-                                .scaledFont(size: 14)
-                                .foregroundColor(settings.secondaryText)
+                            SkeletonDetailHeader()
                         }
                     }
                     .padding(.horizontal, 24)
@@ -337,8 +349,7 @@ struct ManagerJobDetailsView: View {
                 guard let job = viewModel.job, let user = appSession.currentUser else { return }
                 viewModel.deleteJobAndCleanup(job: job, user: user, isOnline: network.isOnline) { success in
                     if success {
-                        router.currentScreen = .jobs
-                        router.selectedTab = .jobs
+                        dismiss()
                     }
                 }
             }

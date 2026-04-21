@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct TechnicianStatisticsView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = StatisticsViewModel()
     @ObservedObject private var network = NetworkService.shared
@@ -14,7 +14,9 @@ struct TechnicianStatisticsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav()
+                BackHeaderNav(onBack: {
+                    dismiss()
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
@@ -170,6 +172,7 @@ struct TechnicianStatisticsView: View {
         viewModel.load(
             organizationId: user.organizationId,
             userId: user.id,
+            role: user.role,
             isOnline: network.isOnline,
             technicianId: user.id
         )

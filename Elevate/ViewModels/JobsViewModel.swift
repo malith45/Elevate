@@ -5,6 +5,7 @@ final class JobsViewModel: ObservableObject {
     @Published var jobs: [Job] = []
     @Published var searchText = ""
     @Published var selectedFilter: JobFilter = .today
+    @Published var isLoading = false
     @Published var errorMessage: String?
 
     private let localStorage = LocalStorageService.shared
@@ -37,16 +38,21 @@ final class JobsViewModel: ObservableObject {
         }
     }
 
-    func loadJobs(organizationId: String, userId: String, isOnline: Bool) {
-        jobs = localStorage.fetchJobs(organizationId: organizationId)
-
+    func loadJobs(organizationId: String, userId: String, role: String, isOnline: Bool) {
+        isLoading = true
+        let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+        jobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
+        
         if isOnline {
-            SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
-                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId) ?? []
+            SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId, role: role) { [weak self] in
+                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId) ?? []
                 DispatchQueue.main.async {
+                    self?.isLoading = false
                     self?.jobs = refreshed
                 }
             }
+        } else {
+            isLoading = false
         }
     }
 }

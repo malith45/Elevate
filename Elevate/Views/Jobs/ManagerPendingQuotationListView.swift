@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ManagerPendingQuotationListView: View {
     @Environment(\.managerTabRouter) private var router
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerQuotationApprovalViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
@@ -13,7 +14,7 @@ struct ManagerPendingQuotationListView: View {
             VStack(spacing: 0) {
                 // Header
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .dashboard
+                    dismiss()
                 })
                 
                 VStack(alignment: .leading, spacing: 24) {
@@ -36,7 +37,7 @@ struct ManagerPendingQuotationListView: View {
                                 ForEach(viewModel.jobs) { job in
                                     PendingQuotationJobCard(job: job) {
                                         router.selectedJobId = job.id
-                                        router.currentScreen = .quotationApproval
+                                        router.path.append(ManagerScreen.quotationApproval)
                                     }
                                 }
                             }

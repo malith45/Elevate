@@ -3,6 +3,7 @@ import PhotosUI
 import UIKit
 
 struct TechnicianProfileView: View {
+    @Environment(\.technicianTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ProfileViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
@@ -114,7 +115,9 @@ struct TechnicianProfileView: View {
                                 AppSettingToggleRow(title: "Push Notifications", subtitle: "Stay updated on new jobs", icon: "bell.fill", isOn: $pushNotificationsEnabled)
                                 Divider().padding(.leading, 64)
                                 
-                                NavigationLink(destination: TechnicianAccessibilityView()) {
+                                Button(action: {
+                                    router.path.append(TechnicianScreen.accessibility)
+                                }) {
                                     HStack(spacing: 16) {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 10)
@@ -142,6 +145,7 @@ struct TechnicianProfileView: View {
                                     }
                                     .padding(16)
                                 }
+                                .buttonStyle(.plain)
                             }
                             .background(settings.isHighContrast ? Color.black : Color.white)
                             .cornerRadius(16)

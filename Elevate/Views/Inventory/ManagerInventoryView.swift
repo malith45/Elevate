@@ -8,6 +8,7 @@ struct ManagerInventoryView: View {
     @StateObject private var viewModel = InventoryViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
+    @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var isEditorPresented = false
     @State private var editingItem: InventoryItem?
@@ -20,8 +21,7 @@ struct ManagerInventoryView: View {
                 // Modified Header Section
                 VStack(alignment: .leading, spacing: 20) {
                     BackHeaderNav(isManager: true, onBack: {
-                        router.currentScreen = .dashboard
-                        router.selectedTab = .dashboard
+                        dismiss()
                     })
                     
                     VStack(alignment: .leading, spacing: 6) {

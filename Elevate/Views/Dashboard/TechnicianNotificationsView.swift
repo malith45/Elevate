@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct TechnicianNotificationsView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTab: TabItem = .dashboard
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.technicianTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = NotificationsViewModel()
     @ObservedObject private var network = NetworkService.shared
@@ -14,7 +14,9 @@ struct TechnicianNotificationsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav()
+                BackHeaderNav(onBack: {
+                    dismiss()
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
@@ -36,9 +38,15 @@ struct TechnicianNotificationsView: View {
                         if viewModel.notifications.isEmpty {
                             EmptyStateView(title: "No notifications yet", message: "Updates about jobs, approvals, and inventory will show up here.")
                         } else {
-                            NotificationSection(title: "TODAY", items: viewModel.todayItems, onTap: handleTap, destinationProvider: notificationDestination)
-                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems, onTap: handleTap, destinationProvider: notificationDestination)
-                            NotificationSection(title: "EARLIER", items: viewModel.olderItems, onTap: handleTap, destinationProvider: notificationDestination)
+                            NotificationSection(title: "TODAY", items: viewModel.todayItems) { item in
+                                handleTap(item)
+                            }
+                            NotificationSection(title: "YESTERDAY", items: viewModel.yesterdayItems) { item in
+                                handleTap(item)
+                            }
+                            NotificationSection(title: "EARLIER", items: viewModel.olderItems) { item in
+                                handleTap(item)
+                            }
                         }
                         
                         Spacer().frame(height: 100)
@@ -73,6 +81,18 @@ struct TechnicianNotificationsView: View {
 
     private func handleTap(_ item: NotificationItem) {
         viewModel.markRead(item, isOnline: NetworkService.shared.isOnline)
+        
+        guard let targetId = item.targetId else { return }
+        let type = item.type.uppercased()
+        
+        router.selectedJobId = targetId
+        if type.contains("ISSUE") {
+            router.path.append(TechnicianScreen.jobIssueReport)
+        } else if type.contains("QUOTATION") || type.contains("QUOTE") {
+            router.path.append(TechnicianScreen.quotationStatus)
+        } else if type.contains("JOB") {
+            router.path.append(TechnicianScreen.jobDetails)
+        }
     }
 }
 
@@ -158,7 +178,6 @@ struct NotificationSection: View {
     let title: String
     let items: [NotificationItem]
     var onTap: ((NotificationItem) -> Void)?
-    var destinationProvider: ((NotificationItem) -> AnyView?)? = nil
     @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
@@ -170,38 +189,15 @@ struct NotificationSection: View {
                     .padding(.horizontal, 24)
 
                 ForEach(items) { item in
-                    if let destination = destinationProvider?(item) {
-                        NavigationLink(destination: destination) {
-                            NotificationCard(item: item, onTap: {
-                                onTap?(item)
-                            })
-                        }
-                        .buttonStyle(.plain)
-                    } else {
-                        NotificationCard(item: item, onTap: {
-                            onTap?(item)
-                        })
-                    }
+                    NotificationCard(item: item, onTap: {
+                        onTap?(item)
+                    })
                 }
             }
         }
     }
 }
 
-private func notificationDestination(for item: NotificationItem) -> AnyView? {
-    guard let targetId = item.targetId else { return nil }
-    let type = item.type.uppercased()
-    if type.contains("ISSUE") {
-        return AnyView(JobIssueReportView(jobId: targetId))
-    }
-    if type.contains("QUOTATION") || type.contains("QUOTE") {
-        return AnyView(QuotationStatusView(jobId: targetId))
-    }
-    if type.contains("JOB") {
-        return AnyView(JobDetailsView(jobId: targetId))
-    }
-    return nil
-}
 
 #Preview {
     TechnicianNotificationsView()

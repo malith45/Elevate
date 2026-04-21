@@ -5,23 +5,53 @@ struct ManagerMainTabView: View {
     @StateObject private var mapViewModel = MapViewModel()
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                switch router.currentScreen {
-                case .dashboard:
-                    ManagerDashboardView(selectedTab: $router.selectedTab)
+        NavigationStack(path: $router.path) {
+            ZStack(alignment: .bottom) {
+                Group {
+                    switch router.selectedTab {
+                    case .dashboard:
+                        ManagerDashboardView(selectedTab: $router.selectedTab)
+                    case .jobs:
+                        ManagerJobListView()
+                    case .map:
+                        ManagerMapView(viewModel: mapViewModel)
+                    case .profile:
+                        ManagerProfileView()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .safeAreaInset(edge: .bottom) {
+                    ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
+                        router.selectedTab = tab
+                        // Clear path when switching tabs to ensure we're at root
+                        router.path = NavigationPath()
+                    }
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
+                    .padding(.bottom, 8)
+                }
+            }
+            .navigationDestination(for: ManagerScreen.self) { screen in
+                switch screen {
+                case .jobDetails:
+                    if let jobId = router.selectedJobId {
+                        ManagerJobDetailsView(jobId: jobId)
+                    }
+                case .jobIssueReport:
+                    if let jobId = router.selectedJobId {
+                        ManagerJobIssueReportView(jobId: jobId)
+                    }
+                case .quotationApproval:
+                    if let jobId = router.selectedJobId {
+                        ManagerQuotationApprovalView(jobId: jobId)
+                    }
+                case .createJob:
+                    ManagerCreateJobView()
                 case .calendar:
                     ManagerCalendarView()
                 case .statistics:
                     ManagerStatisticsView()
                 case .notifications:
                     ManagerNotificationsView()
-                case .jobs:
-                    ManagerJobListView()
-                case .map:
-                    ManagerMapView(viewModel: mapViewModel)
-                case .profile:
-                    ManagerProfileView()
                 case .accessibility:
                     ManagerAccessibilityView()
                 case .organization:
@@ -32,57 +62,20 @@ struct ManagerMainTabView: View {
                     ManagerEditProfileView()
                 case .addMember:
                     ManagerAddMemberView()
-                case .jobDetails:
-                    if let jobId = router.selectedJobId {
-                        ManagerJobDetailsView(jobId: jobId)
-                    } else {
-                        ManagerJobListView()
-                    }
-                case .jobIssueReport:
-                    if let jobId = router.selectedJobId {
-                        ManagerJobIssueReportView(jobId: jobId)
-                    } else {
-                        ManagerJobListView()
-                    }
-                case .quotationApproval:
-                    if let jobId = router.selectedJobId {
-                        ManagerQuotationApprovalView(jobId: jobId)
-                    } else {
-                        ManagerJobListView()
-                    }
-                case .inventoryManager:
-                    ManagerInventoryView()
-                case .createJob:
-                    ManagerCreateJobView()
                 case .memberDetails:
                     if let memberId = router.selectedMemberId {
                         ManagerMemberDetailView(memberId: memberId)
-                    } else {
-                        ManagerMembersView()
                     }
                 case .pendingQuotations:
                     ManagerPendingQuotationListView()
+                case .inventoryManager:
+                    ManagerInventoryView()
+                default:
+                    EmptyView()
                 }
-            }
-            .environment(\.managerTabRouter, router)
-            .safeAreaInset(edge: .bottom) {
-                ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
-                    router.selectedTab = tab
-                    switch tab {
-                    case .dashboard:
-                        router.currentScreen = .dashboard
-                    case .jobs:
-                        router.currentScreen = .jobs
-                    case .map:
-                        router.currentScreen = .map
-                    case .profile:
-                        router.currentScreen = .profile
-                    }
-                }
-                .ignoresSafeArea(.keyboard, edges: .bottom)
-                .padding(.bottom, 8) // Buffer for home indicator
             }
         }
+        .environment(\.managerTabRouter, router)
     }
 }
 

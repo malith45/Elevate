@@ -4,6 +4,7 @@ import UIKit
 
 struct ManagerEditProfileView: View {
     @Environment(\.managerTabRouter) private var router
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerEditProfileViewModel()
     @State private var username = ""
@@ -27,8 +28,7 @@ struct ManagerEditProfileView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .profile
-                    router.selectedTab = .profile
+                    dismiss()
                 })
                 .background(Color.white)
 
@@ -354,8 +354,7 @@ struct ManagerEditProfileView: View {
         viewModel.updateProfile(user: user, username: username, displayName: displayName, email: email, phone: phone, password: password.isEmpty ? nil : password) { updated in
             if let updated = updated {
                 appSession.updateCurrentUser(updated)
-                router.currentScreen = .profile
-                router.selectedTab = .profile
+                dismiss()
             }
         }
     }

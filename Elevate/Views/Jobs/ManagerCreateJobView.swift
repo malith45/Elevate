@@ -8,6 +8,7 @@ struct ManagerCreateJobView: View {
     @StateObject private var viewModel = ManagerCreateJobViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedTechnicianId: String?
     @State private var jobTitle = ""
     @State private var location = ""
@@ -28,8 +29,7 @@ struct ManagerCreateJobView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .jobs
-                    router.selectedTab = .jobs
+                    dismiss()
                 })
                 .background(settings.surfaceColor)
 
@@ -332,8 +332,7 @@ struct ManagerCreateJobView: View {
             isOnline: network.isOnline
         ) { job in
             if job != nil {
-                router.currentScreen = .jobs
-                router.selectedTab = .jobs
+                dismiss()
             }
         }
     }

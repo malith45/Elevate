@@ -3,20 +3,15 @@ import MapKit
 
 struct TechnicianDashboardView: View {
     @EnvironmentObject private var appSession: AppSession
+    @Environment(\.technicianTabRouter) private var router
     @StateObject private var viewModel = DashboardViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject private var syncManager = SyncManager.shared
-    @Binding var selectedTab: TabItem
     @State private var isRefreshing = false
     @State private var showLastSynced = false
-    @State private var navigationJobId: String?
     @ObservedObject var settings = AccessibilitySettings.shared
     @ObservedObject var locationService = LocationService.shared
     @State private var travelTime: String? = nil
-
-    init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
-        _selectedTab = selectedTab
-    }
     
     var body: some View {
         ZStack {
@@ -128,7 +123,8 @@ struct TechnicianDashboardView: View {
                         if let urgentMessage = urgentUpdateMessage {
                             Button(action: {
                                 if let jobId = urgentJobId {
-                                    navigationJobId = jobId
+                                    router.selectedJobId = jobId
+                                    router.path.append(TechnicianScreen.jobDetails)
                                 }
                             }) {
                                 HStack(spacing: 16) {
@@ -171,28 +167,19 @@ struct TechnicianDashboardView: View {
                         HStack(spacing: 8) {
                             TechnicianShortcutItem(title: "START\nJOB", icon: "play.fill", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
                                 if let nextJobId = nextJobId {
-                                    navigationJobId = nextJobId
+                                    router.selectedJobId = nextJobId
+                                    router.path.append(TechnicianScreen.jobDetails)
                                 } else {
-                                    selectedTab = .jobs
+                                    router.selectedTab = .jobs
                                 }
                             }
                             TechnicianShortcutItem(title: "CALENDAR", icon: "calendar", color: Color.elevateLightGray, iconColor: .black) {
-                                // Manual navigation handle if needed, but here we use the link pattern usually
+                                router.path.append(TechnicianScreen.calendar)
                             }
-                            .overlay(
-                                NavigationLink(destination: TechnicianCalendarView()) {
-                                    EmptyView()
-                                }.opacity(0)
-                            )
                             
                             TechnicianShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
-                                // Manual navigation
+                                router.path.append(TechnicianScreen.statistics)
                             }
-                            .overlay(
-                                NavigationLink(destination: TechnicianStatisticsView()) {
-                                    EmptyView()
-                                }.opacity(0)
-                            )
                         }
                         
                         // Today's Tasks
@@ -202,7 +189,7 @@ struct TechnicianDashboardView: View {
                                     .scaledFont(size: 14, weight: .bold)
                                     .foregroundColor(settings.secondaryText)
                                 Spacer()
-                                NavigationLink(destination: JobListView()) {
+                                NavigationLink(value: TechnicianScreen.jobs) {
                                     Text("View All")
                                         .scaledFont(size: 12, weight: .bold)
                                         .foregroundColor(settings.accentColor)
@@ -210,20 +197,27 @@ struct TechnicianDashboardView: View {
                             }
                             
                             VStack(spacing: 16) {
-                                ForEach(technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
-                                    Button(action: {
-                                        navigationJobId = job.id
-                                    }) {
-                                        TaskRow(
-                                            time: timeString(from: job.scheduledAt),
-                                            ampm: ampmString(from: job.scheduledAt),
-                                            title: job.title,
-                                            location: job.location,
-                                            priority: job.priority.uppercased(),
-                                            color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
-                                        )
+                                if viewModel.isLoading && technicianJobs.isEmpty {
+                                    ForEach(0..<3) { _ in
+                                        SkeletonTaskRow()
                                     }
-                                    .buttonStyle(.plain)
+                                } else {
+                                    ForEach(technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                        Button(action: {
+                                            router.selectedJobId = job.id
+                                            router.path.append(TechnicianScreen.jobDetails)
+                                        }) {
+                                            TaskRow(
+                                                time: timeString(from: job.scheduledAt),
+                                                ampm: ampmString(from: job.scheduledAt),
+                                                title: job.title,
+                                                location: job.location,
+                                                priority: job.priority.uppercased(),
+                                                color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
                                 }
                             }
                         }
@@ -238,7 +232,7 @@ struct TechnicianDashboardView: View {
                 .refreshable {
                     if let user = appSession.currentUser {
                         isRefreshing = true
-                        viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline) {
+                        viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline) {
                             isRefreshing = false
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                                 showLastSynced = true
@@ -255,22 +249,16 @@ struct TechnicianDashboardView: View {
             }
         }
         .navigationBarHidden(true)
-        .navigationDestination(isPresented: Binding(
-            get: { navigationJobId != nil },
-            set: { if !$0 { navigationJobId = nil } }
-        )) {
-            navigationDestination
-        }
         .speakOnAppear("Welcome to your Technician Dashboard")
         .onAppear {
             locationService.requestAuthorization()
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline)
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: isOnline)
             }
         }
         .onChange(of: upcomingJob) { _, newJob in
@@ -498,13 +486,6 @@ struct TechnicianDashboardView: View {
         return viewModel.jobs.filter { $0.assignedUserId == user.id }
     }
 
-    private var navigationDestination: some View {
-        Group {
-            if let jobId = navigationJobId {
-                JobDetailsView(jobId: jobId)
-            }
-        }
-    }
 
     private var technicianPendingTodayCount: Int {
         technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }
@@ -673,56 +654,70 @@ struct TaskRow: View {
     var location: String
     var priority: String
     var color: Color
-    
+    @ObservedObject var settings = AccessibilitySettings.shared
+
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 2) {
-                Text(time)
-                    .scaledFont(size: 14, weight: .bold)
-                    .foregroundColor(AccessibilitySettings.shared.primaryText)
-                Text(ampm)
-                    .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(AccessibilitySettings.shared.secondaryText)
-            }
+        HStack(spacing: 0) {
+            // Left Status Strip
+            Rectangle()
+                .fill(color)
+                .frame(width: 6)
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .scaledFont(size: 16, weight: .bold)
-                    .foregroundColor(AccessibilitySettings.shared.primaryText)
-                Text(location)
-                    .scaledFont(size: 12)
-                    .foregroundColor(AccessibilitySettings.shared.secondaryText)
+            VStack(alignment: .leading, spacing: 8) {
+                // Header (Badge + Time)
+                HStack {
+                    Text(priority)
+                        .scaledFont(size: 9, weight: .bold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(color.opacity(0.12))
+                        .foregroundColor(color)
+                        .cornerRadius(20)
+                    
+                    Spacer()
+                    
+                    Text("\(time) \(ampm)")
+                        .scaledFont(size: 11, weight: .bold)
+                        .foregroundColor(settings.secondaryText)
+                }
                 
-                Text(priority)
-                    .scaledFont(size: 10, weight: .bold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : color.opacity(0.1))
-                    .foregroundColor(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.primaryText : color)
-                    .cornerRadius(8)
-                    .overlay(
+                // Title
+                Text(title)
+                    .scaledFont(size: 15, weight: .bold, design: .rounded)
+                    .foregroundColor(settings.primaryText)
+                    .lineLimit(1)
+                
+                // Location row
+                HStack(spacing: 8) {
+                    ZStack {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
-                    )
+                            .fill(Color.elevateLightGray.opacity(0.3))
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "mappin.and.ellipse")
+                            .foregroundColor(settings.accentColor)
+                            .font(.system(size: 12))
+                    }
+                    
+                    Text(location)
+                        .scaledFont(size: 12)
+                        .foregroundColor(settings.secondaryText)
+                        .lineLimit(1)
+                }
             }
-            Spacer()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
         }
-        .padding(16)
-        .background(AccessibilitySettings.shared.surfaceColor)
+        .background(settings.isHighContrast ? Color.black : .white)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+                .stroke(settings.isHighContrast ? Color.white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
+        .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.08), radius: 8, x: 0, y: 4)
     }
 }
 
 #Preview {
-    TechnicianDashboardView(selectedTab: .constant(.dashboard))
-        .environmentObject(AppSession())
-}
-
-#Preview {
-    TechnicianDashboardView(selectedTab: .constant(.dashboard))
+    TechnicianDashboardView()
         .environmentObject(AppSession())
 }

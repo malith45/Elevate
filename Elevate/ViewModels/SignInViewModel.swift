@@ -28,7 +28,7 @@ final class SignInViewModel: ObservableObject {
                 case .success(let user):
                     self.localStorage.saveUser(user)
                     appSession.signIn(user: user)
-                    SyncManager.shared.startSyncing(organizationId: user.organizationId, userId: user.id)
+                    SyncManager.shared.startSyncing(organizationId: user.organizationId, userId: user.id, role: user.role)
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }

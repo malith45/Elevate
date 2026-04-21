@@ -3,11 +3,11 @@ import SwiftUI
 struct QuotationStatusView: View {
     let jobId: String
 
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.technicianTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = QuotationStatusViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
-    @State private var selectedTab: TabItem = .jobs
     
     var body: some View {
         ZStack {
@@ -15,7 +15,9 @@ struct QuotationStatusView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav()
+                BackHeaderNav(onBack: {
+                    dismiss()
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 32) {
@@ -183,7 +185,7 @@ struct QuotationStatusView: View {
                             HStack(spacing: 12) {
                                 Button(action: {
                                     HapticManager.shared.playImpact(style: .light)
-                                    presentationMode.wrappedValue.dismiss()
+                                    dismiss()
                                 }) {
                                     Text("CANCEL")
                                         .scaledFont(size: 14, weight: .bold)
@@ -198,7 +200,10 @@ struct QuotationStatusView: View {
                                         )
                                 }
 
-                                NavigationLink(destination: InventoryView(jobId: jobId)) {
+                                Button(action: {
+                                    router.selectedJobId = jobId
+                                    router.path.append(TechnicianScreen.inventory)
+                                }) {
                                     HStack(spacing: 8) {
                                         Image(systemName: "plus.circle.fill")
                                         Text("ADD ITEMS")
@@ -215,6 +220,7 @@ struct QuotationStatusView: View {
                                             .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
                                     )
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 8)

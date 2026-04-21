@@ -7,6 +7,7 @@ struct ManagerMembersView: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var editingMember: User?
     @State private var searchText = ""
+    @Environment(\.dismiss) private var dismiss
 
     var filteredMembers: [User] {
         if searchText.isEmpty { return viewModel.members }
@@ -21,8 +22,7 @@ struct ManagerMembersView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .organization
-                    router.selectedTab = .profile
+                    dismiss()
                 })
                 .background(settings.surfaceColor)
 
@@ -44,8 +44,7 @@ struct ManagerMembersView: View {
                                 CustomSearchBar(text: $searchText, placeholder: "Search by display name...")
                                 
                                 Button(action: {
-                                    router.currentScreen = .addMember
-                                    router.selectedTab = .profile
+                                    router.path.append(ManagerScreen.addMember)
                                 }) {
                                     HStack(spacing: 6) {
                                         Image(systemName: "plus.circle.fill")
@@ -180,8 +179,7 @@ struct ManagerMembersView: View {
         .onTapGesture {
             HapticManager.shared.playNotification(type: .success)
             router.selectedMemberId = member.id
-            router.currentScreen = .memberDetails
-            router.selectedTab = .profile
+            router.path.append(ManagerScreen.memberDetails)
         }
     }
 }

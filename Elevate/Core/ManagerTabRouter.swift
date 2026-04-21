@@ -27,6 +27,7 @@ final class ManagerTabRouter: ObservableObject {
     static let shared = ManagerTabRouter()
     @Published var selectedTab: TabItem = .dashboard
     @Published var currentScreen: ManagerScreen = .dashboard
+    @Published var path = NavigationPath()
     @Published var selectedJobId: String?
     @Published var selectedMemberId: String?
 }

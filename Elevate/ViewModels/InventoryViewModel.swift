@@ -5,22 +5,27 @@ import UIKit
 final class InventoryViewModel: ObservableObject {
     @Published var items: [InventoryItem] = []
     @Published var quantities: [String: Int] = [:]
+    @Published var isLoading = false
     @Published var errorMessage: String?
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
 
     func loadItems(organizationId: String, isOnline: Bool) {
+        isLoading = true
         items = localStorage.fetchInventoryItems(organizationId: organizationId)
         if isOnline {
             firebase.fetchInventoryItems(organizationId: organizationId) { result in
-                if case .success(let fetched) = result {
-                    self.localStorage.saveInventoryItems(fetched)
-                    DispatchQueue.main.async {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    if case .success(let fetched) = result {
+                        self.localStorage.saveInventoryItems(fetched)
                         self.items = fetched
                     }
                 }
             }
+        } else {
+            isLoading = false
         }
     }
 

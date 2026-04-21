@@ -5,6 +5,7 @@ enum PendingActionType: String, Codable {
     case createJob
     case updateJobStatus
     case updateJobFields
+    case deleteJob
     case submitQuotationRequest
     case updateQuotationItems
     case createInventoryItem

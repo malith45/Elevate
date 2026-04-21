@@ -108,7 +108,7 @@ struct TechnicianTabBarButton: View {
     private func destinationView(for tab: TabItem) -> AnyView {
         switch tab {
         case .dashboard:
-            return AnyView(TechnicianDashboardView(selectedTab: .constant(.dashboard)))
+            return AnyView(TechnicianDashboardView())
         case .jobs:
             return AnyView(JobListView())
         case .map:

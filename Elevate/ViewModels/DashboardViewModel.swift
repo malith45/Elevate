@@ -6,11 +6,13 @@ final class DashboardViewModel: ObservableObject {
     @Published var jobs: [Job] = []
     @Published var totalJobsToday = 0
     @Published var urgentJobsToday = 0
+    @Published var isLoading = false
 
     private let localStorage = LocalStorageService.shared
 
-    func loadJobs(organizationId: String, userId: String, isOnline: Bool, completion: (() -> Void)? = nil) {
-        let localJobs = localStorage.fetchJobs(organizationId: organizationId)
+    func loadJobs(organizationId: String, userId: String, role: String, isOnline: Bool, completion: (() -> Void)? = nil) {
+        let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+        let localJobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
         applyJobs(localJobs)
 
         guard isOnline else {
@@ -18,10 +20,12 @@ final class DashboardViewModel: ObservableObject {
             return
         }
 
-        SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
+        isLoading = true
+        SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId, role: role) { [weak self] in
             Task { @MainActor in
-                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId) ?? []
+                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId) ?? []
                 self?.applyJobs(refreshed)
+                self?.isLoading = false
                 completion?()
             }
         }

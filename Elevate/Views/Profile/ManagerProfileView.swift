@@ -32,8 +32,7 @@ struct ManagerProfileView: View {
                                 }
                                 
                                 Button(action: {
-                                    router.currentScreen = .editProfile
-                                    router.selectedTab = .profile
+                                    router.path.append(ManagerScreen.editProfile)
                                 }) {
                                     Image(systemName: "pencil")
                                         .font(.system(size: 14, weight: .bold))
@@ -65,8 +64,7 @@ struct ManagerProfileView: View {
                         // ORGANIZATION DETAILS CARD
                         // ADMINISTRATIVE HUB (Organization Hub)
                         Button(action: {
-                            router.currentScreen = .organization
-                            router.selectedTab = .profile
+                            router.path.append(ManagerScreen.organization)
                         }) {
                             VStack(alignment: .leading, spacing: 20) {
                                 HStack {
@@ -137,8 +135,7 @@ struct ManagerProfileView: View {
                                 Divider().padding(.leading, 64)
                                 
                                 Button(action: {
-                                    router.currentScreen = .accessibility
-                                    router.selectedTab = .profile
+                                    router.path.append(ManagerScreen.accessibility)
                                 }) {
                                     HStack(spacing: 16) {
                                         ZStack {

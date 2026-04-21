@@ -4,6 +4,7 @@ struct ManagerJobIssueReportView: View {
     let jobId: String
 
     @Environment(\.managerTabRouter) private var router
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ManagerJobIssueReportViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var responseText = ""
@@ -14,8 +15,7 @@ struct ManagerJobIssueReportView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .jobDetails
-                    router.selectedTab = .jobs
+                    dismiss()
                 })
 
                 ScrollView(showsIndicators: false) {

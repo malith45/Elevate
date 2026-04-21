@@ -10,6 +10,7 @@ struct ManagerMemberDetailView: View {
     @State private var errorMessage: String?
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
+    @Environment(\.dismiss) private var dismiss
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
@@ -20,8 +21,7 @@ struct ManagerMemberDetailView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .members
-                    router.selectedTab = .profile
+                    dismiss()
                 })
                 .background(settings.surfaceColor)
 
@@ -58,7 +58,7 @@ struct ManagerMemberDetailView: View {
                 guard let user = appSession.currentUser else { return }
                 viewModel.deleteMember(editMember, actorUserId: user.id, isOnline: network.isOnline) { success in
                     if success {
-                        router.currentScreen = .members
+                        dismiss()
                     }
                 }
             })

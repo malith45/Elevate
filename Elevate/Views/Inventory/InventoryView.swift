@@ -4,13 +4,11 @@ struct InventoryView: View {
     let jobId: String
 
     @EnvironmentObject private var appSession: AppSession
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.technicianTabRouter) private var router
     @StateObject private var viewModel = InventoryViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var searchText: String = ""
-    @State private var selectedTab: TabItem = .jobs
-    @State private var navigateToQuotation = false
     
     var body: some View {
         ZStack {
@@ -40,44 +38,50 @@ struct InventoryView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 32) {
-                        ForEach(groupedItems(), id: \.key) { category, items in
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    Text(category.uppercased())
-                                        .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(settings.secondaryText)
-                                        .tracking(1)
-                                    Spacer()
-                                    Text("\(items.count) AVAILABLE")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 2)
-                                        .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
-                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
-                                        .cornerRadius(4)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                        )
-                                }
+                        if viewModel.isLoading && viewModel.items.isEmpty {
+                            ForEach(0..<4) { _ in
+                                SkeletonCard()
+                            }
+                        } else {
+                            ForEach(groupedItems(), id: \.key) { category, items in
+                                VStack(alignment: .leading, spacing: 16) {
+                                    HStack {
+                                        Text(category.uppercased())
+                                            .scaledFont(size: 12, weight: .bold)
+                                            .foregroundColor(settings.secondaryText)
+                                            .tracking(1)
+                                        Spacer()
+                                        Text("\(items.count) AVAILABLE")
+                                            .scaledFont(size: 10, weight: .bold)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 2)
+                                            .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
+                                            .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                            .cornerRadius(4)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                            )
+                                    }
 
-                                ForEach(items, id: \.id) { item in
-                                    InventoryItemCard(
-                                        icon: "cube.box",
-                                        title: item.name,
-                                        desc: item.category,
-                                        price: currencyString(item.unitPrice),
-                                        quantity: viewModel.quantity(for: item.id),
-                                        imageUrl: item.imageUrl,
-                                        onAdd: { 
-                                            HapticManager.shared.playImpact(style: .light)
-                                            viewModel.increment(itemId: item.id) 
-                                        },
-                                        onRemove: { 
-                                            HapticManager.shared.playImpact(style: .light)
-                                            viewModel.decrement(itemId: item.id) 
-                                        }
-                                    )
+                                    ForEach(items, id: \.id) { item in
+                                        InventoryItemCard(
+                                            icon: "cube.box",
+                                            title: item.name,
+                                            desc: item.category,
+                                            price: currencyString(item.unitPrice),
+                                            quantity: viewModel.quantity(for: item.id),
+                                            imageUrl: item.imageUrl,
+                                            onAdd: { 
+                                                HapticManager.shared.playImpact(style: .light)
+                                                viewModel.increment(itemId: item.id) 
+                                            },
+                                            onRemove: { 
+                                                HapticManager.shared.playImpact(style: .light)
+                                                viewModel.decrement(itemId: item.id) 
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -97,9 +101,6 @@ struct InventoryView: View {
             }
         }
         .navigationBarHidden(true)
-        .navigationDestination(isPresented: $navigateToQuotation) {
-            QuotationStatusView(jobId: jobId)
-        }
         .onAppear {
             HapticManager.shared.playImpact(style: .light)
             if let user = appSession.currentUser {
@@ -181,7 +182,8 @@ struct InventoryView: View {
             isOnline: network.isOnline
         )
         viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
-        navigateToQuotation = true
+        router.selectedJobId = jobId
+        router.path.append(TechnicianScreen.quotationStatus)
     }
 }
 

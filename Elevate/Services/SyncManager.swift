@@ -22,7 +22,7 @@ final class SyncManager: ObservableObject {
 
     private init() {}
 
-    func startSyncing(organizationId: String, userId: String, completion: (() -> Void)? = nil) {
+    func startSyncing(organizationId: String, userId: String, role: String, completion: (() -> Void)? = nil) {
         pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
 
         guard network.isOnline else {
@@ -33,7 +33,7 @@ final class SyncManager: ObservableObject {
 
         status = .syncing
         syncPendingActions(organizationId: organizationId, userId: userId) { [weak self] in
-            self?.syncJobs(organizationId: organizationId) { [weak self] in
+            self?.syncJobs(organizationId: organizationId, userId: userId, role: role) { [weak self] in
                 self?.syncPendingJobPhotos(organizationId: organizationId)
                 self?.syncPendingIssueReports()
                 self?.pendingCount = self?.local.pendingActionsCount(organizationId: organizationId, userId: userId) ?? 0
@@ -107,6 +107,22 @@ final class SyncManager: ObservableObject {
                 organizationId: organizationId,
                 userId: userId,
                 type: .updateJobFields,
+                payload: data,
+                createdAt: Date()
+            )
+            local.enqueuePendingAction(action)
+            pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        }
+    }
+
+    func enqueueDeleteJob(jobId: String, organizationId: String, userId: String) {
+        let payload: [String: Any] = ["jobId": jobId]
+        if let data = encodePayload(payload) {
+            let action = PendingAction(
+                id: UUID().uuidString,
+                organizationId: organizationId,
+                userId: userId,
+                type: .deleteJob,
                 payload: data,
                 createdAt: Date()
             )
@@ -473,6 +489,18 @@ final class SyncManager: ObservableObject {
                         group.leave()
                     }
                 }
+            case .deleteJob:
+                guard let payload = decodePayload(action.payload),
+                      let jobId = payload["jobId"] as? String
+                else { return }
+                
+                group.enter()
+                firebase.deleteJob(jobId: jobId) { result in
+                    if case .success = result {
+                        self.local.deletePendingAction(id: action.id)
+                    }
+                    group.leave()
+                }
             case .createInventoryItem:
                 guard let payload = decodePayload(action.payload),
                       var item = inventoryItemFromPayload(payload)
@@ -589,10 +617,15 @@ final class SyncManager: ObservableObject {
         }
     }
 
-    private func syncJobs(organizationId: String, completion: (() -> Void)? = nil) {
-        firebase.fetchJobs(organizationId: organizationId) { result in
+    private func syncJobs(organizationId: String, userId: String, role: String, completion: (() -> Void)? = nil) {
+        let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+        
+        firebase.fetchJobs(organizationId: organizationId, assignedUserId: assignedUserId) { result in
             switch result {
             case .success(let jobs):
+                if role == "TECHNICIAN" {
+                    self.local.purgeOtherUsersJobs(organizationId: organizationId, currentUserId: userId)
+                }
                 self.local.saveJobs(jobs)
             case .failure:
                 break

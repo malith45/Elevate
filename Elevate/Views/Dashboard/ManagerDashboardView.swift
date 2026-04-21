@@ -71,8 +71,7 @@ struct ManagerDashboardView: View {
                             }
                             Spacer()
                             Button(action: {
-                                router.currentScreen = .calendar
-                                router.selectedTab = .dashboard
+                                router.path.append(ManagerScreen.calendar)
                             }) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
@@ -198,20 +197,16 @@ struct ManagerDashboardView: View {
                         // Shortcuts
                         HStack(spacing: 8) {
                             ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
-                                router.currentScreen = .createJob
-                                router.selectedTab = .dashboard
+                                router.path.append(ManagerScreen.createJob)
                             }
                             ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black) {
-                                router.currentScreen = .pendingQuotations
-                                router.selectedTab = .dashboard
+                                router.path.append(ManagerScreen.pendingQuotations)
                             }
                             ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black) {
-                                router.currentScreen = .inventoryManager
-                                router.selectedTab = .dashboard
+                                router.path.append(ManagerScreen.inventoryManager)
                             }
                             ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
-                                router.currentScreen = .statistics
-                                router.selectedTab = .dashboard
+                                router.path.append(ManagerScreen.statistics)
                             }
                         }
                         
@@ -223,8 +218,8 @@ struct ManagerDashboardView: View {
                                     .foregroundColor(settings.secondaryText)
                                 Spacer()
                                 Button(action: {
-                                    router.currentScreen = .jobs
                                     router.selectedTab = .jobs
+                                    router.path = NavigationPath()
                                 }) {
                                     Text("View All")
                                         .scaledFont(size: 12, weight: .bold)
@@ -234,22 +229,27 @@ struct ManagerDashboardView: View {
                             }
                             
                             VStack(spacing: 16) {
-                                ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
-                                    Button(action: {
-                                        router.selectedJobId = job.id
-                                        router.currentScreen = .jobDetails
-                                        router.selectedTab = .jobs
-                                    }) {
-                                        TaskRow(
-                                            time: timeString(from: job.scheduledAt),
-                                            ampm: ampmString(from: job.scheduledAt),
-                                            title: job.title,
-                                            location: job.location,
-                                            priority: job.priority.uppercased(),
-                                            color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
-                                        )
+                                if viewModel.isLoading && viewModel.jobs.isEmpty {
+                                    ForEach(0..<3) { _ in
+                                        SkeletonTaskRow()
                                     }
-                                    .buttonStyle(.plain)
+                                } else {
+                                    ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                        Button(action: {
+                                            router.selectedJobId = job.id
+                                            router.path.append(ManagerScreen.jobDetails)
+                                        }) {
+                                            TaskRow(
+                                                time: timeString(from: job.scheduledAt),
+                                                ampm: ampmString(from: job.scheduledAt),
+                                                title: job.title,
+                                                location: job.location,
+                                                priority: job.priority.uppercased(),
+                                                color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
                                 }
                             }
                         }
@@ -276,7 +276,7 @@ struct ManagerDashboardView: View {
                     
                     isRefreshing = true
                     if let user = appSession.currentUser {
-                        viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline) {
+                        viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline) {
                             finishSync()
                         }
                     } else {
@@ -292,13 +292,13 @@ struct ManagerDashboardView: View {
         .speakOnAppear("Welcome to your Manager Dashboard")
         .onAppear {
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline)
                 loadTechnicians(organizationId: user.organizationId)
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: isOnline)
                 loadTechnicians(organizationId: user.organizationId)
             }
         }

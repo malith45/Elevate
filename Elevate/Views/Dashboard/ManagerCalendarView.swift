@@ -3,6 +3,7 @@ import EventKit
 
 struct ManagerCalendarView: View {
     @Environment(\.managerTabRouter) private var router
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = CalendarViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
@@ -19,8 +20,7 @@ struct ManagerCalendarView: View {
             VStack(spacing: 0) {
                 // Top Nav
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .dashboard
-                    router.selectedTab = .dashboard
+                    dismiss()
                 })
                 
                 ScrollView(showsIndicators: false) {

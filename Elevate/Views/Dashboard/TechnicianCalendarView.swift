@@ -269,15 +269,16 @@ private extension TechnicianCalendarView {
 
     func syncJobs() {
         guard let user = appSession.currentUser else { return }
+        let assignedUserId = (user.role == "TECHNICIAN") ? user.id : nil
+        
         let refreshLocal = {
-            let jobs = localStorage.fetchJobs(organizationId: user.organizationId)
-                .filter { $0.assignedUserId == user.id }
+            let jobs = localStorage.fetchJobs(organizationId: user.organizationId, userId: assignedUserId)
             self.viewModel.syncJobsIfAuthorized(jobs)
             self.viewModel.loadEventsIfAuthorized()
         }
 
         if NetworkService.shared.isOnline {
-            SyncManager.shared.startSyncing(organizationId: user.organizationId, userId: user.id) {
+            SyncManager.shared.startSyncing(organizationId: user.organizationId, userId: user.id, role: user.role) {
                 refreshLocal()
             }
         } else {

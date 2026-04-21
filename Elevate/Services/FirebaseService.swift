@@ -385,10 +385,15 @@ final class FirebaseService {
         }
     }
 
-    func fetchJobs(organizationId: String, completion: @escaping (Result<[Job], Error>) -> Void) {
-        db.collection("jobs")
+    func fetchJobs(organizationId: String, assignedUserId: String? = nil, completion: @escaping (Result<[Job], Error>) -> Void) {
+        var query: Query = db.collection("jobs")
             .whereField("organizationId", isEqualTo: organizationId)
-            .getDocuments { snapshot, error in
+        
+        if let assignedUserId = assignedUserId {
+            query = query.whereField("assignedUserId", isEqualTo: assignedUserId)
+        }
+        
+        query.getDocuments { snapshot, error in
                 if let error = error {
                     completion(.failure(error))
                     return

@@ -5,12 +5,15 @@ import MapKit
 struct JobDetailsView: View {
     let jobId: String
 
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.technicianTabRouter) private var router
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = JobDetailsViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var showCamera = false
+    @State private var showHoldPrompt = false
+    @State private var holdReasonText = ""
     
     var body: some View {
         ZStack {
@@ -18,7 +21,9 @@ struct JobDetailsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav()
+                BackHeaderNav(onBack: {
+                    dismiss()
+                })
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
@@ -35,7 +40,10 @@ struct JobDetailsView: View {
 
                                 Spacer()
 
-                                NavigationLink(destination: JobIssueReportView(jobId: job.id)) {
+                                Button(action: {
+                                    router.selectedJobId = job.id
+                                    router.path.append(TechnicianScreen.jobIssueReport)
+                                }) {
                                     HStack(spacing: 6) {
                                         Image(systemName: "exclamationmark.circle.fill")
                                         Text("REPORT ISSUE")
@@ -51,6 +59,7 @@ struct JobDetailsView: View {
                                             .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
+                                .buttonStyle(.plain)
                             }
 
                             VStack(alignment: .leading, spacing: 12) {
@@ -177,7 +186,10 @@ struct JobDetailsView: View {
                                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
 
-                            NavigationLink(destination: QuotationStatusView(jobId: job.id)) {
+                            Button(action: {
+                                router.selectedJobId = job.id
+                                router.path.append(TechnicianScreen.quotationStatus)
+                            }) {
                                 VStack(spacing: 6) {
                                     Image(systemName: "doc.text.fill")
                                     Text("VIEW QUOTATION")
@@ -193,6 +205,7 @@ struct JobDetailsView: View {
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                             }
+                            .buttonStyle(.plain)
                         }
                         
                         VStack(alignment: .leading, spacing: 12) {
@@ -236,13 +249,20 @@ struct JobDetailsView: View {
                         }
                         
                         HStack(spacing: 12) {
-                            Button(action: { updateStatus(jobId: job.id, status: "IN_PROGRESS") }) {
-                                Text("Update")
+                            Button(action: {
+                                if job.status.uppercased() == "HOLD" {
+                                    updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                } else {
+                                    holdReasonText = job.holdReason ?? ""
+                                    showHoldPrompt = true
+                                }
+                            }) {
+                                Text(job.status.uppercased() == "HOLD" ? "Resume" : "Hold Job")
                                     .scaledFont(size: 16, weight: .bold)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                                    .background(settings.surfaceColor)
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
@@ -266,9 +286,7 @@ struct JobDetailsView: View {
                         
                         Spacer().frame(height: 100)
                         } else {
-                            Text("Loading job details...")
-                                .scaledFont(size: 14)
-                                .foregroundColor(.elevateTextGray)
+                            SkeletonDetailHeader()
                         }
                     }
                     .padding(.horizontal, 24)
@@ -282,11 +300,20 @@ struct JobDetailsView: View {
                 viewModel.addPhoto(jobId: jobId, data: data, isOnline: network.isOnline)
             }, isPresented: $showCamera)
         }
+        .alert("Hold Job", isPresented: $showHoldPrompt) {
+            TextField("Reason for delay", text: $holdReasonText)
+            Button("Cancel", role: .cancel) {}
+            Button("Place on Hold") {
+                updateStatus(jobId: jobId, status: "HOLD", holdReason: holdReasonText)
+            }
+        } message: {
+            Text("Provide a brief reason for pausing this job.")
+        }
     }
 
-    private func updateStatus(jobId: String, status: String) {
+    private func updateStatus(jobId: String, status: String, holdReason: String? = nil) {
         guard let user = appSession.currentUser else { return }
-        viewModel.updateStatus(jobId: jobId, status: status, user: user, isOnline: network.isOnline)
+        viewModel.updateStatus(jobId: jobId, status: status, user: user, isOnline: network.isOnline, holdReasonOverride: holdReason)
     }
 
     private func currencyString(_ value: Double?) -> String {

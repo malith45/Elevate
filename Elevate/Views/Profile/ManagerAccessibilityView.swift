@@ -4,6 +4,7 @@ import UIKit
 struct ManagerAccessibilityView: View {
     @Environment(\.managerTabRouter) private var router
     @ObservedObject var settings = AccessibilitySettings.shared
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack {
@@ -11,8 +12,7 @@ struct ManagerAccessibilityView: View {
             
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .profile
-                    router.selectedTab = .profile
+                    dismiss()
                 })
                 .background(settings.isHighContrast ? Color.black : Color.white)
                 

@@ -152,9 +152,9 @@ final class JobDetailsViewModel: ObservableObject {
                 }
             }
         } else {
-            // If offline, we'd need a deleteJob action in SyncManager, 
-            // but for now we'll assume success locally as per request.
+            SyncManager.shared.enqueueDeleteJob(jobId: job.id, organizationId: user.organizationId, userId: user.id)
             DispatchQueue.main.async {
+                HapticManager.shared.playNotification(type: .success)
                 completion(true)
             }
         }

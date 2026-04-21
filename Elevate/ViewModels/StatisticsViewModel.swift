@@ -27,29 +27,30 @@ final class StatisticsViewModel: ObservableObject {
 
     private let localStorage = LocalStorageService.shared
 
-    func load(organizationId: String, userId: String, isOnline: Bool, technicianId: String? = nil) {
-        jobs = filteredJobs(organizationId: organizationId, technicianId: technicianId)
+    func load(organizationId: String, userId: String, role: String, isOnline: Bool, technicianId: String? = nil) {
+        let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+        jobs = filteredJobs(organizationId: organizationId, userId: assignedUserId, technicianId: technicianId)
         technicians = localStorage.fetchUsers(organizationId: organizationId)
             .filter { $0.role.uppercased() == "TECHNICIAN" }
         computeStats(from: jobs)
-        computeComparison(organizationId: organizationId, technicianId: technicianId)
+        computeComparison(organizationId: organizationId, role: role, userId: userId, technicianId: technicianId)
 
         guard isOnline else { return }
-        SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId) { [weak self] in
+        SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId, role: role) { [weak self] in
             guard let self = self else { return }
-            let refreshed = self.filteredJobs(organizationId: organizationId, technicianId: technicianId)
+            let refreshed = self.filteredJobs(organizationId: organizationId, userId: assignedUserId, technicianId: technicianId)
             DispatchQueue.main.async(execute: DispatchWorkItem(block: {
                 self.jobs = refreshed
                 self.computeStats(from: refreshed)
-                self.computeComparison(organizationId: organizationId, technicianId: technicianId)
+                self.computeComparison(organizationId: organizationId, role: role, userId: userId, technicianId: technicianId)
                 self.technicians = self.localStorage.fetchUsers(organizationId: organizationId)
                     .filter { $0.role.uppercased() == "TECHNICIAN" }
             }))
         }
     }
 
-    private func filteredJobs(organizationId: String, technicianId: String?) -> [Job] {
-        let all = localStorage.fetchJobs(organizationId: organizationId)
+    private func filteredJobs(organizationId: String, userId: String?, technicianId: String?) -> [Job] {
+        let all = localStorage.fetchJobs(organizationId: organizationId, userId: userId)
         guard let technicianId = technicianId, !technicianId.isEmpty else { return all }
         return all.filter { $0.assignedUserId == technicianId }
     }
@@ -65,8 +66,9 @@ final class StatisticsViewModel: ObservableObject {
         onScheduleRate = scheduled == 0 ? 0 : Double(completed) / Double(scheduled)
     }
 
-    private func computeComparison(organizationId: String, technicianId: String?) {
-        let allJobs = localStorage.fetchJobs(organizationId: organizationId)
+    private func computeComparison(organizationId: String, role: String, userId: String, technicianId: String?) {
+        let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+        let allJobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
         let teamRate = completionRate(for: allJobs)
         let targetRate = 0.8
 

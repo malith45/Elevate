@@ -4,7 +4,7 @@ import CoreLocation
 
 struct JobListView: View {
     @EnvironmentObject private var appSession: AppSession
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.technicianTabRouter) private var router
     @StateObject private var viewModel = JobsViewModel()
     @ObservedObject private var network = NetworkService.shared
     @State private var selectedFilter = 0
@@ -58,7 +58,12 @@ struct JobListView: View {
                         
                         // Job Cards
                         VStack(spacing: 24) {
-                            if viewModel.selectedFilter == .upcoming {
+                            if viewModel.isLoading && viewModel.jobs.isEmpty {
+                                ForEach(0..<5) { _ in
+                                    SkeletonTaskRow()
+                                        .padding(.horizontal, 24)
+                                }
+                            } else if viewModel.selectedFilter == .upcoming {
                                 let past = pastJobs()
                                 let future = upcomingJobs()
                                 
@@ -71,7 +76,12 @@ struct JobListView: View {
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(past) { job in
-                                            JobCard(job: job)
+                                            Button(action: {
+                                                router.selectedJobId = job.id
+                                                router.path.append(TechnicianScreen.jobDetails)
+                                            }) {
+                                                JobCard(job: job)
+                                            }
                                         }
                                     }
                                 }
@@ -85,7 +95,12 @@ struct JobListView: View {
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(future) { job in
-                                            JobCard(job: job)
+                                            Button(action: {
+                                                router.selectedJobId = job.id
+                                                router.path.append(TechnicianScreen.jobDetails)
+                                            }) {
+                                                JobCard(job: job)
+                                            }
                                         }
                                     }
                                 }
@@ -98,7 +113,12 @@ struct JobListView: View {
                                     emptyState
                                 } else {
                                     ForEach(viewModel.filteredJobs) { job in
-                                        JobCard(job: job)
+                                        Button(action: {
+                                            router.selectedJobId = job.id
+                                            router.path.append(TechnicianScreen.jobDetails)
+                                        }) {
+                                            JobCard(job: job)
+                                        }
                                     }
                                 }
                             }
@@ -124,12 +144,12 @@ struct JobListView: View {
         .speakOnAppear("Technician Job Schedule")
         .onAppear {
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline)
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
             if let user = appSession.currentUser {
-                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
+                viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: isOnline)
             }
         }
     }
@@ -141,7 +161,7 @@ struct JobListView: View {
                 .foregroundColor(.gray.opacity(0.3))
             Text("No jobs found for this filter")
                 .scaledFont(size: 14)
-                .foregroundColor(.gray)
+                .foregroundColor(settings.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -189,6 +209,7 @@ struct FilterButton: View {
 
 struct JobCard: View {
     var job: Job
+    @Environment(\.technicianTabRouter) private var router
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
@@ -249,7 +270,10 @@ struct JobCard: View {
                 
                 // Action Row
                 HStack(spacing: 10) {
-                    NavigationLink(destination: JobDetailsView(jobId: job.id)) {
+                    Button(action: {
+                        router.selectedJobId = job.id
+                        router.path.append(TechnicianScreen.jobDetails)
+                    }) {
                         Text("Open Details")
                             .scaledFont(size: 15, weight: .bold)
                             .foregroundColor(.white)

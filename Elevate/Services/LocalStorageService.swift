@@ -122,9 +122,19 @@ final class LocalStorageService {
         }
     }
 
-    func fetchJobs(organizationId: String) -> [Job] {
+    func fetchJobs(organizationId: String, userId: String? = nil) -> [Job] {
         let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")
-        request.predicate = NSPredicate(format: "organizationId == %@", organizationId)
+        
+        var predicates: [NSPredicate] = [
+            NSPredicate(format: "organizationId == %@", organizationId)
+        ]
+        
+        if let userId = userId {
+            predicates.append(NSPredicate(format: "assignedUserId == %@", userId))
+        }
+        
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+        
         let results = (try? stack.viewContext.fetch(request)) ?? []
         return results.map { item in
             Job(
@@ -148,6 +158,31 @@ final class LocalStorageService {
                 photoUrls: item.value(forKey: "photoUrls") as? [String] ?? [],
                 updatedAt: item.value(forKey: "updatedAt") as? Date ?? (item.value(forKey: "scheduledAt") as? Date ?? Date())
             )
+        }
+    }
+
+    func purgeOtherUsersJobs(organizationId: String, currentUserId: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "JobEntity")
+        
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "organizationId == %@", organizationId),
+            NSPredicate(format: "assignedUserId != %@", currentUserId)
+        ])
+        
+        let batchDelete = NSBatchDeleteRequest(fetchRequest: request)
+        batchDelete.resultType = .resultTypeObjectIDs
+        
+        do {
+            let result = try context.execute(batchDelete) as? NSBatchDeleteResult
+            let objectIDArray = result?.result as? [NSManagedObjectID] ?? []
+            
+            let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: objectIDArray]
+            NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
+            
+            saveContext(context)
+        } catch {
+            print("Error purging jobs: \(error)")
         }
     }
 

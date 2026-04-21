@@ -17,32 +17,56 @@ struct ManagerInventoryView: View {
             settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .jobs
-                    router.selectedTab = .jobs
-                })
+                // Modified Header Section
+                VStack(alignment: .leading, spacing: 20) {
+                    BackHeaderNav(isManager: true, onBack: {
+                        router.currentScreen = .dashboard
+                        router.selectedTab = .dashboard
+                    })
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Inventory Fleet")
+                            .scaledFont(size: 28, weight: .bold, design: .rounded)
+                            .foregroundColor(settings.primaryText)
+                        Text("Manage region-wide assets and stock levels")
+                            .scaledFont(size: 14, weight: .medium)
+                            .foregroundColor(settings.secondaryText)
+                    }
+                    .padding(.horizontal, 24)
+                }
+                .padding(.bottom, 24)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 28) {
                         searchBar
 
+                        // Redesigned Stats Dashboard
                         HStack(spacing: 16) {
-                            statCard(title: "TOTAL ITEMS", value: "\(viewModel.items.count)", valueColor: settings.accentColor)
-                            statCard(title: "CRITICAL STOCK", value: "\(criticalItems.count)", valueColor: .red)
+                            statCard(title: "TOTAL ASSETS", value: "\(viewModel.items.count)", icon: "shippingbox.fill", color: settings.accentColor)
+                            statCard(title: "LOW STOCK", value: "\(criticalItems.count)", icon: "exclamationmark.triangle.fill", color: .red)
                         }
                         .padding(.horizontal, 24)
 
+                        // Improved Grouped List
                         ForEach(groupedItems(), id: \.key) { category, items in
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack(alignment: .lastTextBaseline) {
                                     Text(category.uppercased())
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(settings.accentColor)
+                                        .scaledFont(size: 11, weight: .black)
+                                        .foregroundColor(settings.secondaryText.opacity(0.8))
+                                        .tracking(1.2)
+                                    
                                     Spacer()
-                                    Text("\(items.count) ITEMS")
+                                    
+                                    Text("\(items.count) UNITS")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(settings.secondaryText)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
+                                        .foregroundColor(settings.accentColor)
+                                        .cornerRadius(6)
                                 }
+                                .padding(.horizontal, 8)
 
                                 ForEach(items, id: \.id) { item in
                                     inventoryRow(item)
@@ -51,12 +75,12 @@ struct ManagerInventoryView: View {
                             .padding(.horizontal, 24)
                         }
 
-                        Spacer().frame(height: 100)
+                        Spacer().frame(height: 120)
                     }
                     .padding(.top, 12)
                 }
                 .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 96)
+                    Color.clear.frame(height: 40)
                 }
                 .refreshable {
                     if let user = appSession.currentUser {
@@ -150,81 +174,107 @@ struct ManagerInventoryView: View {
         .padding(.horizontal, 24)
     }
 
-    private func statCard(title: String, value: String, valueColor: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(settings.secondaryText)
-            Text(value)
-                .scaledFont(size: 22, weight: .bold)
-                .foregroundColor(valueColor)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(settings.surfaceColor)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-        )
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-    }
-
-    private func inventoryRow(_ item: InventoryItem) -> some View {
-        let status = stockStatus(for: item.quantity)
-
-        return HStack(spacing: 12) {
-            let skuText = item.sku ?? "N/A"
-            inventoryImageView(urlString: item.imageUrl)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.name)
-                    .scaledFont(size: 14, weight: .bold)
+    private func statCard(title: String, value: String, icon: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.12))
+                        .frame(width: 28, height: 28)
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(color)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(settings.secondaryText.opacity(0.3))
+            }
+            
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .scaledFont(size: 20, weight: .bold, design: .rounded)
                     .foregroundColor(settings.primaryText)
-                    .lineLimit(1)
-                Text("SKU: \(skuText)")
-                    .scaledFont(size: 10)
+                Text(title)
+                    .scaledFont(size: 8, weight: .black)
                     .foregroundColor(settings.secondaryText)
-                Text("\(item.quantity) units")
-                    .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(settings.accentColor)
+                    .tracking(0.5)
             }
-
-            Spacer()
-
-            Text(status.label)
-                .scaledFont(size: 9, weight: .bold)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(status.background)
-                .foregroundColor(status.foreground)
-                .cornerRadius(10)
-
-            Button(action: {
-                editingItem = item
-                isEditorPresented = true
-            }) {
-                Image(systemName: "square.and.pencil")
-                    .foregroundColor(settings.secondaryText)
-                    .frame(width: 32, height: 32)
-                    .background(settings.isHighContrast ? Color.black : Color.white)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 1 : 0)
-                    )
-                    .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
-            }
-            .buttonStyle(.plain)
         }
         .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(settings.surfaceColor)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+
+    private func inventoryRow(_ item: InventoryItem) -> some View {
+        let status = stockStatus(for: item.quantity)
+
+        return Button(action: {
+            editingItem = item
+            isEditorPresented = true
+        }) {
+            HStack(spacing: 12) {
+                inventoryImageView(urlString: item.imageUrl)
+                
+                Text(item.name)
+                    .scaledFont(size: 16, weight: .bold)
+                    .foregroundColor(settings.primaryText)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .layoutPriority(1)
+                
+                Spacer(minLength: 12)
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(currencyString(item.unitPrice))
+                        .scaledFont(size: 14, weight: .bold)
+                        .foregroundColor(settings.primaryText)
+                        .fixedSize()
+                    
+                    HStack(spacing: 4) {
+                        Text("\(item.quantity)")
+                            .scaledFont(size: 9, weight: .black)
+                        Text(status.label)
+                            .scaledFont(size: 9, weight: .bold)
+                    }
+                    .foregroundColor(status.foreground)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(status.background)
+                    .cornerRadius(6)
+                    .fixedSize()
+                }
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(settings.secondaryText.opacity(0.3))
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(settings.surfaceColor)
+            .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            )
+            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func currencyString(_ value: Double?) -> String {
+        guard let value = value else { return "LKR 0.00" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "LKR"
+        formatter.locale = Locale(identifier: "en_LK")
+        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(String(format: "%.2f", value))"
     }
 
     private func groupedItems() -> [(key: String, value: [InventoryItem])] {
@@ -236,44 +286,55 @@ struct ManagerInventoryView: View {
     }
 
     private var criticalItems: [InventoryItem] {
-        viewModel.items.filter { $0.quantity <= 3 }
+        viewModel.items.filter { $0.quantity < 5 }
     }
 
     private func stockStatus(for quantity: Int) -> (label: String, background: Color, foreground: Color) {
-        if quantity <= 3 {
+        if quantity < 5 {
             return ("LOW STOCK", Color.red.opacity(0.1), .red)
         }
         return ("IN STOCK", Color.elevateLightGray, .elevateDarkGreen)
     }
 
     private func inventoryImageView(urlString: String?) -> some View {
-        let frame = CGSize(width: 56, height: 56)
-        if let urlString = urlString, let url = URL(string: urlString) {
-            return AnyView(
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
+        ZStack {
+            if let urlString = urlString {
+                if urlString.hasPrefix("data:image") {
+                    if let uiImage = imageFromBase64(urlString) {
+                        Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFill()
-                    case .failure:
-                        placeholderImage
-                    case .empty:
-                        placeholderImage
-                    @unknown default:
+                    } else {
                         placeholderImage
                     }
+                } else if let url = URL(string: urlString) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            placeholderImage
+                        }
+                    }
+                } else {
+                    placeholderImage
                 }
-                .frame(width: frame.width, height: frame.height)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            )
+            } else {
+                placeholderImage
+            }
         }
+        .frame(width: 56, height: 56)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(settings.cardStroke, lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+    }
 
-        return AnyView(
-            placeholderImage
-                .frame(width: frame.width, height: frame.height)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-        )
+    private func imageFromBase64(_ base64String: String) -> UIImage? {
+        let components = base64String.components(separatedBy: ",")
+        let cleanString = components.count > 1 ? components[1] : components[0]
+        if let data = Data(base64Encoded: cleanString) {
+            return UIImage(data: data)
+        }
+        return nil
     }
 
     private var placeholderImage: some View {
@@ -310,6 +371,7 @@ private struct InventoryEditorView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedPhotoData: Data?
     @State private var isDeleteAlertPresented = false
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     init(item: InventoryItem?, onDelete: ((InventoryItem) -> Void)? = nil, onSave: @escaping (InventoryEditorDraft) -> Void) {
         self.item = item
@@ -323,123 +385,213 @@ private struct InventoryEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("DETAILS")) {
-                    TextField("Name", text: $name)
-                    TextField("Category", text: $category)
-                    TextField("SKU", text: $sku)
-                    TextField("Unit Price (LKR)", text: $unitPriceText)
-                        .keyboardType(.decimalPad)
-                }
-
-                Section(header: Text("PHOTO")) {
-                    HStack(spacing: 16) {
-                        photoPreview
-                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                            Text(selectedPhotoData == nil ? "Add Photo" : "Change Photo")
+        ZStack {
+            settings.appBackground.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header Content
+                VStack(alignment: .leading, spacing: 24) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item == nil ? "Add New Item" : "Edit Item")
+                                .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
+                            Text(item == nil ? "Create a new entry in your regional inventory" : "Update details for \(name)")
+                                .scaledFont(size: 14, weight: .medium)
+                                .foregroundColor(settings.secondaryText)
+                        }
+                        Spacer()
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(settings.secondaryText.opacity(0.5))
                         }
                     }
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
 
-                Section(header: Text("STOCK")) {
-                    TextField("Quantity", text: $quantityText)
-                        .keyboardType(.numberPad)
-                }
-
-                if item != nil {
-                    Section {
-                        Button(role: .destructive) {
-                            isDeleteAlertPresented = true
-                        } label: {
-                            Text("Delete Item")
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 24) {
+                        // Photo Card
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("ITEM PHOTOGRAPH")
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(settings.secondaryText)
+                                .padding(.horizontal, 4)
+                            
+                            HStack(spacing: 20) {
+                                photoPreview
+                                
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(selectedPhotoData == nil ? "Add Photo" : "Replace Photo")
+                                            .scaledFont(size: 14, weight: .bold)
+                                            .foregroundColor(settings.accentColor)
+                                        Text("JPG, PNG up to 5MB")
+                                            .scaledFont(size: 11)
+                                            .foregroundColor(settings.secondaryText)
+                                    }
+                                }
+                            }
                         }
+                        .padding(20)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(20)
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
+                        
+                        // Identity Card
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text("IDENTIFICATION")
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(settings.secondaryText)
+                                .padding(.horizontal, 4)
+                            
+                            CustomTextField(title: "Item Name", placeholder: "e.g. Copper Pipe 15mm", iconName: "tag", text: $name)
+                            CustomTextField(title: "Category", placeholder: "e.g. Plumbing", iconName: "folder", text: $category)
+                            CustomTextField(title: "SKU / Reference", placeholder: "e.g. CP-15-001", iconName: "barcode", text: $sku)
+                        }
+                        .padding(20)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(20)
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
+                        
+                        // Commercial Card
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text("COMMERCIALS & STOCK")
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(settings.secondaryText)
+                                .padding(.horizontal, 4)
+                            
+                            HStack(spacing: 16) {
+                                CustomTextField(title: "Price (LKR)", placeholder: "0.00", iconName: "dollarsign.circle", text: $unitPriceText)
+                                CustomTextField(title: "Quantity", placeholder: "0", iconName: "box.truck", text: $quantityText)
+                            }
+                        }
+                        .padding(20)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(20)
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
+                        
+                        if item != nil {
+                            Button(action: { isDeleteAlertPresented = true }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Delete from Inventory")
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(12)
+                            }
+                            .padding(.top, 8)
+                        }
+                        
+                        Spacer().frame(height: 120)
+                    }
+                    .padding(.horizontal, 24)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    bottomActionBar
+                }
+            }
+        }
+        .alert("Delete Item", isPresented: $isDeleteAlertPresented) {
+            Button("Delete", role: .destructive) {
+                guard let item = item else { return }
+                onDelete?(item)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently remove \(name) from the system.")
+        }
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self) {
+                    await MainActor.run {
+                        selectedPhotoData = data
                     }
                 }
             }
-            .navigationTitle(item == nil ? "Add Item" : "Edit Item")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                }
-            }
-            .alert("Delete Item", isPresented: $isDeleteAlertPresented) {
-                Button("Delete", role: .destructive) {
-                    guard let item = item else { return }
-                    onDelete?(item)
+        }
+    }
+
+    private var bottomActionBar: some View {
+        VStack(spacing: 0) {
+            Divider().background(settings.cardStroke)
+            HStack(spacing: 16) {
+                SecondaryButton(title: "Cancel") {
                     dismiss()
                 }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will remove the item from inventory.")
-            }
-            .onChange(of: selectedPhotoItem) { _, newItem in
-                guard let newItem else {
-                    selectedPhotoData = nil
-                    return
-                }
-                Task {
-                    if let data = try? await newItem.loadTransferable(type: Data.self) {
-                        await MainActor.run {
-                            selectedPhotoData = data
-                        }
-                    }
+                
+                PrimaryButton(title: item == nil ? "CREATE ITEM" : "SAVE CHANGES") {
+                    HapticManager.shared.playImpact(style: .medium)
+                    save()
                 }
             }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, 34)
+            .background(settings.surfaceColor)
         }
     }
 
     private var photoPreview: some View {
-        let size = CGSize(width: 64, height: 64)
-        if let selectedPhotoData, let uiImage = UIImage(data: selectedPhotoData) {
-            return AnyView(
+        ZStack {
+            if let selectedPhotoData, let uiImage = UIImage(data: selectedPhotoData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: size.width, height: size.height)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            )
-        }
-
-        if let urlString = item?.imageUrl, let url = URL(string: urlString) {
-            return AnyView(
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
+            } else if let urlString = item?.imageUrl {
+                if urlString.hasPrefix("data:image") {
+                    if let uiImage = imageFromBase64(urlString) {
+                        Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFill()
-                    case .failure:
-                        photoPlaceholder
-                    case .empty:
-                        photoPlaceholder
-                    @unknown default:
+                    } else {
                         photoPlaceholder
                     }
+                } else if let url = URL(string: urlString) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            photoPlaceholder
+                        }
+                    }
+                } else {
+                    photoPlaceholder
                 }
-                .frame(width: size.width, height: size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            )
+            } else {
+                photoPlaceholder
+            }
         }
+        .frame(width: 80, height: 80)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(settings.cardStroke, lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+    }
 
-        return AnyView(
-            photoPlaceholder
-                .frame(width: size.width, height: size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-        )
+    private func imageFromBase64(_ base64String: String) -> UIImage? {
+        let components = base64String.components(separatedBy: ",")
+        let cleanString = components.count > 1 ? components[1] : components[0]
+        if let data = Data(base64Encoded: cleanString) {
+            return UIImage(data: data)
+        }
+        return nil
     }
 
     private var photoPlaceholder: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(Color.elevateLightGray.opacity(0.6))
-            .overlay(
-                Image(systemName: "photo")
-                    .foregroundColor(.gray)
-            )
+        ZStack {
+            Color.elevateLightGray.opacity(0.5)
+            Image(systemName: "camera.fill")
+                .foregroundColor(settings.secondaryText.opacity(0.5))
+        }
     }
 
     private func save() {

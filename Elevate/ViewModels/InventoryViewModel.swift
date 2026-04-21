@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 final class InventoryViewModel: ObservableObject {
     @Published var items: [InventoryItem] = []
@@ -207,24 +208,31 @@ final class InventoryViewModel: ObservableObject {
             return
         }
 
-        guard isOnline else {
-            errorMessage = "Photo upload is offline. Item saved without a photo."
+        // Convert to Base64 with compression instead of uploading to Storage
+        if let base64String = compressAndEncode(data: imageData) {
+            persistItem(imageUrl: base64String)
+        } else {
+            self.errorMessage = "Failed to process image. Item saved without a photo."
             persistItem(imageUrl: nil)
-            return
         }
+        completion(nil) // Already finished synchronously
+    }
 
-        let fileName = "\(itemId)_\(Int(Date().timeIntervalSince1970)).jpg"
-        firebase.uploadInventoryPhoto(data: imageData, fileName: fileName, itemId: itemId) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let urlString):
-                    persistItem(imageUrl: urlString)
-                case .failure:
-                    self.errorMessage = "Photo upload failed. Item saved without a photo."
-                    persistItem(imageUrl: nil)
-                }
-            }
-        }
+    private func compressAndEncode(data: Data) -> String? {
+        guard let uiImage = UIImage(data: data) else { return nil }
+        
+        // Downscale to ~300px to keep firestore docs small
+        let maxSize: CGFloat = 300
+        let scale = min(maxSize / uiImage.size.width, maxSize / uiImage.size.height, 1.0)
+        let newSize = CGSize(width: uiImage.size.width * scale, height: uiImage.size.height * scale)
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        uiImage.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        guard let compressedData = resizedImage?.jpegData(compressionQuality: 0.6) else { return nil }
+        return "data:image/jpeg;base64," + compressedData.base64EncodedString()
     }
 
     func updateItem(_ item: InventoryItem, userId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, imageUrl: String?, imageData: Data?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
@@ -289,23 +297,11 @@ final class InventoryViewModel: ObservableObject {
             return
         }
 
-        guard isOnline else {
-            errorMessage = "Photo upload is offline. Item saved without a new photo."
+        if let base64String = compressAndEncode(data: imageData) {
+            persistItem(updatedImageUrl: base64String)
+        } else {
+            self.errorMessage = "Failed to update image. Item saved without a new photo."
             persistItem(updatedImageUrl: imageUrl)
-            return
-        }
-
-        let fileName = "\(item.id)_\(Int(Date().timeIntervalSince1970)).jpg"
-        firebase.uploadInventoryPhoto(data: imageData, fileName: fileName, itemId: item.id) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let urlString):
-                    persistItem(updatedImageUrl: urlString)
-                case .failure:
-                    self.errorMessage = "Photo upload failed. Item saved without a new photo."
-                    persistItem(updatedImageUrl: imageUrl)
-                }
-            }
         }
     }
 

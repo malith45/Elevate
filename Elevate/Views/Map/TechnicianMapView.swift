@@ -3,6 +3,7 @@ import MapKit
 
 struct TechnicianMapView: View {
     @EnvironmentObject private var appSession: AppSession
+    @Environment(\.technicianTabRouter) private var router
     @ObservedObject var viewModel: MapViewModel
     @ObservedObject private var locationService = LocationService.shared
     @State private var mapPosition: MapCameraPosition
@@ -146,7 +147,15 @@ struct TechnicianMapView: View {
         .onAppear {
             locationService.requestAuthorization()
             viewModel.updateRegionIfNeeded()
-            selectActiveJob()
+            
+            if let focusId = router.mapFocusJobId {
+                focusOnJob(id: focusId)
+                // Clear focus after consumption
+                router.mapFocusJobId = nil
+            } else {
+                selectActiveJob()
+            }
+            
             if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
                 viewModel.requestRoute()
             }
@@ -234,10 +243,38 @@ struct TechnicianMapView: View {
             .sorted { $0.scheduledAt < $1.scheduledAt }
 
         activeJob = jobs.first
-        if let job = activeJob,
+        updateSelection(activeJob)
+    }
+
+    private func focusOnJob(id: String) {
+        if let job = localStorage.fetchJob(id: id) {
+            activeJob = job
+            updateSelection(job)
+        }
+    }
+
+    private func updateSelection(_ job: Job?) {
+        if let job = job,
            let latitude = job.siteLatitude,
            let longitude = job.siteLongitude {
-            viewModel.setDestination(CLLocationCoordinate2D(latitude: latitude, longitude: longitude))
+            let coord = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            viewModel.setDestination(coord)
+            
+            // Adjust map view to show both user and destination if possible
+            if let current = locationService.currentLocation {
+                let region = MKCoordinateRegion(
+                    center: CLLocationCoordinate2D(
+                        latitude: (current.latitude + coord.latitude) / 2,
+                        longitude: (current.longitude + coord.longitude) / 2
+                    ),
+                    span: MKCoordinateSpan(
+                        latitudeDelta: abs(current.latitude - coord.latitude) * 1.5 + 0.01,
+                        longitudeDelta: abs(current.longitude - coord.longitude) * 1.5 + 0.01
+                    )
+                )
+                viewModel.region = region
+                mapPosition = .region(region)
+            }
         } else {
             viewModel.setDestination(nil)
         }

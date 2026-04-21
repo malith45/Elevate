@@ -22,6 +22,7 @@ final class TechnicianTabRouter: ObservableObject {
     @Published var selectedTab: TabItem = .dashboard
     @Published var path = NavigationPath()
     @Published var selectedJobId: String?
+    @Published var mapFocusJobId: String?
 }
 
 private struct TechnicianTabRouterKey: EnvironmentKey {

@@ -28,14 +28,16 @@ struct JobDetailsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         if let job = viewModel.job {
+                            // Header Section
                             HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("Job Details")
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("JOB DETAILS")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(settings.secondaryText)
+                                        .tracking(1.0)
+                                    Text(job.title)
                                         .scaledFont(size: 28, weight: .bold, design: .rounded)
                                         .foregroundColor(settings.primaryText)
-                                    Text(job.title)
-                                        .scaledFont(size: 14, weight: .semibold)
-                                        .foregroundColor(settings.secondaryText)
                                 }
 
                                 Spacer()
@@ -45,246 +47,279 @@ struct JobDetailsView: View {
                                     router.path.append(TechnicianScreen.jobIssueReport)
                                 }) {
                                     HStack(spacing: 6) {
-                                        Image(systemName: "exclamationmark.circle.fill")
-                                        Text("REPORT ISSUE")
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                        Text("REPORTS")
                                     }
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
+                                    .padding(.vertical, 8)
                                     .background(settings.isHighContrast ? settings.surfaceColor : Color.red.opacity(0.1))
                                     .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
                                     .cornerRadius(12)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                            .stroke(settings.isHighContrast ? .red : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
                                 .buttonStyle(.plain)
                             }
+                            .padding(.top, 12)
 
-                            VStack(alignment: .leading, spacing: 12) {
+                            // INFO CARD
+                            VStack(alignment: .leading, spacing: 16) {
                                 HStack(alignment: .top) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("PROJECT SITE")
                                             .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(settings.secondaryText)
+                                            .tracking(0.5)
                                         Text(job.location)
-                                            .scaledFont(size: 22, weight: .bold)
+                                            .scaledFont(size: 16, weight: .bold)
                                             .foregroundColor(settings.accentColor)
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                     Spacer()
-                                    Text("ID\n\(String(job.id.prefix(8)).uppercased())")
-                                        .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                        .foregroundColor(settings.primaryText)
-                                        .multilineTextAlignment(.leading)
-                                        .padding(10)
-                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                        )
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        Text("REFERENCE")
+                                            .scaledFont(size: 8, weight: .bold)
+                                            .foregroundColor(settings.secondaryText)
+                                        Text(String(job.id.prefix(8)).uppercased())
+                                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                            .foregroundColor(settings.primaryText)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(settings.isHighContrast ? .white.opacity(0.1) : Color.elevateLightGray.opacity(0.5))
+                                            .cornerRadius(6)
+                                    }
                                 }
 
+                                Divider().background(settings.cardStroke)
+
                                 if let notes = job.notes, !notes.isEmpty {
-                                    Text(notes)
-                                        .scaledFont(size: 14)
-                                        .foregroundColor(settings.primaryText.opacity(0.8))
-                                } else {
-                                    Text("No description provided.")
-                                        .scaledFont(size: 14)
-                                        .foregroundColor(settings.secondaryText)
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("INSTRUCTIONS")
+                                            .scaledFont(size: 10, weight: .bold)
+                                            .foregroundColor(settings.secondaryText)
+                                        Text(notes)
+                                            .scaledFont(size: 14)
+                                            .foregroundColor(settings.primaryText.opacity(0.9))
+                                            .lineSpacing(4)
+                                    }
                                 }
 
                                 HStack(spacing: 8) {
-                                    Label("Assigned", systemImage: "person.fill")
-                                        .scaledFont(size: 11, weight: .bold)
+                                    Image(systemName: "calendar")
+                                        .foregroundColor(settings.accentColor)
+                                    Text(formattedDate(job.scheduledAt))
+                                        .scaledFont(size: 12, weight: .semibold)
                                         .foregroundColor(settings.secondaryText)
                                     Spacer()
-                                    Text(viewModel.assignedTechnician?.displayName ?? job.assignedUserId)
-                                        .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(settings.primaryText)
+                                    Label("Priority: \(job.priority.uppercased())", systemImage: "flag.fill")
+                                        .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(job.priority.uppercased() == "HIGH" ? .red : settings.secondaryText)
                                 }
                             }
-                            .padding(16)
+                            .padding(20)
                             .background(settings.surfaceColor)
-                            .cornerRadius(16)
+                            .cornerRadius(20)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16)
+                                RoundedRectangle(cornerRadius: 20)
                                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("LOCATION")
-                                .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(settings.secondaryText)
+                            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+                            
+                            // LOCATION & NAVIGATION
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("REAL-TIME NAVIGATION")
+                                    .scaledFont(size: 11, weight: .bold)
+                                    .foregroundColor(settings.secondaryText)
+                                    .tracking(0.5)
 
-                            ZStack(alignment: .bottomLeading) {
-                                if let latitude = job.siteLatitude, let longitude = job.siteLongitude {
-                                    let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                                    let position = MapCameraPosition.region(
-                                        MKCoordinateRegion(
-                                            center: coordinate,
-                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                ZStack(alignment: .bottom) {
+                                    if let siteLat = job.siteLatitude, let siteLon = job.siteLongitude {
+                                        let siteCoord = CLLocationCoordinate2D(latitude: siteLat, longitude: siteLon)
+                                        
+                                        Map {
+                                            Marker("Site", systemImage: "mappin.circle.fill", coordinate: siteCoord)
+                                                .tint(settings.accentColor)
+                                            
+                                            if let techCoord = viewModel.technicianLocation {
+                                                Annotation("You", coordinate: techCoord) {
+                                                    ZStack {
+                                                        Circle().fill(Color.blue).frame(width: 16, height: 16)
+                                                        Circle().stroke(Color.white, lineWidth: 2).frame(width: 16, height: 16)
+                                                    }
+                                                    .shadow(radius: 4)
+                                                }
+                                            }
+                                        }
+                                        .frame(height: 240)
+                                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
-                                    )
-                                    Map(position: .constant(position)) {
-                                        Marker("Site", coordinate: coordinate)
-                                    }
-                                    .frame(height: 180)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                                } else {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .fill(LinearGradient(colors: [.elevateDarkGreen.opacity(0.85), .elevateDarkGreen.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                            .frame(height: 180)
-
-                                        VStack(spacing: 8) {
-                                            Image(systemName: "map.fill")
-                                                .font(.system(size: 36))
-                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : .white.opacity(0.4))
-                                            Text("Location preview unavailable")
-                                                .scaledFont(size: 12, weight: .semibold)
-                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : .white.opacity(0.7))
+                                        
+                                        // View in Maps Overlay
+                                        Button(action: {
+                                            HapticManager.shared.playImpact(style: .medium)
+                                            router.mapFocusJobId = job.id
+                                            router.selectedTab = .map
+                                        }) {
+                                            HStack(spacing: 8) {
+                                                Image(systemName: "location.north.fill")
+                                                Text("START NAVIGATION")
+                                                    .scaledFont(size: 13, weight: .bold)
+                                            }
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 24)
+                                            .padding(.vertical, 14)
+                                            .background(settings.isHighContrast ? Color.black : settings.accentColor)
+                                            .cornerRadius(16)
+                                            .shadow(color: settings.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                                            )
+                                        }
+                                        .padding(.bottom, 20)
+                                    } else {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .fill(Color.elevateLightGray.opacity(0.5))
+                                                .frame(height: 180)
+                                            Text("Map unavailable")
+                                                .scaledFont(size: 14, weight: .semibold)
+                                                .foregroundColor(settings.secondaryText)
                                         }
                                     }
                                 }
-
-                                Button(action: { openInMaps(job) }) {
-                                    Text("VIEW IN MAPS")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .background(settings.isHighContrast ? Color.black : Color.white)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
-                                        )
-                                }
-                                .padding(12)
                             }
-                        }
-                        
-                        HStack(spacing: 16) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("APPROVED COST")
-                                    .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(settings.secondaryText)
 
-                                Text(currencyString(job.approvedCost))
-                                    .scaledFont(size: 18, weight: .bold)
-                                    .foregroundColor(settings.accentColor)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(16)
-                            .background(settings.surfaceColor)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                            )
-
-                            Button(action: {
-                                router.selectedJobId = job.id
-                                router.path.append(TechnicianScreen.quotationStatus)
-                            }) {
-                                VStack(spacing: 6) {
-                                    Image(systemName: "doc.text.fill")
-                                    Text("VIEW QUOTATION")
+                            // COST & QUOTATION PAIR
+                            HStack(spacing: 16) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("APPROVED COST")
                                         .scaledFont(size: 10, weight: .bold)
+                                        .foregroundColor(settings.secondaryText)
+
+                                    Text(currencyString(job.approvedCost))
+                                        .scaledFont(size: 18, weight: .bold)
+                                        .foregroundColor(settings.accentColor)
                                 }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 18)
-                                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
-                                .cornerRadius(14)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(20)
+                                .background(settings.surfaceColor)
+                                .cornerRadius(20)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
+                                    RoundedRectangle(cornerRadius: 20)
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("PHOTOS")
-                                .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(settings.secondaryText)
 
-                            if !job.photoUrls.isEmpty {
+                                Button(action: {
+                                    router.selectedJobId = job.id
+                                    router.path.append(TechnicianScreen.quotationStatus)
+                                }) {
+                                    VStack(spacing: 6) {
+                                        Image(systemName: "doc.plaintext.fill")
+                                            .font(.system(size: 20))
+                                        Text("QUOTATION")
+                                            .scaledFont(size: 10, weight: .bold)
+                                    }
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                                    .cornerRadius(20)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(settings.isHighContrast ? .white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                            // MEDIA GRID
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("SERVICE PHOTOS")
+                                    .scaledFont(size: 11, weight: .bold)
+                                    .foregroundColor(settings.secondaryText)
+                                    .tracking(0.5)
+
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(job.photoUrls, id: \.self) { url in
                                             PhotoPreview(urlString: url)
-                                                .frame(width: 88, height: 88)
-                                                .cornerRadius(12)
+                                                .frame(width: 100, height: 100)
+                                                .cornerRadius(16)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                )
+                                        }
+                                        
+                                        // Square Add Photo Placeholder
+                                        Button(action: { 
+                                            HapticManager.shared.playImpact(style: .light)
+                                            showCamera = true 
+                                        }) {
+                                            VStack(spacing: 8) {
+                                                Image(systemName: "plus.viewfinder")
+                                                    .font(.system(size: 24))
+                                                Text("ADD")
+                                                    .scaledFont(size: 10, weight: .bold)
+                                            }
+                                            .foregroundColor(settings.accentColor)
+                                            .frame(width: 100, height: 100)
+                                            .background(settings.surfaceColor)
+                                            .cornerRadius(16)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(settings.accentColor.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
+                                            )
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                            
+                            // FINAL ACTIONS
+                            VStack(spacing: 12) {
+                                if job.status.uppercased() == "HOLD" {
+                                    actionButton(title: "RESUME WORK", icon: "play.fill", color: .blue) {
+                                        updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                    }
+                                } else {
+                                    HStack(spacing: 12) {
+                                        Button(action: {
+                                            holdReasonText = job.holdReason ?? ""
+                                            showHoldPrompt = true
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "pause.fill")
+                                                Text("HOLD")
+                                            }
+                                            .scaledFont(size: 15, weight: .bold)
+                                            .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 16)
+                                            .background(settings.surfaceColor)
+                                            .cornerRadius(16)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                            )
+                                        }
+                                        
+                                        actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: Color.elevateDarkGreen) {
+                                            updateStatus(jobId: job.id, status: "COMPLETED")
                                         }
                                     }
                                 }
-                            } else {
-                                Text("No photos submitted yet.")
-                                    .scaledFont(size: 12)
-                                    .foregroundColor(settings.secondaryText)
                             }
-
-                            Button(action: { showCamera = true }) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "camera.fill")
-                                    Text("Add Photo")
-                                        .scaledFont(size: 12, weight: .bold)
-                                }
-                                .foregroundColor(settings.accentColor)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(settings.surfaceColor)
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(style: StrokeStyle(lineWidth: 1, dash: [5]))
-                                        .foregroundColor(settings.cardStroke)
-                                )
-                            }
-                        }
-                        
-                        HStack(spacing: 12) {
-                            Button(action: {
-                                if job.status.uppercased() == "HOLD" {
-                                    updateStatus(jobId: job.id, status: "IN_PROGRESS")
-                                } else {
-                                    holdReasonText = job.holdReason ?? ""
-                                    showHoldPrompt = true
-                                }
-                            }) {
-                                Text(job.status.uppercased() == "HOLD" ? "Resume" : "Hold Job")
-                                    .scaledFont(size: 16, weight: .bold)
-                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 16)
-                                    .background(settings.surfaceColor)
-                                    .cornerRadius(14)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                    )
-                            }
-                            Button(action: { updateStatus(jobId: job.id, status: "COMPLETED") }) {
-                                Text("Complete Job")
-                                    .scaledFont(size: 16, weight: .bold)
-                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 16)
-                                    .background(settings.surfaceColor)
-                                    .cornerRadius(14)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                    )
-                            }
-                        }
-                        
-                        Spacer().frame(height: 100)
+                            .padding(.top, 12)
+                            
+                            Spacer().frame(height: 120)
                         } else {
                             SkeletonDetailHeader()
                         }
@@ -294,26 +329,55 @@ struct JobDetailsView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear { viewModel.load(jobId: jobId) }
+        .onAppear { 
+            HapticManager.shared.playImpact(style: .light)
+            viewModel.load(jobId: jobId) 
+        }
         .sheet(isPresented: $showCamera) {
             CameraCaptureView(onCapture: { data in
                 viewModel.addPhoto(jobId: jobId, data: data, isOnline: network.isOnline)
             }, isPresented: $showCamera)
         }
-        .alert("Hold Job", isPresented: $showHoldPrompt) {
+        .alert("Place on Hold", isPresented: $showHoldPrompt) {
             TextField("Reason for delay", text: $holdReasonText)
             Button("Cancel", role: .cancel) {}
-            Button("Place on Hold") {
+            Button("Confirm Hold") {
                 updateStatus(jobId: jobId, status: "HOLD", holdReason: holdReasonText)
             }
         } message: {
-            Text("Provide a brief reason for pausing this job.")
+            Text("Provide a brief reason for pausing this service.")
+        }
+    }
+
+    private func actionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: {
+            HapticManager.shared.playImpact(style: .rigid)
+            action()
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .scaledFont(size: 15, weight: .bold)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(settings.isHighContrast ? Color.black : color)
+            .cornerRadius(16)
+            .shadow(color: color.opacity(0.2), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+            )
         }
     }
 
     private func updateStatus(jobId: String, status: String, holdReason: String? = nil) {
         guard let user = appSession.currentUser else { return }
         viewModel.updateStatus(jobId: jobId, status: status, user: user, isOnline: network.isOnline, holdReasonOverride: holdReason)
+        if status.uppercased() == "COMPLETED" {
+            dismiss()
+        }
     }
 
     private func currencyString(_ value: Double?) -> String {
@@ -321,22 +385,15 @@ struct JobDetailsView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
+        formatter.locale = Locale(identifier: "en_LK")
         return formatter.string(from: NSNumber(value: actualValue)) ?? "LKR \(actualValue)"
     }
-
-    private func openInMaps(_ job: Job) {
-        if let latitude = job.siteLatitude, let longitude = job.siteLongitude {
-            let location = CLLocation(latitude: latitude, longitude: longitude)
-            let item = MKMapItem(location: location, address: nil)
-            item.name = job.title
-            item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
-            return
-        }
-
-        let encoded = job.location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? job.location
-        if let url = URL(string: "http://maps.apple.com/?q=\(encoded)") {
-            UIApplication.shared.open(url)
-        }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 

@@ -17,6 +17,12 @@ final class JobIssueReportViewModel: ObservableObject {
         }
     }
 
+    func removeAttachment(url: String) {
+        if let index = attachmentUrls.firstIndex(of: url) {
+            attachmentUrls.remove(at: index)
+        }
+    }
+
     func submit(jobId: String, user: User, isOnline: Bool) {
         errorMessage = nil
         didSubmit = false

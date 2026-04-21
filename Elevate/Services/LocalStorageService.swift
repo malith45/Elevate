@@ -254,6 +254,17 @@ final class LocalStorageService {
         saveContext(context)
     }
 
+    func removeJobPhotoUrl(jobId: String, url: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")
+        request.predicate = NSPredicate(format: "id == %@", jobId)
+        guard let item = try? context.fetch(request).first else { return }
+        let existing = item.value(forKey: "photoUrls") as? [String] ?? []
+        let updated = existing.filter { $0 != url }
+        item.setValue(updated, forKey: "photoUrls")
+        saveContext(context)
+    }
+
     func replaceJobPhotoUrl(jobId: String, from oldUrl: String, to newUrl: String) {
         let context = stack.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")

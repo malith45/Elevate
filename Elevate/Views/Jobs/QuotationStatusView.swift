@@ -166,7 +166,7 @@ struct QuotationStatusView: View {
                                     Text("COUNT")
                                         .scaledFont(size: 12, weight: .semibold)
                                         .foregroundColor(settings.secondaryText.opacity(0.7))
-                                    Text("\(viewModel.items.count)")
+                                    Text("\(viewModel.approvedItems.count)")
                                         .scaledFont(size: 24, weight: .bold)
                                         .foregroundColor(settings.accentColor)
                                 }
@@ -185,9 +185,9 @@ struct QuotationStatusView: View {
                             HStack(spacing: 12) {
                                 Button(action: {
                                     HapticManager.shared.playImpact(style: .light)
-                                    dismiss()
+                                    router.path = NavigationPath([TechnicianScreen.jobDetails])
                                 }) {
-                                    Text("CANCEL")
+                                    Text("GO BACK")
                                         .scaledFont(size: 14, weight: .bold)
                                         .foregroundColor(settings.secondaryText)
                                         .frame(maxWidth: .infinity)

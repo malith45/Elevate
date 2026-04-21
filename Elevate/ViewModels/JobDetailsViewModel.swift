@@ -109,6 +109,17 @@ final class JobDetailsViewModel: ObservableObject {
         }
     }
 
+    func removePhoto(jobId: String, url: String, isOnline: Bool) {
+        localStorage.removeJobPhotoUrl(jobId: jobId, url: url)
+        job = localStorage.fetchJob(id: jobId)
+
+        if isOnline {
+            firebase.updateJobFields(jobId: jobId, fields: [
+                "photoUrls": FieldValue.arrayRemove([url])
+            ]) { _ in }
+        }
+    }
+
     func deleteJobAndCleanup(job: Job, user: User, isOnline: Bool, completion: @escaping (Bool) -> Void) {
         // 1. Restore Inventory for approved items
         let approvedItems = job.quotationItems.filter { $0.status == "APPROVED" }

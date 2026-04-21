@@ -249,13 +249,28 @@ struct JobDetailsView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(job.photoUrls, id: \.self) { url in
-                                            PhotoPreview(urlString: url)
-                                                .frame(width: 100, height: 100)
-                                                .cornerRadius(16)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 16)
-                                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                                )
+                                            ZStack(alignment: .topTrailing) {
+                                                PhotoPreview(urlString: url)
+                                                    .frame(width: 100, height: 100)
+                                                    .cornerRadius(16)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 16)
+                                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                    )
+                                                
+                                                Button(action: {
+                                                    HapticManager.shared.playImpact(style: .medium)
+                                                    viewModel.removePhoto(jobId: job.id, url: url, isOnline: network.isOnline)
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .font(.system(size: 22))
+                                                        .symbolRenderingMode(.palette)
+                                                        .foregroundStyle(.white, .red)
+                                                        .background(Circle().fill(.white).padding(2))
+                                                        .offset(x: 6, y: -6)
+                                                        .shadow(color: .black.opacity(0.1), radius: 2)
+                                                }
+                                            }
                                         }
                                         
                                         // Square Add Photo Placeholder

@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UIKit
 
 struct CameraCaptureView: UIViewControllerRepresentable {
     let onCapture: (Data) -> Void
@@ -23,6 +24,11 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
     private let output = AVCapturePhotoOutput()
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private let accessLabel = UILabel()
+    private let simulatorPatternLabel = UILabel()
+    private let simulatorSubLabel = UILabel()
+    private let captureButton = UIButton(type: .system)
+    private let cancelButton = UIButton(type: .system)
+    private var isSimulationMode = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,22 +38,63 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if session.isRunning == false {
-            session.startRunning()
+        if !isSimulationMode && session.isRunning == false {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                self?.session.startRunning()
+            }
         }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        session.stopRunning()
+        if !isSimulationMode {
+            session.stopRunning()
+        }
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         previewLayer?.frame = view.bounds
+        
+        let safeBottom = view.safeAreaInsets.bottom
+        let bottomPadding: CGFloat = safeBottom > 0 ? safeBottom : 24
+        
+        // Position Main Capture Button
+        captureButton.frame = CGRect(
+            x: (view.bounds.width - 140) / 2,
+            y: view.bounds.height - bottomPadding - 48 - 12,
+            width: 140,
+            height: 48
+        )
+        
+        // Position Cancel Button
+        cancelButton.frame = CGRect(
+            x: 24,
+            y: view.bounds.height - bottomPadding - 40 - 16,
+            width: 80,
+            height: 40
+        )
+        
+        // Position Simulator Labels
+        simulatorPatternLabel.frame = view.bounds
+        simulatorSubLabel.frame = CGRect(
+            x: 40,
+            y: view.center.y + 40,
+            width: view.bounds.width - 80,
+            height: 60
+        )
+        
+        // Access Label positioning
+        accessLabel.frame = CGRect(x: 24, y: 0, width: view.bounds.width - 48, height: 120)
+        accessLabel.center = view.center
     }
 
     private func checkCameraAccess() {
+        #if targetEnvironment(simulator)
+        isSimulationMode = true
+        showSimulationMode()
+        configureCaptureButton()
+        #else
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             configureSession()
@@ -66,8 +113,32 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
                 }
             }
         default:
-            showAccessDeniedMessage()
+            if AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) == nil {
+                isSimulationMode = true
+                showSimulationMode()
+                configureCaptureButton()
+            } else {
+                showAccessDeniedMessage()
+            }
         }
+        #endif
+    }
+
+    private func showSimulationMode() {
+        view.backgroundColor = .darkGray
+        
+        simulatorPatternLabel.text = "📷 SIMULATOR CAMERA"
+        simulatorPatternLabel.textColor = UIColor.white.withAlphaComponent(0.3)
+        simulatorPatternLabel.font = .systemFont(ofSize: 24, weight: .bold)
+        simulatorPatternLabel.textAlignment = .center
+        view.addSubview(simulatorPatternLabel)
+        
+        simulatorSubLabel.text = "Hardware not detected. Capture will return a placeholder image."
+        simulatorSubLabel.textColor = UIColor.white.withAlphaComponent(0.5)
+        simulatorSubLabel.font = .systemFont(ofSize: 14)
+        simulatorSubLabel.numberOfLines = 0
+        simulatorSubLabel.textAlignment = .center
+        view.addSubview(simulatorSubLabel)
     }
 
     private func configureSession() {
@@ -79,6 +150,10 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
               session.canAddInput(input)
         else {
             session.commitConfiguration()
+            isSimulationMode = true
+            DispatchQueue.main.async {
+                self.showSimulationMode()
+            }
             return
         }
 
@@ -104,18 +179,16 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
         accessLabel.textColor = .white
         accessLabel.numberOfLines = 0
         accessLabel.textAlignment = .center
-        accessLabel.frame = CGRect(x: 24, y: 0, width: view.bounds.width - 48, height: 120)
-        accessLabel.center = view.center
         view.addSubview(accessLabel)
 
-        let closeButton = UIButton(type: .system)
-        closeButton.setTitle("Close", for: .normal)
-        closeButton.setTitleColor(.white, for: .normal)
-        closeButton.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        closeButton.layer.cornerRadius = 16
-        closeButton.frame = CGRect(x: (view.bounds.width - 120) / 2, y: view.bounds.height - 90, width: 120, height: 40)
-        closeButton.addTarget(self, action: #selector(closeCamera), for: .touchUpInside)
-        view.addSubview(closeButton)
+        let sheetCloseButton = UIButton(type: .system)
+        sheetCloseButton.setTitle("Close", for: .normal)
+        sheetCloseButton.setTitleColor(.white, for: .normal)
+        sheetCloseButton.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        sheetCloseButton.layer.cornerRadius = 16
+        sheetCloseButton.frame = CGRect(x: (view.bounds.width - 120) / 2, y: view.bounds.height - 90, width: 120, height: 40)
+        sheetCloseButton.addTarget(self, action: #selector(closeCamera), for: .touchUpInside)
+        view.addSubview(sheetCloseButton)
     }
 
     @objc private func closeCamera() {
@@ -123,34 +196,60 @@ final class CameraViewController: UIViewController, AVCapturePhotoCaptureDelegat
     }
 
     private func configureCaptureButton() {
-        let button = UIButton(type: .system)
-        button.setTitle("Capture", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        button.layer.cornerRadius = 24
-        button.frame = CGRect(x: (view.bounds.width - 140) / 2, y: view.bounds.height - 90, width: 140, height: 48)
-        button.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
-        view.addSubview(button)
+        captureButton.setTitle("Capture", for: .normal)
+        captureButton.setTitleColor(.white, for: .normal)
+        captureButton.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        captureButton.layer.cornerRadius = 24
+        captureButton.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
+        view.addSubview(captureButton)
+        
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitleColor(.white.withAlphaComponent(0.7), for: .normal)
+        cancelButton.addTarget(self, action: #selector(closeCamera), for: .touchUpInside)
+        view.addSubview(cancelButton)
     }
 
     @objc private func capturePhoto() {
+        if isSimulationMode {
+            captureMockPhoto()
+            return
+        }
+
         if session.isRunning == false {
-            session.startRunning()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                self?.session.startRunning()
+            }
         }
         guard let connection = output.connection(with: .video), connection.isEnabled else {
-            accessLabel.text = "Camera is unavailable. Try again on a physical device."
-            accessLabel.textColor = .white
-            accessLabel.numberOfLines = 0
-            accessLabel.textAlignment = .center
-            accessLabel.frame = CGRect(x: 24, y: 0, width: view.bounds.width - 48, height: 120)
-            accessLabel.center = view.center
-            if accessLabel.superview == nil {
-                view.addSubview(accessLabel)
-            }
+            isSimulationMode = true
+            showSimulationMode()
             return
         }
         let settings = AVCapturePhotoSettings()
         output.capturePhoto(with: settings, delegate: self)
+    }
+
+    private func captureMockPhoto() {
+        let size = CGSize(width: 1080, height: 1440)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { context in
+            UIColor.darkGray.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            
+            let text = "ELEVATE - SERVICE PHOTO\n(SIMULATOR MOCK)\n\nCaptured: \(Date().description)"
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 48, weight: .bold),
+                .foregroundColor: UIColor.white.withAlphaComponent(0.5)
+            ]
+            let nsText = NSString(string: text)
+            let rect = CGRect(x: 100, y: 500, width: 880, height: 600)
+            nsText.draw(in: rect, withAttributes: attrs)
+        }
+        
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            onCapture?(data)
+        }
+        onDismiss?()
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {

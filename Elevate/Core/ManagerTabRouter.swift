@@ -20,6 +20,7 @@ enum ManagerScreen {
     case inventoryManager
     case createJob
     case memberDetails
+    case pendingQuotations
 }
 
 final class ManagerTabRouter: ObservableObject {

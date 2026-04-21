@@ -182,17 +182,20 @@ struct QuotationStatusView: View {
                             
                             HStack(spacing: 12) {
                                 Button(action: {
-                                    HapticManager.shared.playImpact(style: .medium)
+                                    HapticManager.shared.playImpact(style: .light)
                                     presentationMode.wrappedValue.dismiss()
                                 }) {
-                                    Text("CONFIRM QUOTATION")
+                                    Text("CANCEL")
                                         .scaledFont(size: 14, weight: .bold)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(settings.secondaryText)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                        .background(settings.surfaceColor)
                                         .cornerRadius(12)
-                                        .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(settings.cardStroke, lineWidth: 1)
+                                        )
                                 }
 
                                 NavigationLink(destination: InventoryView(jobId: jobId)) {
@@ -201,14 +204,15 @@ struct QuotationStatusView: View {
                                         Text("ADD ITEMS")
                                     }
                                     .scaledFont(size: 14, weight: .bold)
-                                    .foregroundColor(settings.accentColor)
+                                    .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(settings.surfaceColor)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
                                     .cornerRadius(12)
+                                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(settings.accentColor.opacity(0.3), lineWidth: 1)
+                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
                                     )
                                 }
                             }

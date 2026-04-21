@@ -7,7 +7,6 @@ struct ManagerQuotationApprovalView: View {
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = ManagerQuotationApprovalViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
-    @State private var showAll = false
     private let localStorage = LocalStorageService.shared
 
     var body: some View {
@@ -16,121 +15,66 @@ struct ManagerQuotationApprovalView: View {
 
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
-                    router.currentScreen = .jobDetails
+                    if let _ = jobId {
+                        router.currentScreen = .jobDetails
+                    } else {
+                        router.currentScreen = .pendingQuotations
+                    }
                     router.selectedTab = .jobs
                 })
 
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Approve Items")
+                            .scaledFont(size: 28, weight: .bold, design: .rounded)
+                            .foregroundColor(settings.primaryText)
+                        Text("Review and dispatch equipment approvals")
+                            .scaledFont(size: 15, weight: .medium)
+                            .foregroundColor(settings.secondaryText)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
+
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Approve Quotations")
-                                .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.primaryText)
-                            Text("Review and approve item requests")
-                                .scaledFont(size: 13, weight: .semibold)
-                                .foregroundColor(settings.secondaryText)
-                        }
-
-                        if jobId != nil {
-                            Button(action: { showAll.toggle() }) {
-                                Text(showAll ? "VIEW THIS JOB" : "VIEW ALL QUOTATIONS")
-                                    .scaledFont(size: 11, weight: .bold)
-                                    .foregroundColor(settings.accentColor)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(settings.surfaceColor)
-                                    .cornerRadius(10)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                    )
-                            }
-                        }
-
-                        if showAll {
-                            if viewModel.jobs.isEmpty {
-                                emptyState
-                            } else {
-                                VStack(spacing: 16) {
-                                    ForEach(viewModel.jobs) { job in
-                                        jobSection(job)
-                                    }
-                                }
-                            }
-                        } else if viewModel.items.isEmpty {
-                            VStack(spacing: 12) {
-                                Image(systemName: "doc.text")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.elevateTextGray.opacity(0.5))
+                    VStack(alignment: .leading, spacing: 32) {
+                        if viewModel.items.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(settings.secondaryText.opacity(0.3))
                                 Text("No pending quotations for this job.")
-                                    .scaledFont(size: 14)
+                                    .scaledFont(size: 15, weight: .medium)
                                     .foregroundColor(settings.secondaryText)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 60)
+                            .padding(.vertical, 80)
                         } else {
-                            VStack(spacing: 12) {
+                            VStack(spacing: 16) {
                                 ForEach(viewModel.items) { item in
-                                    quotationRow(item, jobId: viewModel.job?.id)
+                                    quotationRow(item, jobId: jobId)
                                 }
-                            }
-
-                            HStack(spacing: 16) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("APPROVED COST")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(settings.secondaryText)
-                                    Text(currencyString(viewModel.job?.approvedCost))
-                                        .scaledFont(size: 18, weight: .bold)
-                                        .foregroundColor(settings.accentColor)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(16)
-                                .background(settings.surfaceColor)
-                                .cornerRadius(14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                )
-
-                                Button(action: { viewModel.approveAll(jobId: viewModel.job?.id) }) {
-                                    Text("Approve All")
-                                        .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 16)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                        .cornerRadius(14)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
-                                        )
-                                }
-                                .buttonStyle(.plain)
                             }
                         }
 
-                        Spacer().frame(height: 100)
+                        if !viewModel.items.isEmpty {
+                            bottomApprovalBar
+                                .padding(.top, 16)
+                                .padding(.bottom, 32) // Gentle breathing room at the end
+                        }
                     }
                     .padding(.horizontal, 24)
-                    .padding(.top, 12)
                 }
             }
         }
         .navigationBarHidden(true)
-            .onAppear {
-                showAll = true
-                let actorUserId = appSession.currentUser?.id ?? ""
-                let organizationId = appSession.currentUser?.organizationId ?? ""
-                let activeJobId = showAll ? nil : jobId
-                viewModel.load(jobId: activeJobId, organizationId: organizationId, actorUserId: actorUserId)
-            }
-            .onChange(of: showAll) { _, isAll in
-                let actorUserId = appSession.currentUser?.id ?? ""
-                let organizationId = appSession.currentUser?.organizationId ?? ""
-                let activeJobId = isAll ? nil : jobId
-                viewModel.load(jobId: activeJobId, organizationId: organizationId, actorUserId: actorUserId)
-            }
+        .onAppear {
+            let actorUserId = appSession.currentUser?.id ?? ""
+            let organizationId = appSession.currentUser?.organizationId ?? ""
+            viewModel.load(jobId: jobId, organizationId: organizationId, actorUserId: actorUserId)
+        }
         .alert("Quotation", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { _ in viewModel.errorMessage = nil }
@@ -141,183 +85,154 @@ struct ManagerQuotationApprovalView: View {
         }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "doc.text")
-                .font(.system(size: 40))
-                .foregroundColor(.elevateTextGray.opacity(0.5))
-            Text("No pending quotations right now.")
-                .scaledFont(size: 14)
-                .foregroundColor(settings.secondaryText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 60)
-    }
 
-    private func jobSection(_ job: Job) -> some View {
-        let technicianName = displayName(for: job.assignedUserId)
-        let pendingCount = job.quotationItems.filter { $0.status.uppercased() == "PENDING" }.count
 
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(job.title)
-                        .scaledFont(size: 16, weight: .bold)
-                        .foregroundColor(settings.primaryText)
-                    Text(technicianName)
-                        .scaledFont(size: 11, weight: .semibold)
-                        .foregroundColor(settings.secondaryText)
+    private var bottomApprovalBar: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("ESTIMATED COST")
+                    .scaledFont(size: 10, weight: .bold)
+                    .foregroundColor(settings.secondaryText)
+                    .tracking(0.5)
+                Text(currencyString(viewModel.job?.approvedCost))
+                    .scaledFont(size: 20, weight: .bold)
+                    .foregroundColor(settings.accentColor)
+            }
+            
+            Spacer()
+            
+            Button(action: { 
+                HapticManager.shared.playImpact(style: .medium)
+                viewModel.approveAll(jobId: viewModel.job?.id) 
+            }) {
+                HStack {
+                    Text("APPROVE ALL")
+                    Image(systemName: "checkmark.shield.fill")
                 }
-                Spacer()
-                Text("\(pendingCount) PENDING")
-                    .scaledFont(size: 9, weight: .bold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(settings.isHighContrast ? Color.black : Color.orange.opacity(0.15))
-                    .foregroundColor(settings.isHighContrast ? .white : .orange)
-                    .cornerRadius(10)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
-                    )
+                .scaledFont(size: 13, weight: .bold)
+                .foregroundColor(.white)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 24)
+                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                .cornerRadius(12)
+                .shadow(color: Color.elevateDarkGreen.opacity(0.15), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                )
             }
-
-            ForEach(job.quotationItems) { item in
-                quotationRow(item, jobId: job.id)
-            }
-
-            Button(action: { viewModel.approveAll(jobId: job.id) }) {
-                Text("Approve All")
-                    .scaledFont(size: 12, weight: .bold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
-                    )
-            }
-            .buttonStyle(.plain)
         }
-        .padding(16)
+        .padding(24)
         .background(settings.surfaceColor)
-        .cornerRadius(16)
+        .cornerRadius(20)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 20)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
+        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
     }
+
+
 
     private func quotationRow(_ item: QuotationItem, jobId: String?) -> some View {
         let status = item.status.uppercased()
         let isApproved = status == "APPROVED"
         let isRejected = status == "REJECTED"
 
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.name)
-                        .scaledFont(size: 16, weight: .bold)
+                        .scaledFont(size: 15, weight: .bold)
                         .foregroundColor(settings.primaryText)
-                    Text("Qty: \(item.quantity)")
-                        .scaledFont(size: 12)
+                    Text("Quantity: \(item.quantity)")
+                        .scaledFont(size: 12, weight: .medium)
                         .foregroundColor(settings.secondaryText)
                 }
 
                 Spacer()
 
                 Text(currencyString(Double(item.quantity) * item.unitPrice))
-                    .scaledFont(size: 14, weight: .bold)
+                    .scaledFont(size: 15, weight: .bold)
                     .foregroundColor(settings.accentColor)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 statusPill(status)
 
                 Spacer()
 
-                Button(action: {
-                    if let jobId = jobId {
-                        viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "APPROVED")
+                HStack(spacing: 8) {
+                    Button(action: {
+                        if let jobId = jobId {
+                            HapticManager.shared.playImpact(style: .rigid)
+                            viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "APPROVED")
+                        }
+                    }) {
+                        Image(systemName: isApproved ? "checkmark.circle.fill" : "checkmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(isApproved ? .white : .green)
+                            .padding(10)
+                            .background(isApproved ? (settings.isHighContrast ? Color.black : Color.green) : Color.green.opacity(0.1))
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.green.opacity(0.2), lineWidth: 1))
                     }
-                }) {
-                    Text("Approve")
-                        .scaledFont(size: 12, weight: .bold)
-                        .foregroundColor(isApproved ? .white : (settings.isHighContrast ? .white : settings.accentColor))
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(isApproved ? (settings.isHighContrast ? Color.black : Color.elevateDarkGreen) : settings.surfaceColor)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                        )
-                }
-                .buttonStyle(.plain)
 
-                Button(action: {
-                    if let jobId = jobId {
-                        viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "REJECTED")
+                    Button(action: {
+                        if let jobId = jobId {
+                            HapticManager.shared.playImpact(style: .rigid)
+                            viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "REJECTED")
+                        }
+                    }) {
+                        Image(systemName: isRejected ? "xmark.circle.fill" : "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(isRejected ? .white : .red)
+                            .padding(10)
+                            .background(isRejected ? (settings.isHighContrast ? Color.black : Color.red) : Color.red.opacity(0.1))
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.red.opacity(0.2), lineWidth: 1))
                     }
-                }) {
-                    Text("Reject")
-                        .scaledFont(size: 12, weight: .bold)
-                        .foregroundColor(isRejected ? .white : .red)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(isRejected ? (settings.isHighContrast ? Color.black : Color.red) : (settings.isHighContrast ? Color.black : Color.red.opacity(0.12)))
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke((settings.isHighContrast && !isRejected) ? Color.red : (settings.isHighContrast ? Color.white : Color.clear), lineWidth: settings.isHighContrast ? 1 : 0)
-                        )
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(16)
-        .background(settings.surfaceColor)
-        .cornerRadius(14)
+        .background(settings.isHighContrast ? Color.black : settings.surfaceColor.opacity(0.6))
+        .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
     }
 
     private func statusPill(_ status: String) -> some View {
         let normalized = status.uppercased()
         let color: Color
         switch normalized {
-        case "APPROVED":
-            color = .green
-        case "REJECTED":
-            color = .red
-        default:
-            color = .orange
+        case "APPROVED": color = .green
+        case "REJECTED": color = .red
+        default: color = .orange
         }
 
         return Text(normalized)
-            .scaledFont(size: 10, weight: .bold)
+            .scaledFont(size: 9, weight: .black)
             .foregroundColor(settings.isHighContrast ? .white : color)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(settings.isHighContrast ? Color.black : color.opacity(0.15))
-            .cornerRadius(10)
+            .background(settings.isHighContrast ? Color.black : color.opacity(0.1))
+            .cornerRadius(8)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 8)
                     .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
             )
     }
 
     private func currencyString(_ value: Double?) -> String {
-        guard let value = value else { return "LKR -" }
+        guard let value = value else { return "LKR 0.00" }
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
-        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+        formatter.locale = Locale(identifier: "en_LK")
+        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(String(format: "%.2f", value))"
     }
 
     private func displayName(for userId: String) -> String {

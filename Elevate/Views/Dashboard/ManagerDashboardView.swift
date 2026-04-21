@@ -195,8 +195,8 @@ struct ManagerDashboardView: View {
                                 router.selectedTab = .dashboard
                             }
                             ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black) {
-                                router.currentScreen = .jobs
-                                router.selectedTab = .jobs
+                                router.currentScreen = .pendingQuotations
+                                router.selectedTab = .dashboard
                             }
                             ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black) {
                                 router.currentScreen = .inventoryManager

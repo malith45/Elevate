@@ -60,6 +60,8 @@ struct ManagerMainTabView: View {
                     } else {
                         ManagerMembersView()
                     }
+                case .pendingQuotations:
+                    ManagerPendingQuotationListView()
                 }
             }
             .environment(\.managerTabRouter, router)

@@ -21,12 +21,13 @@ struct CustomSearchBar: View {
                 }
             }
         }
-        .padding(12)
+        .padding(14)
         .background(settings.surfaceColor)
-        .cornerRadius(10)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 1)
         )
     }
 }

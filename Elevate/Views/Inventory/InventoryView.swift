@@ -20,23 +20,41 @@ struct InventoryView: View {
                 // Top Nav
                 BackHeaderNav()
                 
-                // Search Bar
-                CustomSearchBar(text: $searchText, placeholder: "Search")
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Inventory Selection")
+                        .scaledFont(size: 28, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.primaryText)
+                    Text("Browse and select equipment for this job")
+                        .scaledFont(size: 15, weight: .medium)
+                        .foregroundColor(settings.secondaryText)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 16)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
+
+                // Search Bar
+                CustomSearchBar(text: $searchText, placeholder: "Search equipment...")
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 32) {
                         ForEach(groupedItems(), id: \.key) { category, items in
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Text(category.uppercased())
                                         .scaledFont(size: 12, weight: .bold)
                                         .foregroundColor(settings.secondaryText)
+                                        .tracking(1)
                                     Spacer()
-                                    Text("\(items.count) ITEMS AVAILABLE")
+                                    Text("\(items.count) AVAILABLE")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(settings.secondaryText)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 2)
+                                        .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
+                                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
+                                        .cornerRadius(4)
                                 }
 
                                 ForEach(items, id: \.id) { item in
@@ -47,16 +65,20 @@ struct InventoryView: View {
                                         price: currencyString(item.unitPrice),
                                         quantity: viewModel.quantity(for: item.id),
                                         imageUrl: item.imageUrl,
-                                        onAdd: { viewModel.increment(itemId: item.id) },
-                                        onRemove: { viewModel.decrement(itemId: item.id) }
+                                        onAdd: { 
+                                            HapticManager.shared.playImpact(style: .light)
+                                            viewModel.increment(itemId: item.id) 
+                                        },
+                                        onRemove: { 
+                                            HapticManager.shared.playImpact(style: .light)
+                                            viewModel.decrement(itemId: item.id) 
+                                        }
                                     )
                                 }
                             }
                         }
 
-                        EmptyView()
-                        
-                        Spacer().frame(height: 120)
+                        Spacer().frame(height: 140)
                     }
                     .padding(.horizontal, 24)
                 }
@@ -69,14 +91,13 @@ struct InventoryView: View {
                     }
                 }
             }
-            
         }
         .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToQuotation) {
             QuotationStatusView(jobId: jobId)
         }
-        .speakOnAppear("Inventory Selection")
         .onAppear {
+            HapticManager.shared.playImpact(style: .light)
             if let user = appSession.currentUser {
                 viewModel.loadItems(organizationId: user.organizationId, isOnline: network.isOnline)
             }
@@ -108,29 +129,43 @@ struct InventoryView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
-        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(value)"
+        formatter.locale = Locale(identifier: "en_LK")
+        return formatter.string(from: NSNumber(value: value)) ?? "LKR \(String(format: "%.2f", value))"
     }
 
     private var requestQuotationBar: some View {
         VStack(spacing: 0) {
-            Button(action: submitQuotation) {
-                Text("REQUEST QUOTATION")
+            Divider().background(settings.cardStroke)
+            
+            VStack(spacing: 16) {
+                Button(action: {
+                    HapticManager.shared.playImpact(style: .medium)
+                    submitQuotation()
+                }) {
+                    HStack {
+                        Text("REQUEST QUOTATION")
+                        Spacer()
+                        Image(systemName: "arrow.right.circle.fill")
+                    }
                     .scaledFont(size: 14, weight: .bold)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 18)
+                    .padding(.horizontal, 24)
                     .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                    .cornerRadius(10)
+                    .cornerRadius(14)
+                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
                     )
+                }
             }
             .padding(.horizontal, 24)
-            .padding(.top, 10)
-            .padding(.bottom, 108)
+            .padding(.top, 20)
+            .padding(.bottom, 140)
+            .background(settings.appBackground)
         }
-        .background(settings.appBackground)
     }
 
     private func submitQuotation() {
@@ -160,101 +195,97 @@ struct InventoryItemCard: View {
     var body: some View {
         HStack(spacing: 16) {
             inventoryImageView
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .scaledFont(size: 16, weight: .bold)
+                    .scaledFont(size: 15, weight: .bold)
                     .foregroundColor(settings.primaryText)
+                    .lineLimit(1)
+                
                 Text(desc)
-                    .scaledFont(size: 12)
+                    .scaledFont(size: 11, weight: .medium)
                     .foregroundColor(settings.secondaryText)
+                
                 Text(price)
-                    .scaledFont(size: 14, weight: .bold)
+                    .scaledFont(size: 13, weight: .semibold)
                     .foregroundColor(settings.accentColor)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
             }
             
             Spacer()
             
-            // Stepper
-            HStack(spacing: 0) {
-                Button(action: {
-                    onRemove()
-                }) {
+            // Premium Stepper
+            HStack(spacing: 12) {
+                Button(action: onRemove) {
                     Image(systemName: "minus")
-                        .foregroundColor(settings.primaryText)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(quantity > 0 ? settings.primaryText : settings.secondaryText.opacity(0.3))
                         .frame(width: 32, height: 32)
+                        .background(settings.surfaceColor)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(settings.cardStroke, lineWidth: 1))
                 }
+                .disabled(quantity <= 0)
                 
                 Text("\(quantity)")
-                    .scaledFont(size: 14, weight: .bold)
+                    .scaledFont(size: 15, weight: .bold)
                     .foregroundColor(settings.primaryText)
-                    .frame(width: 24)
+                    .frame(minWidth: 20)
                     .multilineTextAlignment(.center)
                 
-                Button(action: {
-                    onAdd()
-                }) {
+                Button(action: onAdd) {
                     Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 32, height: 32)
                         .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                        .overlay(
-                            Rectangle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
-                        )
+                        .clipShape(Circle())
+                        .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
             }
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(settings.isHighContrast ? Color.white : Color.elevateLightGray, lineWidth: 1))
-            .cornerRadius(6)
         }
         .padding(16)
         .background(settings.surfaceColor)
-        .cornerRadius(12)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
     }
 
     private var inventoryImageView: some View {
-        let size = CGSize(width: 60, height: 60)
-        if let urlString = imageUrl, let url = URL(string: urlString) {
-            return AnyView(
+        let size = CGSize(width: 64, height: 64)
+        return ZStack {
+            if let urlString = imageUrl, let url = URL(string: urlString) {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        placeholderImage
-                    case .empty:
-                        placeholderImage
-                    @unknown default:
+                        image.resizable().scaledToFill()
+                    default:
                         placeholderImage
                     }
                 }
-                .frame(width: size.width, height: size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            )
+            } else {
+                placeholderImage
+            }
         }
-
-        return AnyView(
-            placeholderImage
-                .frame(width: size.width, height: size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+        .frame(width: size.width, height: size.height)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white, lineWidth: 2)
         )
     }
 
     private var placeholderImage: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(Color.elevateLightGray.opacity(0.5))
-            .overlay(
-                Image(systemName: icon)
-                    .font(.system(size: 24))
-                    .foregroundColor(.gray)
-            )
+        ZStack {
+            Color.elevateLightGray.opacity(0.5)
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(.gray.opacity(0.5))
+        }
     }
 }
 

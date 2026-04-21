@@ -209,31 +209,15 @@ final class InventoryViewModel: ObservableObject {
         }
 
         // Convert to Base64 with compression instead of uploading to Storage
-        if let base64String = compressAndEncode(data: imageData) {
+        if let base64String = ImageUtils.compressAndEncode(data: imageData) {
             persistItem(imageUrl: base64String)
         } else {
             self.errorMessage = "Failed to process image. Item saved without a photo."
             persistItem(imageUrl: nil)
         }
-        completion(nil) // Already finished synchronously
+        completion(nil)
     }
 
-    private func compressAndEncode(data: Data) -> String? {
-        guard let uiImage = UIImage(data: data) else { return nil }
-        
-        // Downscale to ~300px to keep firestore docs small
-        let maxSize: CGFloat = 300
-        let scale = min(maxSize / uiImage.size.width, maxSize / uiImage.size.height, 1.0)
-        let newSize = CGSize(width: uiImage.size.width * scale, height: uiImage.size.height * scale)
-        
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        uiImage.draw(in: CGRect(origin: .zero, size: newSize))
-        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        guard let compressedData = resizedImage?.jpegData(compressionQuality: 0.6) else { return nil }
-        return "data:image/jpeg;base64," + compressedData.base64EncodedString()
-    }
 
     func updateItem(_ item: InventoryItem, userId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, imageUrl: String?, imageData: Data?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -297,7 +281,7 @@ final class InventoryViewModel: ObservableObject {
             return
         }
 
-        if let base64String = compressAndEncode(data: imageData) {
+        if let base64String = ImageUtils.compressAndEncode(data: imageData) {
             persistItem(updatedImageUrl: base64String)
         } else {
             self.errorMessage = "Failed to update image. Item saved without a new photo."

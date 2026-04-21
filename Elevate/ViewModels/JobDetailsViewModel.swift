@@ -97,21 +97,15 @@ final class JobDetailsViewModel: ObservableObject {
     }
 
     func addPhoto(jobId: String, data: Data, isOnline: Bool) {
-        let fileName = "job_\(jobId)_\(UUID().uuidString).jpg"
-        if let localUrl = localStorage.saveImageData(data, fileName: fileName) {
-            localStorage.appendJobPhotoUrl(jobId: jobId, url: localUrl)
-            job = localStorage.fetchJob(id: jobId)
+        guard let base64String = ImageUtils.compressAndEncode(data: data) else { return }
+        
+        localStorage.appendJobPhotoUrl(jobId: jobId, url: base64String)
+        job = localStorage.fetchJob(id: jobId)
 
-            if isOnline {
-                firebase.uploadJobPhoto(data: data, fileName: fileName, jobId: jobId) { result in
-                    if case .success(let remoteUrl) = result {
-                        self.localStorage.replaceJobPhotoUrl(jobId: jobId, from: localUrl, to: remoteUrl)
-                        DispatchQueue.main.async {
-                            self.job = self.localStorage.fetchJob(id: jobId)
-                        }
-                    }
-                }
-            }
+        if isOnline {
+            firebase.updateJobFields(jobId: jobId, fields: [
+                "photoUrls": FieldValue.arrayUnion([base64String])
+            ]) { _ in }
         }
     }
 }

@@ -256,37 +256,15 @@ struct InventoryItemCard: View {
     }
 
     private var inventoryImageView: some View {
-        let size = CGSize(width: 64, height: 64)
-        return ZStack {
-            if let urlString = imageUrl, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    default:
-                        placeholderImage
-                    }
-                }
-            } else {
-                placeholderImage
-            }
-        }
-        .frame(width: size.width, height: size.height)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white, lineWidth: 2)
-        )
+        HighFidelityImageView(urlString: imageUrl, placeholderIcon: icon, cornerRadius: 12)
+            .aspectRatio(1, contentMode: .fill)
+            .frame(width: 64, height: 64)
+            .clipped()
+            .fixedSize()
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.5), lineWidth: 1))
     }
 
-    private var placeholderImage: some View {
-        ZStack {
-            Color.elevateLightGray.opacity(0.5)
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(.gray.opacity(0.5))
-        }
-    }
 }
 
 #Preview {

@@ -10,7 +10,6 @@ final class FirebaseService {
 
     private let auth = Auth.auth()
     private let db = Firestore.firestore()
-    private let supabaseStorage = SupabaseStorageService.shared
 
     private init() {}
 
@@ -663,36 +662,8 @@ final class FirebaseService {
         }
     }
 
-    func uploadIssueAttachment(data: Data, fileName: String, completion: @escaping (Result<String, Error>) -> Void) {
-        supabaseStorage.uploadPublicFile(data: data, path: "issueAttachments/\(fileName)") { result in
-            completion(result)
-        }
-    }
-
-    func uploadJobPhoto(data: Data, fileName: String, jobId: String, completion: @escaping (Result<String, Error>) -> Void) {
-        supabaseStorage.uploadPublicFile(data: data, path: "jobPhotos/\(jobId)/\(fileName)") { result in
-            switch result {
-            case .success(let urlString):
-                self.db.collection("jobs").document(jobId).updateData([
-                    "photoUrls": FieldValue.arrayUnion([urlString])
-                ]) { updateError in
-                    if let updateError = updateError {
-                        completion(.failure(updateError))
-                    } else {
-                        completion(.success(urlString))
-                    }
-                }
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-
-    func uploadInventoryPhoto(data: Data, fileName: String, itemId: String, completion: @escaping (Result<String, Error>) -> Void) {
-        supabaseStorage.uploadPublicFile(data: data, path: "inventoryPhotos/\(itemId)/\(fileName)") { result in
-            completion(result)
-        }
-    }
+    // Removed uploadIssueAttachment, uploadJobPhoto, and uploadInventoryPhoto
+    // These are now handled as Base64 strings directly in the documents via ViewModels.
 
     func fetchInventoryItems(organizationId: String, completion: @escaping (Result<[InventoryItem], Error>) -> Void) {
         db.collection("inventory")

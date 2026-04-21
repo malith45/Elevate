@@ -475,8 +475,23 @@ final class SyncManager: ObservableObject {
                 }
             case .createInventoryItem:
                 guard let payload = decodePayload(action.payload),
-                      let item = inventoryItemFromPayload(payload)
+                      var item = inventoryItemFromPayload(payload)
                 else { return }
+
+                if let url = item.imageUrl, url.hasPrefix("file://"),
+                   let data = loadFileData(url),
+                   let base64 = ImageUtils.compressAndEncode(data: data) {
+                    item = InventoryItem(
+                        id: item.id,
+                        organizationId: item.organizationId,
+                        name: item.name,
+                        category: item.category,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        sku: item.sku,
+                        imageUrl: base64
+                    )
+                }
 
                 group.enter()
                 firebase.createInventoryItem(item) { result in
@@ -492,6 +507,12 @@ final class SyncManager: ObservableObject {
 
                 var fields = payload
                 fields.removeValue(forKey: "itemId")
+
+                if let url = fields["imageUrl"] as? String, url.hasPrefix("file://"),
+                   let data = loadFileData(url),
+                   let base64 = ImageUtils.compressAndEncode(data: data) {
+                    fields["imageUrl"] = base64
+                }
 
                 group.enter()
                 firebase.updateInventoryItem(itemId: itemId, fields: fields) { result in
@@ -586,11 +607,12 @@ final class SyncManager: ObservableObject {
             let localUrls = job.photoUrls.filter { $0.hasPrefix("file://") }
             localUrls.forEach { localUrl in
                 guard let data = loadFileData(localUrl) else { return }
-                let fileName = "job_\(job.id)_\(UUID().uuidString).jpg"
-                firebase.uploadJobPhoto(data: data, fileName: fileName, jobId: job.id) { result in
-                    if case .success(let remoteUrl) = result {
-                        self.local.replaceJobPhotoUrl(jobId: job.id, from: localUrl, to: remoteUrl)
-                    }
+                if let base64 = ImageUtils.compressAndEncode(data: data) {
+                    // Update locally first
+                    self.local.replaceJobPhotoUrl(jobId: job.id, from: localUrl, to: base64)
+                    
+                    // Then push to Firebase if possible
+                    self.firebase.updateJobFields(jobId: job.id, fields: ["photoUrls": job.photoUrls.map { $0 == localUrl ? base64 : $0 }]) { _ in }
                 }
             }
         }
@@ -604,49 +626,31 @@ final class SyncManager: ObservableObject {
     }
 
     private func uploadIssueReport(_ report: IssueReport) {
-        let localUrls = report.attachmentUrls.filter { $0.hasPrefix("file://") }
-        if localUrls.isEmpty {
-            firebase.createIssueReport(report) { result in
-                if case .success = result {
-                    self.local.markIssueReportSynced(id: report.id)
-                }
+        let updatedUrls = report.attachmentUrls.map { url -> String in
+            if url.hasPrefix("file://"),
+               let data = loadFileData(url),
+               let base64 = ImageUtils.compressAndEncode(data: data) {
+                return base64
             }
-            return
+            return url
         }
 
-        var uploadedUrls: [String] = []
-        let group = DispatchGroup()
+        let updatedReport = IssueReport(
+            id: report.id,
+            jobId: report.jobId,
+            userId: report.userId,
+            organizationId: report.organizationId,
+            description: report.description,
+            priority: report.priority,
+            createdAt: report.createdAt,
+            attachmentUrls: updatedUrls,
+            managerResponse: report.managerResponse,
+            resolvedAt: report.resolvedAt
+        )
 
-        localUrls.forEach { localUrl in
-            guard let data = loadFileData(localUrl) else { return }
-            group.enter()
-            let fileName = "issue_\(report.id)_\(UUID().uuidString).jpg"
-            firebase.uploadIssueAttachment(data: data, fileName: fileName) { result in
-                if case .success(let url) = result {
-                    uploadedUrls.append(url)
-                }
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) {
-            let mergedUrls = report.attachmentUrls.filter { !$0.hasPrefix("file://") } + uploadedUrls
-            let updated = IssueReport(
-                id: report.id,
-                jobId: report.jobId,
-                userId: report.userId,
-                organizationId: report.organizationId,
-                description: report.description,
-                priority: report.priority,
-                createdAt: report.createdAt,
-                attachmentUrls: mergedUrls,
-                managerResponse: report.managerResponse,
-                resolvedAt: report.resolvedAt
-            )
-            self.firebase.createIssueReport(updated) { result in
-                if case .success = result {
-                    self.local.markIssueReportSynced(id: report.id)
-                }
+        firebase.createIssueReport(updatedReport) { result in
+            if case .success = result {
+                self.local.markIssueReportSynced(id: report.id)
             }
         }
     }

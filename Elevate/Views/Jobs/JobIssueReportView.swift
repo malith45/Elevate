@@ -134,8 +134,7 @@ struct JobIssueReportView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showCamera) {
             CameraCaptureView(onCapture: { data in
-                let fileName = "issue_\(jobId)_\(UUID().uuidString).jpg"
-                viewModel.addAttachment(data: data, fileName: fileName)
+                viewModel.addAttachment(data: data)
             }, isPresented: $showCamera)
         }
         .alert("Issue Report", isPresented: Binding(

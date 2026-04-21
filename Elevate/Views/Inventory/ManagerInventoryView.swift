@@ -297,35 +297,11 @@ struct ManagerInventoryView: View {
     }
 
     private func inventoryImageView(urlString: String?) -> some View {
-        ZStack {
-            if let urlString = urlString {
-                if urlString.hasPrefix("data:image") {
-                    if let uiImage = imageFromBase64(urlString) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        placeholderImage
-                    }
-                } else if let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
-                        if case .success(let image) = phase {
-                            image.resizable().scaledToFill()
-                        } else {
-                            placeholderImage
-                        }
-                    }
-                } else {
-                    placeholderImage
-                }
-            } else {
-                placeholderImage
-            }
-        }
-        .frame(width: 56, height: 56)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(settings.cardStroke, lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+        HighFidelityImageView(urlString: urlString, placeholderIcon: "cube.box", cornerRadius: 14)
+            .frame(width: 56, height: 56)
+            .fixedSize()
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(settings.cardStroke, lineWidth: 1))
     }
 
     private func imageFromBase64(_ base64String: String) -> UIImage? {
@@ -546,33 +522,16 @@ private struct InventoryEditorView: View {
             if let selectedPhotoData, let uiImage = UIImage(data: selectedPhotoData) {
                 Image(uiImage: uiImage)
                     .resizable()
-                    .scaledToFill()
-            } else if let urlString = item?.imageUrl {
-                if urlString.hasPrefix("data:image") {
-                    if let uiImage = imageFromBase64(urlString) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        photoPlaceholder
-                    }
-                } else if let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
-                        if case .success(let image) = phase {
-                            image.resizable().scaledToFill()
-                        } else {
-                            photoPlaceholder
-                        }
-                    }
-                } else {
-                    photoPlaceholder
-                }
+                    .aspectRatio(1, contentMode: .fill)
+                    .frame(width: 80, height: 80)
+                    .clipped()
+                    .fixedSize()
             } else {
-                photoPlaceholder
+                HighFidelityImageView(urlString: item?.imageUrl, placeholderIcon: "camera.fill", cornerRadius: 16)
+                    .frame(width: 80, height: 80)
             }
         }
         .frame(width: 80, height: 80)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(settings.cardStroke, lineWidth: 1))
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
     }

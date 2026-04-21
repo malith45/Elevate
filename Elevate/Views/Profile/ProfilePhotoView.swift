@@ -1,10 +1,6 @@
 import SwiftUI
 import UIKit
 
-// Posted after a profile photo is saved locally so ProfilePhotoView can refresh.
-extension Notification.Name {
-    static let profilePhotoDidUpdate = Notification.Name("profilePhotoDidUpdate")
-}
 
 struct ProfilePhotoView: View {
     let userId: String
@@ -20,17 +16,8 @@ struct ProfilePhotoView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-            } else if let urlStr = remoteUrlString, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    default:
-                        placeholderIcon
-                    }
-                }
             } else {
-                placeholderIcon
+                HighFidelityImageView(urlString: remoteUrlString, placeholderIcon: "person.fill", cornerRadius: size / 2, backgroundColor: Color.elevateDarkGreen)
             }
         }
         .frame(width: size, height: size)
@@ -48,11 +35,6 @@ struct ProfilePhotoView: View {
         }
     }
 
-    private var placeholderIcon: some View {
-        Image(systemName: "person.fill")
-            .font(.system(size: size * 0.45))
-            .foregroundColor(.white)
-    }
 
     private func reloadImage() {
         localImage = ProfileImageStore.shared.loadImage(for: userId)

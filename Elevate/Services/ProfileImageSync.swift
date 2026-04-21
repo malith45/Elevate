@@ -11,6 +11,7 @@ final class ProfileImageSync {
         firebase.fetchUserPhotoUrl(userId: userId) { result in
             if case .success(let url) = result, let url {
                 ProfileImageCache.shared.saveRemoteUrl(url, for: userId)
+                NotificationCenter.default.post(name: .profilePhotoDidUpdate, object: nil, userInfo: ["userId": userId])
             }
         }
     }

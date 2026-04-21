@@ -121,7 +121,7 @@ struct ManagerDashboardView: View {
                                 Text("URGENT")
                                     .scaledFont(size: 10, weight: .bold)
                                     .foregroundColor(settings.isHighContrast ? settings.primaryText : .red.opacity(0.8))
-                                Text(String(format: "%02d", viewModel.urgentJobsToday))
+                                Text(viewModel.urgentJobsToday >= 10 ? "9+" : "\(viewModel.urgentJobsToday)")
                                     .scaledFont(size: 28, weight: .bold, design: .rounded)
                                     .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
                             }

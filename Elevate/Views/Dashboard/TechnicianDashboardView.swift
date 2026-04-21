@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 struct TechnicianDashboardView: View {
     @EnvironmentObject private var appSession: AppSession
@@ -10,6 +11,8 @@ struct TechnicianDashboardView: View {
     @State private var showLastSynced = false
     @State private var navigationJobId: String?
     @ObservedObject var settings = AccessibilitySettings.shared
+    @ObservedObject var locationService = LocationService.shared
+    @State private var travelTime: String? = nil
 
     init(selectedTab: Binding<TabItem> = .constant(.dashboard)) {
         _selectedTab = selectedTab
@@ -55,12 +58,73 @@ struct TechnicianDashboardView: View {
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
 
-                        // Quick Stats
-                        HStack(spacing: 16) {
-                            StatPill(icon: "calendar", value: "\(technicianJobsTodayCount)", title: "TODAY'S JOBS", isPrimary: true)
-                            StatPill(icon: "exclamationmark.triangle", value: "\(technicianUrgentTodayCount)", title: "URGENT", isPrimary: false)
+                        // Header title for stats
+                        Text("MY WORKLOAD")
+                            .scaledFont(size: 14, weight: .bold)
+                            .foregroundColor(settings.secondaryText)
+                            .padding(.top, 8)
+
+                        // Unified Overview Card
+                        VStack(spacing: 0) {
+                            HStack(spacing: 0) {
+                                // Column 1: Today's Pending
+                                VStack(alignment: .center, spacing: 4) {
+                                    Text("TODAY")
+                                        .scaledFont(size: 9, weight: .bold)
+                                        .foregroundColor(settings.secondaryText)
+                                    Text("\(technicianPendingTodayCount)")
+                                        .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                        .foregroundColor(settings.primaryText)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                Divider()
+                                    .frame(height: 32)
+                                    .background(settings.cardStroke)
+                                
+                                // Column 2: Today's Urgent
+                                VStack(alignment: .center, spacing: 4) {
+                                    Text("URGENT")
+                                        .scaledFont(size: 9, weight: .bold)
+                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .red.opacity(0.8))
+                                    Text("\(technicianUrgentTodayCount)")
+                                        .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                Divider()
+                                    .frame(height: 32)
+                                    .background(settings.cardStroke)
+                                
+                                // Column 3: All Pending
+                                VStack(alignment: .center, spacing: 4) {
+                                    Text("TOTAL")
+                                        .scaledFont(size: 9, weight: .bold)
+                                        .foregroundColor(settings.secondaryText)
+                                    Text("\(technicianTotalPendingCount)")
+                                        .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                        .foregroundColor(settings.primaryText)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
                         }
+                        .padding(.vertical, 20)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(24)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
+                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         
+                        // Smart Navigation Card
+                        SmartNavigationCard(job: upcomingJob, travelTime: travelTime) {
+                            if let job = upcomingJob {
+                                openInAppleMaps(job: job)
+                            }
+                        }
+
                         if let urgentMessage = urgentUpdateMessage {
                             Button(action: {
                                 if let jobId = urgentJobId {
@@ -68,52 +132,67 @@ struct TechnicianDashboardView: View {
                                 }
                             }) {
                                 HStack(spacing: 16) {
-                                    Image(systemName: "exclamationmark.triangle")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.white)
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("URGENT UPDATE")
-                                            .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.white.opacity(0.8))
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                                .font(.system(size: 12))
+                                            Text("URGENT UPDATE")
+                                                .scaledFont(size: 10, weight: .heavy)
+                                        }
+                                        .foregroundColor(.white.opacity(0.8))
+                                        
                                         Text(urgentMessage)
-                                            .scaledFont(size: 14, weight: .medium)
+                                            .scaledFont(size: 16, weight: .bold, design: .rounded)
                                             .foregroundColor(.white)
+                                            .lineLimit(2)
                                     }
                                     Spacer()
+                                    
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.white.opacity(0.7))
                                 }
-                                .padding()
-                                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
-                                .cornerRadius(12)
+                                .padding(24)
+                                .background(
+                                    settings.isHighContrast ? AnyView(settings.surfaceColor) : 
+                                    AnyView(LinearGradient(gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                                )
+                                .cornerRadius(24)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: 24)
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
+                                .shadow(color: settings.isHighContrast ? .clear : Color.red.opacity(0.3), radius: 10, x: 0, y: 6)
                             }
                             .buttonStyle(.plain)
                         }
                         
                         // Shortcuts
-                        HStack(spacing: 16) {
-                            Button(action: {
+                        HStack(spacing: 8) {
+                            TechnicianShortcutItem(title: "START\nJOB", icon: "play.fill", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
                                 if let nextJobId = nextJobId {
                                     navigationJobId = nextJobId
                                 } else {
                                     selectedTab = .jobs
                                 }
-                            }) {
-                                ShortcutBoxInternal(title: "START JOB", icon: "play.fill")
                             }
-                            .buttonStyle(.plain)
-                            NavigationLink(destination: TechnicianCalendarView()) {
-                                ShortcutBoxInternal(title: "CALENDAR", icon: "calendar")
+                            TechnicianShortcutItem(title: "CALENDAR", icon: "calendar", color: Color.elevateLightGray, iconColor: .black) {
+                                // Manual navigation handle if needed, but here we use the link pattern usually
                             }
-                            NavigationLink(destination: TechnicianStatisticsView()) {
-                                ShortcutBoxInternal(title: "STATISTICS", icon: "chart.bar")
+                            .overlay(
+                                NavigationLink(destination: TechnicianCalendarView()) {
+                                    EmptyView()
+                                }.opacity(0)
+                            )
+                            
+                            TechnicianShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
+                                // Manual navigation
                             }
+                            .overlay(
+                                NavigationLink(destination: TechnicianStatisticsView()) {
+                                    EmptyView()
+                                }.opacity(0)
+                            )
                         }
                         
                         // Today's Tasks
@@ -184,6 +263,7 @@ struct TechnicianDashboardView: View {
         }
         .speakOnAppear("Welcome to your Technician Dashboard")
         .onAppear {
+            locationService.requestAuthorization()
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: network.isOnline)
             }
@@ -193,7 +273,126 @@ struct TechnicianDashboardView: View {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, isOnline: isOnline)
             }
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: shouldShowSyncStatus)
+        .onChange(of: upcomingJob) { _, newJob in
+            if let job = newJob {
+                calculateETA(for: job)
+            } else {
+                travelTime = nil
+            }
+        }
+        .onChange(of: locationService.authorizationStatus) { _, _ in
+            if let job = upcomingJob {
+                calculateETA(for: job)
+            }
+        }
+    }
+
+    private func calculateETA(for job: Job) {
+        guard let current = locationService.currentLocation,
+              let lat = job.siteLatitude,
+              let lon = job.siteLongitude,
+              (lat != 0 || lon != 0) else {
+            print("DEBUG: Missing or invalid (0,0) coordinates for ETA calculation")
+            return
+        }
+
+        // Reset travelTime before every calculation to show "Calculating..."
+        self.travelTime = nil
+
+        let source = CLLocation(latitude: current.latitude, longitude: current.longitude)
+        let destination = CLLocation(latitude: lat, longitude: lon)
+        let distance = source.distance(from: destination)
+        
+        // Robustness: If within 500m, skip server calculation and show Nearby
+        if distance < 500 {
+            print("DEBUG: Job is within 500m (\(Int(distance))m). Showing 'Nearby'.")
+            DispatchQueue.main.async {
+                self.travelTime = "Nearby"
+            }
+            return
+        }
+
+        let request = MKDirections.Request()
+        
+        if #available(iOS 26.0, *) {
+            request.source = MKMapItem(location: source, address: nil)
+            request.destination = MKMapItem(location: destination, address: nil)
+        } else {
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: current))
+            request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination.coordinate))
+        }
+        
+        request.transportType = .automobile
+
+        let directions = MKDirections(request: request)
+        directions.calculateETA { response, error in
+            DispatchQueue.main.async {
+                if let eta = response?.expectedTravelTime {
+                    print("DEBUG: MKDirections successful: \(eta)s")
+                    self.updateTravelTime(with: eta, isEstimate: false)
+                } else {
+                    // FALLBACK: If routing fails (expected in Sri Lanka), use distance-based estimate
+                    // Average speed in Colombo traffic (approx 25 km/h = 6.94 m/s)
+                    let averageSpeedMps: Double = 6.94 
+                    let estimatedTime = distance / averageSpeedMps
+                    
+                    print("DEBUG: MKDirections failed (\(error?.localizedDescription ?? "No route")). Using Estimate: \(Int(estimatedTime))s")
+                    self.updateTravelTime(with: estimatedTime, isEstimate: true)
+                }
+            }
+        }
+    }
+
+    private func updateTravelTime(with seconds: TimeInterval, isEstimate: Bool) {
+        if seconds < 60 {
+            self.travelTime = "Nearby"
+        } else {
+            let formatter = DateComponentsFormatter()
+            formatter.unitsStyle = .abbreviated
+            formatter.allowedUnits = [.hour, .minute]
+            let timeString = formatter.string(from: seconds) ?? "Nearby"
+            self.travelTime = isEstimate ? "~\(timeString)" : timeString
+        }
+    }
+
+    private func openInAppleMaps(job: Job) {
+        guard let lat = job.siteLatitude, let lon = job.siteLongitude else {
+            let address = job.location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            if let url = URL(string: "http://maps.apple.com/?address=\(address)") {
+                UIApplication.shared.open(url)
+            }
+            return
+        }
+
+        let sourceItem: MKMapItem
+        let destinationItem: MKMapItem
+        
+        // Use hardcoded Colombo start point to ensure external app works correctly
+        let startCoord = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
+        let destCoord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        
+        if #available(iOS 26.0, *) {
+            sourceItem = MKMapItem(location: CLLocation(latitude: startCoord.latitude, longitude: startCoord.longitude), address: nil)
+            destinationItem = MKMapItem(location: CLLocation(latitude: destCoord.latitude, longitude: destCoord.longitude), address: nil)
+        } else {
+            sourceItem = MKMapItem(placemark: MKPlacemark(coordinate: startCoord))
+            destinationItem = MKMapItem(placemark: MKPlacemark(coordinate: destCoord))
+        }
+        
+        sourceItem.name = "My Location"
+        destinationItem.name = job.title
+        
+        MKMapItem.openMaps(with: [sourceItem, destinationItem], launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
+    }
+
+    private var upcomingJob: Job? {
+        let upcoming = technicianJobs.filter {
+            let status = $0.status.uppercased()
+            return status != "COMPLETED" && status != "CANCELLED"
+        }
+        return upcoming.sorted { $0.scheduledAt < $1.scheduledAt }.first
     }
 
     private func timeString(from date: Date) -> String {
@@ -291,11 +490,7 @@ struct TechnicianDashboardView: View {
     }
 
     private var nextJobId: String? {
-        let upcoming = technicianJobs.filter {
-            let status = $0.status.uppercased()
-            return status != "COMPLETED" && status != "CANCELLED"
-        }
-        return upcoming.sorted { $0.scheduledAt < $1.scheduledAt }.first?.id
+        upcomingJob?.id
     }
 
     private var technicianJobs: [Job] {
@@ -311,38 +506,163 @@ struct TechnicianDashboardView: View {
         }
     }
 
-    private var technicianJobsTodayCount: Int {
-        technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.count
+    private var technicianPendingTodayCount: Int {
+        technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }
+            .filter { 
+                let status = $0.status.uppercased()
+                return status != "COMPLETED" && status != "CANCELLED" 
+            }.count
     }
 
     private var technicianUrgentTodayCount: Int {
         technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }
-            .filter { $0.priority.uppercased() == "HIGH" || $0.priority.uppercased() == "URGENT" }
-            .count
+            .filter { 
+                let priority = $0.priority.uppercased()
+                return priority == "HIGH" || priority == "URGENT"
+            }.filter {
+                let status = $0.status.uppercased()
+                return status != "COMPLETED" && status != "CANCELLED"
+            }.count
+    }
+
+    private var technicianTotalPendingCount: Int {
+        technicianJobs.filter { 
+            let status = $0.status.uppercased()
+            return status != "COMPLETED" && status != "CANCELLED" 
+        }.count
     }
 }
 
-struct ShortcutBoxInternal: View {
+struct TechnicianShortcutItem: View {
     var title: String
     var icon: String
+    var color: Color
+    var iconColor: Color
+    var action: () -> Void
+    
     var body: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(AccessibilitySettings.shared.surfaceColor)
-                    .frame(height: 56)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
-                    )
-                Image(systemName: icon)
-                    .foregroundColor(AccessibilitySettings.shared.accentColor)
-                    .font(.system(size: 20))
+        Button(action: action) {
+            VStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(AccessibilitySettings.shared.surfaceColor)
+                        .frame(maxWidth: .infinity, minHeight: 72)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+                        )
+                        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+                    
+                    VStack(spacing: 8) {
+                        Circle()
+                            .fill(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : color)
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Circle().stroke(AccessibilitySettings.shared.primaryText, lineWidth: AccessibilitySettings.shared.isHighContrast ? 1.5 : 0)
+                            )
+                            .overlay(
+                                Image(systemName: icon)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(AccessibilitySettings.shared.isHighContrast ? .white : iconColor)
+                            )
+                        
+                        Text(title)
+                            .scaledFont(size: 9, weight: .bold)
+                            .foregroundColor(AccessibilitySettings.shared.primaryText)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(8)
+                }
             }
-            Text(title)
-                .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(AccessibilitySettings.shared.primaryText)
         }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct SmartNavigationCard: View {
+    var job: Job?
+    var travelTime: String?
+    var onNavigate: () -> Void
+    
+    @ObservedObject var settings = AccessibilitySettings.shared
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon section
+            ZStack {
+                Circle()
+                    .fill(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
+                    .frame(width: 48, height: 48)
+                    .overlay(
+                        Circle().stroke(settings.primaryText, lineWidth: settings.isHighContrast ? 1.5 : 0)
+                    )
+                
+                Image(systemName: job == nil ? "checkmark.circle.fill" : "map.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(job == nil ? .green : settings.accentColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                if let job = job {
+                    Text("NEXT JOB")
+                        .scaledFont(size: 10, weight: .heavy)
+                        .foregroundColor(settings.secondaryText)
+                    
+                    Text(job.title)
+                        .scaledFont(size: 16, weight: .bold)
+                        .foregroundColor(settings.primaryText)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    if let time = travelTime {
+                        Text("\(time) away")
+                            .scaledFont(size: 12, weight: .medium)
+                            .foregroundColor(settings.accentColor)
+                    } else {
+                        Text("Calculating ETA...")
+                            .scaledFont(size: 12, weight: .medium)
+                            .foregroundColor(settings.secondaryText)
+                    }
+                } else {
+                    Text("ALL DONE")
+                        .scaledFont(size: 10, weight: .heavy)
+                        .foregroundColor(settings.secondaryText)
+                    
+                    Text("Work day complete")
+                        .scaledFont(size: 16, weight: .bold)
+                        .foregroundColor(settings.primaryText)
+                    
+                    Text("You've finished all your tasks for today.")
+                        .scaledFont(size: 12, weight: .medium)
+                        .foregroundColor(settings.secondaryText)
+                }
+            }
+            
+            Spacer()
+            
+            if let _ = job {
+                Button(action: onNavigate) {
+                    Text("Navigate")
+                        .scaledFont(size: 12, weight: .bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(settings.accentColor)
+                        .cornerRadius(20)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(16)
+        .background(settings.surfaceColor)
+        .cornerRadius(24)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
+        .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
 }
 
@@ -387,7 +707,19 @@ struct TaskRow: View {
             }
             Spacer()
         }
+        .padding(16)
+        .background(AccessibilitySettings.shared.surfaceColor)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+        )
     }
+}
+
+#Preview {
+    TechnicianDashboardView(selectedTab: .constant(.dashboard))
+        .environmentObject(AppSession())
 }
 
 #Preview {

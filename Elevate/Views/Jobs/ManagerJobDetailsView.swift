@@ -12,6 +12,7 @@ struct ManagerJobDetailsView: View {
     @State private var reportCount = 0
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var showHoldPrompt = false
+    @State private var showDeleteConfirmation = false
     @State private var holdReasonText = ""
 
     private let localStorage = LocalStorageService.shared
@@ -277,7 +278,7 @@ struct ManagerJobDetailsView: View {
                                             )
                                     }
 
-                                    Button(action: { updateStatus(jobId: job.id, status: "CANCELLED") }) {
+                                    Button(action: { showDeleteConfirmation = true }) {
                                         Text("Cancel Job")
                                             .scaledFont(size: 14, weight: .bold)
                                             .foregroundColor(.red)
@@ -329,6 +330,20 @@ struct ManagerJobDetailsView: View {
             }
         } message: {
             Text("Add a reason for placing this job on hold.")
+        }
+        .alert("Permanently Delete Job?", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete Forever", role: .destructive) {
+                guard let job = viewModel.job, let user = appSession.currentUser else { return }
+                viewModel.deleteJobAndCleanup(job: job, user: user, isOnline: network.isOnline) { success in
+                    if success {
+                        router.currentScreen = .jobs
+                        router.selectedTab = .jobs
+                    }
+                }
+            }
+        } message: {
+            Text("This will permanently remove the job and all issue reports. Approved quotation items will be returned to inventory.")
         }
     }
 

@@ -7,7 +7,7 @@ final class MapViewModel: ObservableObject {
     @Published var destination: CLLocationCoordinate2D?
     @Published var route: MKRoute?
     @Published var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+        center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     @Published var savedRegion: MKCoordinateRegion?

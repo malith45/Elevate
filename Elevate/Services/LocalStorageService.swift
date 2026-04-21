@@ -188,6 +188,16 @@ final class LocalStorageService {
         saveContext(context)
     }
 
+    func deleteJob(id: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        if let item = try? context.fetch(request).first {
+            context.delete(item)
+            saveContext(context)
+        }
+    }
+
     func updateJobQuotationItems(id: String, items: [QuotationItem], updatedAt: Date) {
         let context = stack.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")
@@ -350,6 +360,19 @@ final class LocalStorageService {
                 managerResponse: item.value(forKey: "managerResponse") as? String,
                 resolvedAt: item.value(forKey: "resolvedAt") as? Date
             )
+        }
+    }
+
+    func deleteIssueReportsForJob(jobId: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "IssueReportEntity")
+        request.predicate = NSPredicate(format: "jobId == %@", jobId)
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+        do {
+            try context.execute(deleteRequest)
+            saveContext(context)
+        } catch {
+            print("Error deleting issue reports: \(error)")
         }
     }
 

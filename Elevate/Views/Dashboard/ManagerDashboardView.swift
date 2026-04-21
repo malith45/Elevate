@@ -95,6 +95,12 @@ struct ManagerDashboardView: View {
                         )
                         .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         
+                        // Header title for pending stats
+                        Text("PENDING JOBS")
+                            .scaledFont(size: 11, weight: .bold)
+                            .foregroundColor(settings.secondaryText)
+                            .padding(.top, 8)
+
                         // Pending and Urgent
                         HStack(spacing: 16) {
                             // Pending

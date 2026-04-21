@@ -32,6 +32,13 @@ final class DashboardViewModel: ObservableObject {
         let calendar = Calendar.current
         let todayJobs = jobs.filter { calendar.isDateInToday($0.scheduledAt) }
         totalJobsToday = todayJobs.count
-        urgentJobsToday = todayJobs.filter { $0.priority.uppercased() == "HIGH" || $0.priority.uppercased() == "URGENT" }.count
+        
+        // Count all pending urgent jobs (not just today)
+        urgentJobsToday = jobs.filter { 
+            let priority = $0.priority.uppercased()
+            let status = $0.status.uppercased()
+            return (priority == "HIGH" || priority == "URGENT") && 
+                   (status != "COMPLETED" && status != "CANCELLED")
+        }.count
     }
 }

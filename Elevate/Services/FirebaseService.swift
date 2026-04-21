@@ -1044,4 +1044,39 @@ final class FirebaseService {
             "fcmUpdatedAt": Timestamp(date: Date())
         ], merge: true)
     }
+
+    func deleteJob(jobId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("jobs").document(jobId).delete { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    func deleteIssueReportsForJob(jobId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("issueReports").whereField("jobId", isEqualTo: jobId).getDocuments { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let documents = snapshot?.documents, !documents.isEmpty else {
+                completion(.success(()))
+                return
+            }
+            
+            let batch = self.db.batch()
+            documents.forEach { batch.deleteDocument($0.reference) }
+            
+            batch.commit { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+        }
+    }
 }

@@ -5,10 +5,11 @@ import CoreLocation
 final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     static let shared = LocationService()
 
-    @Published private(set) var currentLocation: CLLocationCoordinate2D?
+    @Published private(set) var currentLocation: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
     @Published private(set) var authorizationStatus: CLAuthorizationStatus = .notDetermined
 
     private let manager = CLLocationManager()
+    private var isMockingLocation = true // Hardcoded for now per user request
 
     private override init() {
         super.init()
@@ -21,7 +22,9 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     func startUpdating() {
-        manager.startUpdatingLocation()
+        if !isMockingLocation {
+            manager.startUpdatingLocation()
+        }
     }
 
     func stopUpdating() {
@@ -36,6 +39,8 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        currentLocation = locations.last?.coordinate
+        if !isMockingLocation {
+            currentLocation = locations.last?.coordinate
+        }
     }
 }

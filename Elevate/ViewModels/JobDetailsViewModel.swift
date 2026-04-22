@@ -32,7 +32,7 @@ final class JobDetailsViewModel: ObservableObject {
         locationListener?.remove()
     }
 
-    func updateStatus(jobId: String, status: String, user: User, isOnline: Bool, holdReasonOverride: String? = nil) {
+    func updateStatus(jobId: String, status: String, user: User, isOnline: Bool, holdReasonOverride: String? = nil, completion: (() -> Void)? = nil) {
         guard let current = localStorage.fetchJob(id: jobId) else { return }
 
         let updatedAt = Date()
@@ -85,7 +85,9 @@ final class JobDetailsViewModel: ObservableObject {
         }
 
         if isOnline {
-            firebase.updateJobFields(jobId: jobId, fields: fields) { _ in }
+            firebase.updateJobFields(jobId: jobId, fields: fields) { _ in 
+                DispatchQueue.main.async { completion?() }
+            }
         } else {
             SyncManager.shared.enqueueJobFieldsUpdate(
                 jobId: jobId,
@@ -93,6 +95,7 @@ final class JobDetailsViewModel: ObservableObject {
                 organizationId: user.organizationId,
                 userId: user.id
             )
+            DispatchQueue.main.async { completion?() }
         }
     }
 

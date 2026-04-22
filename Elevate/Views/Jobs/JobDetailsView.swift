@@ -31,6 +31,21 @@ struct JobDetailsView: View {
                             // Header Section
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 4) {
+                                    if job.status.uppercased() == "HOLD" {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "pause.circle.fill")
+                                                .foregroundColor(.orange)
+                                            Text("ON HOLD: \(job.holdReason ?? "No reason provided")")
+                                                .scaledFont(size: 10, weight: .bold)
+                                                .foregroundColor(.orange)
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(Color.orange.opacity(0.1))
+                                        .cornerRadius(8)
+                                        .padding(.bottom, 6)
+                                    }
+
                                     Text("JOB DETAILS")
                                         .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(settings.secondaryText)
@@ -300,11 +315,15 @@ struct JobDetailsView: View {
                             
                             // FINAL ACTIONS
                             VStack(spacing: 12) {
-                                if job.status.uppercased() == "HOLD" {
-                                    actionButton(title: "RESUME WORK", icon: "play.fill", color: .blue) {
+                                let status = job.status.uppercased()
+                                
+                                if status == "HOLD" {
+                                    // HOLD -> CONTINUE
+                                    actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
                                         updateStatus(jobId: job.id, status: "IN_PROGRESS")
                                     }
-                                } else {
+                                } else if status == "IN_PROGRESS" {
+                                    // IN_PROGRESS -> HOLD | COMPLETE
                                     HStack(spacing: 12) {
                                         Button(action: {
                                             holdReasonText = job.holdReason ?? ""
@@ -327,8 +346,15 @@ struct JobDetailsView: View {
                                         }
                                         
                                         actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: Color.elevateDarkGreen) {
-                                            updateStatus(jobId: job.id, status: "COMPLETED")
+                                            updateStatus(jobId: job.id, status: "COMPLETED") {
+                                                dismiss()
+                                            }
                                         }
+                                    }
+                                } else if status == "PENDING" {
+                                    // PENDING -> START
+                                    actionButton(title: "START WORK", icon: "play.circle.fill", color: settings.accentColor) {
+                                        updateStatus(jobId: job.id, status: "IN_PROGRESS")
                                     }
                                 }
                             }
@@ -387,12 +413,9 @@ struct JobDetailsView: View {
         }
     }
 
-    private func updateStatus(jobId: String, status: String, holdReason: String? = nil) {
+    private func updateStatus(jobId: String, status: String, holdReason: String? = nil, completion: (() -> Void)? = nil) {
         guard let user = appSession.currentUser else { return }
-        viewModel.updateStatus(jobId: jobId, status: status, user: user, isOnline: network.isOnline, holdReasonOverride: holdReason)
-        if status.uppercased() == "COMPLETED" {
-            dismiss()
-        }
+        viewModel.updateStatus(jobId: jobId, status: status, user: user, isOnline: network.isOnline, holdReasonOverride: holdReason, completion: completion)
     }
 
     private func currencyString(_ value: Double?) -> String {

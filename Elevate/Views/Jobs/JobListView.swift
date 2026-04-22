@@ -314,7 +314,7 @@ struct JobCard: View {
         if job.isUrgent { return .red }
         switch job.status.uppercased() {
         case "COMPLETED": return .elevateDarkGreen
-        case "IN-PROGRESS": return .blue
+        case "IN PROGRESS": return .blue
         case "CANCELLED": return .gray
         default: return settings.accentColor
         }

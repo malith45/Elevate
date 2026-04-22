@@ -31,21 +31,6 @@ struct JobDetailsView: View {
                             // Header Section
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    if job.status.uppercased() == "HOLD" {
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "pause.circle.fill")
-                                                .foregroundColor(.orange)
-                                            Text("ON HOLD: \(job.holdReason ?? "No reason provided")")
-                                                .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(.orange)
-                                        }
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .background(Color.orange.opacity(0.1))
-                                        .cornerRadius(8)
-                                        .padding(.bottom, 6)
-                                    }
-
                                     Text("JOB DETAILS")
                                         .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(settings.secondaryText)
@@ -320,10 +305,10 @@ struct JobDetailsView: View {
                                 if status == "HOLD" {
                                     // HOLD -> CONTINUE
                                     actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
-                                        updateStatus(jobId: job.id, status: "IN-PROGRESS")
+                                        updateStatus(jobId: job.id, status: "IN_PROGRESS")
                                     }
-                                } else if status == "IN-PROGRESS" {
-                                    // IN-PROGRESS -> HOLD | COMPLETE
+                                } else if status == "IN_PROGRESS" {
+                                    // IN_PROGRESS -> HOLD | COMPLETE
                                     HStack(spacing: 12) {
                                         Button(action: {
                                             holdReasonText = job.holdReason ?? ""
@@ -351,10 +336,10 @@ struct JobDetailsView: View {
                                             }
                                         }
                                     }
-                                } else if status == "PENDING" || status == "SCHEDULED" {
+                                } else if status == "PENDING" {
                                     // PENDING -> START
                                     actionButton(title: "START WORK", icon: "play.circle.fill", color: settings.accentColor) {
-                                        updateStatus(jobId: job.id, status: "IN-PROGRESS")
+                                        updateStatus(jobId: job.id, status: "IN_PROGRESS")
                                     }
                                 }
                             }

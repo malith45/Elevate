@@ -55,7 +55,7 @@ final class ManagerCreateJobViewModel: ObservableObject {
             siteLatitude: siteLatitude,
             siteLongitude: siteLongitude,
             scheduledAt: scheduledAt,
-            status: "PENDING",
+            status: "SCHEDULED",
             priority: isUrgent ? "HIGH" : "NORMAL",
             isUrgent: isUrgent,
             isOnHold: false,

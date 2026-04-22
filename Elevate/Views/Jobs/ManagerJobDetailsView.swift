@@ -283,13 +283,13 @@ struct ManagerJobDetailsView: View {
                                     // HOLD -> CONTINUE | CANCEL
                                     HStack(spacing: 12) {
                                         actionButton(title: "CONTINUE", icon: "play.fill", color: .blue) {
-                                            updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                            updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                         }
                                         
                                         cancelButton
                                     }
-                                } else if status == "IN_PROGRESS" {
-                                    // IN_PROGRESS -> HOLD | CANCEL
+                                } else if status == "IN-PROGRESS" {
+                                    // IN-PROGRESS -> HOLD | CANCEL
                                     HStack(spacing: 12) {
                                         Button(action: {
                                             holdReasonText = job.holdReason ?? ""
@@ -313,7 +313,7 @@ struct ManagerJobDetailsView: View {
                                         
                                         cancelButton
                                     }
-                                } else if status == "PENDING" {
+                                } else if status == "PENDING" || status == "SCHEDULED" {
                                     // PENDING -> CANCEL
                                     cancelButton
                                 }

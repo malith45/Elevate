@@ -302,7 +302,61 @@ struct JobDetailsView: View {
                             VStack(spacing: 12) {
                                 let status = job.status.uppercased()
                                 
-                                if status == "HOLD" {
+                                if status == "COMPLETED" {
+                                    // TERMINAL: Completed banner — read-only
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .font(.system(size: 22))
+                                            .foregroundColor(.white)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("JOB COMPLETED")
+                                                .scaledFont(size: 13, weight: .bold)
+                                                .foregroundColor(.white)
+                                            Text(formattedDate(job.updatedAt))
+                                                .scaledFont(size: 11)
+                                                .foregroundColor(.white.opacity(0.8))
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 16)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                    .cornerRadius(16)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(settings.isHighContrast ? .white : Color.elevateDarkGreen.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                    )
+                                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+
+                                } else if status == "CANCELLED" {
+                                    // TERMINAL: Cancelled banner — read-only, set by manager
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "xmark.octagon.fill")
+                                            .font(.system(size: 22))
+                                            .foregroundColor(.white)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("JOB CANCELLED BY MANAGER")
+                                                .scaledFont(size: 13, weight: .bold)
+                                                .foregroundColor(.white)
+                                            if let cancelledAt = job.cancelledAt {
+                                                Text(formattedDate(cancelledAt))
+                                                    .scaledFont(size: 11)
+                                                    .foregroundColor(.white.opacity(0.8))
+                                            }
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 16)
+                                    .background(settings.isHighContrast ? Color.black : Color.red)
+                                    .cornerRadius(16)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(settings.isHighContrast ? .white : Color.red.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                    )
+                                    .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
+
+                                } else if status == "HOLD" {
                                     // HOLD -> CONTINUE
                                     actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
                                         updateStatus(jobId: job.id, status: "IN_PROGRESS")
@@ -344,6 +398,7 @@ struct JobDetailsView: View {
                                 }
                             }
                             .padding(.top, 12)
+
                             
                             Spacer().frame(height: 120)
                         } else {

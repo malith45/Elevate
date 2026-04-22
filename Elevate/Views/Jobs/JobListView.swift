@@ -111,6 +111,46 @@ struct JobListView: View {
                             } else {
                                 if viewModel.filteredJobs.isEmpty {
                                     emptyState
+                                } else if viewModel.selectedFilter == .completed {
+                                    let completed = viewModel.filteredJobs.filter { $0.status.uppercased() == "COMPLETED" }
+                                    let cancelled = viewModel.filteredJobs.filter { $0.status.uppercased() == "CANCELLED" }
+
+                                    VStack(alignment: .leading, spacing: 24) {
+                                        if !completed.isEmpty {
+                                            VStack(alignment: .leading, spacing: 12) {
+                                                Text("COMPLETED")
+                                                    .scaledFont(size: 10, weight: .bold)
+                                                    .foregroundColor(.elevateDarkGreen)
+                                                    .tracking(1)
+                                                    .padding(.horizontal, 24)
+                                                ForEach(completed) { job in
+                                                    Button(action: {
+                                                        router.selectedJobId = job.id
+                                                        router.path.append(TechnicianScreen.jobDetails)
+                                                    }) {
+                                                        JobCard(job: job)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if !cancelled.isEmpty {
+                                            VStack(alignment: .leading, spacing: 12) {
+                                                Text("CANCELLED")
+                                                    .scaledFont(size: 10, weight: .bold)
+                                                    .foregroundColor(.red)
+                                                    .tracking(1)
+                                                    .padding(.horizontal, 24)
+                                                ForEach(cancelled) { job in
+                                                    Button(action: {
+                                                        router.selectedJobId = job.id
+                                                        router.path.append(TechnicianScreen.jobDetails)
+                                                    }) {
+                                                        JobCard(job: job)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 } else {
                                     ForEach(viewModel.filteredJobs) { job in
                                         Button(action: {
@@ -122,6 +162,7 @@ struct JobListView: View {
                                     }
                                 }
                             }
+
                         }
                         .padding(.top, 8)
                         
@@ -145,6 +186,7 @@ struct JobListView: View {
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline)
+                viewModel.startObservingStatusChanges(organizationId: user.organizationId, userId: user.id, role: user.role)
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
@@ -314,7 +356,8 @@ struct JobCard: View {
         if job.isUrgent { return .red }
         switch job.status.uppercased() {
         case "COMPLETED": return .elevateDarkGreen
-        case "IN PROGRESS": return .blue
+        case "IN_PROGRESS": return .blue
+        case "HOLD": return .orange
         case "CANCELLED": return .gray
         default: return settings.accentColor
         }

@@ -56,10 +56,15 @@ struct ManagerJobListView: View {
 
                         // Job Cards
                         VStack(spacing: 24) {
-                            if viewModel.selectedFilter == .upcoming {
+                            if viewModel.isLoading && viewModel.jobs.isEmpty {
+                                ForEach(0..<5) { _ in
+                                    SkeletonTaskRow()
+                                        .padding(.horizontal, 24)
+                                }
+                            } else if viewModel.selectedFilter == .upcoming {
                                 let past = pastJobs()
                                 let future = upcomingJobs()
-                                
+
                                 if !past.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("PAST JOBS")
@@ -67,7 +72,7 @@ struct ManagerJobListView: View {
                                             .foregroundColor(.red)
                                             .tracking(1)
                                             .padding(.horizontal, 24)
-                                        
+
                                         ForEach(past) { job in
                                             Button(action: {
                                                 router.selectedJobId = job.id
@@ -79,7 +84,7 @@ struct ManagerJobListView: View {
                                         }
                                     }
                                 }
-                                
+
                                 if !future.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("UPCOMING JOBS")
@@ -87,7 +92,7 @@ struct ManagerJobListView: View {
                                             .foregroundColor(.elevateDarkGreen)
                                             .tracking(1)
                                             .padding(.horizontal, 24)
-                                        
+
                                         ForEach(future) { job in
                                             Button(action: {
                                                 router.selectedJobId = job.id
@@ -99,9 +104,55 @@ struct ManagerJobListView: View {
                                         }
                                     }
                                 }
-                                
+
                                 if past.isEmpty && future.isEmpty {
                                     emptyState
+                                }
+                            } else if viewModel.selectedFilter == .completed {
+                                if viewModel.filteredJobs.isEmpty {
+                                    emptyState
+                                } else {
+                                    let completed = viewModel.filteredJobs.filter { $0.status.uppercased() == "COMPLETED" }
+                                    let cancelled = viewModel.filteredJobs.filter { $0.status.uppercased() == "CANCELLED" }
+
+                                    VStack(alignment: .leading, spacing: 24) {
+                                        if !completed.isEmpty {
+                                            VStack(alignment: .leading, spacing: 12) {
+                                                Text("COMPLETED")
+                                                    .scaledFont(size: 10, weight: .bold)
+                                                    .foregroundColor(.elevateDarkGreen)
+                                                    .tracking(1)
+                                                    .padding(.horizontal, 24)
+                                                ForEach(completed) { job in
+                                                    Button(action: {
+                                                        router.selectedJobId = job.id
+                                                        router.path.append(ManagerScreen.jobDetails)
+                                                    }) {
+                                                        ManagerJobCard(job: job)
+                                                    }
+                                                    .buttonStyle(.plain)
+                                                }
+                                            }
+                                        }
+                                        if !cancelled.isEmpty {
+                                            VStack(alignment: .leading, spacing: 12) {
+                                                Text("CANCELLED")
+                                                    .scaledFont(size: 10, weight: .bold)
+                                                    .foregroundColor(.red)
+                                                    .tracking(1)
+                                                    .padding(.horizontal, 24)
+                                                ForEach(cancelled) { job in
+                                                    Button(action: {
+                                                        router.selectedJobId = job.id
+                                                        router.path.append(ManagerScreen.jobDetails)
+                                                    }) {
+                                                        ManagerJobCard(job: job)
+                                                    }
+                                                    .buttonStyle(.plain)
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             } else {
                                 if viewModel.filteredJobs.isEmpty {
@@ -141,6 +192,7 @@ struct ManagerJobListView: View {
         .onAppear {
             if let user = appSession.currentUser {
                 viewModel.loadJobs(organizationId: user.organizationId, userId: user.id, role: user.role, isOnline: network.isOnline)
+                viewModel.startObservingStatusChanges(organizationId: user.organizationId, userId: user.id, role: user.role)
             }
         }
         .onChange(of: network.isOnline) { _, isOnline in
@@ -257,7 +309,8 @@ private struct ManagerJobCard: View {
         if job.isUrgent { return .red }
         switch job.status.uppercased() {
         case "COMPLETED": return .elevateDarkGreen
-        case "IN PROGRESS": return .blue
+        case "IN_PROGRESS": return .blue
+        case "HOLD": return .orange
         case "CANCELLED": return .gray
         default: return settings.accentColor
         }

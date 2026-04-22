@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import LocalAuthentication
+import FirebaseAuth
 
 struct ManagerJobDetailsView: View {
     let jobId: String
@@ -46,6 +47,7 @@ struct ManagerJobDetailsView: View {
                                 Spacer()
 
                                 Button(action: {
+                                    router.selectedJobId = job.id
                                     router.path.append(ManagerScreen.jobIssueReport)
                                 }) {
                                     HStack(spacing: 6) {
@@ -263,8 +265,62 @@ struct ManagerJobDetailsView: View {
                             // ACTION BUTTONS
                             VStack(spacing: 12) {
                                 let status = job.status.uppercased()
-                                
-                                if status == "HOLD" {
+
+                                if status == "COMPLETED" {
+                                    // TERMINAL: Completed banner — read-only
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .font(.system(size: 22))
+                                            .foregroundColor(.white)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("JOB COMPLETED")
+                                                .scaledFont(size: 13, weight: .bold)
+                                                .foregroundColor(.white)
+                                            Text(currencyString(job.approvedCost) + " · " + formattedDate(job.updatedAt))
+                                                .scaledFont(size: 11)
+                                                .foregroundColor(.white.opacity(0.8))
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 16)
+                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                    .cornerRadius(16)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(settings.isHighContrast ? .white : Color.elevateDarkGreen.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                    )
+                                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+
+                                } else if status == "CANCELLED" {
+                                    // TERMINAL: Cancelled banner — read-only
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "xmark.octagon.fill")
+                                            .font(.system(size: 22))
+                                            .foregroundColor(.white)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("JOB CANCELLED")
+                                                .scaledFont(size: 13, weight: .bold)
+                                                .foregroundColor(.white)
+                                            if let cancelledAt = job.cancelledAt {
+                                                Text(formattedDate(cancelledAt))
+                                                    .scaledFont(size: 11)
+                                                    .foregroundColor(.white.opacity(0.8))
+                                            }
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 16)
+                                    .background(settings.isHighContrast ? Color.black : Color.red)
+                                    .cornerRadius(16)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(settings.isHighContrast ? .white : Color.red.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                    )
+                                    .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
+
+                                } else if status == "HOLD" {
                                     // HOLD -> CONTINUE | CANCEL
                                     HStack(spacing: 12) {
                                         actionButton(title: "CONTINUE", icon: "play.fill", color: .blue) {
@@ -419,19 +475,25 @@ struct ManagerJobDetailsView: View {
     }
 
     private func verifyPasswordAndCancel() {
-        // In a real app, you would verify against Firebase Auth or a stored hash.
-        // For this flow, we will simulate verification.
-        // If we have access to the user's password (unlikely for security), 
-        // but for this MVP/Demo we will allow it if not empty for now, 
-        // OR we can check against a fixed value if it's for demo.
-        // Since we don't store passwords in plain text, I'll just check if it's not empty 
-        // or prompt for a specific demo password if needed.
-        
-        if !cancelPassword.isEmpty {
-            confirmDeletion()
-            cancelPassword = ""
-        } else {
+        guard !cancelPassword.isEmpty,
+              let user = Auth.auth().currentUser,
+              let email = user.email else {
             showPasswordError = true
+            cancelPassword = ""
+            return
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: email, password: cancelPassword)
+        cancelPassword = ""
+
+        user.reauthenticate(with: credential) { _, error in
+            DispatchQueue.main.async {
+                if error == nil {
+                    self.confirmDeletion()
+                } else {
+                    self.showPasswordError = true
+                }
+            }
         }
     }
 
@@ -450,6 +512,13 @@ struct ManagerJobDetailsView: View {
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
         return formatter.string(from: NSNumber(value: actualValue)) ?? "LKR \(actualValue)"
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 
     private func legendPill(title: String, icon: String) -> some View {

@@ -1,6 +1,7 @@
 import Combine
 import UIKit
 import FirebaseFirestore
+import FirebaseAuth
 import CoreLocation
 
 final class JobDetailsViewModel: ObservableObject {
@@ -9,6 +10,7 @@ final class JobDetailsViewModel: ObservableObject {
     @Published var technicianLocation: CLLocationCoordinate2D?
 
     private var locationListener: ListenerRegistration?
+    private var jobListener: ListenerRegistration?
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
@@ -17,8 +19,8 @@ final class JobDetailsViewModel: ObservableObject {
         job = localStorage.fetchJob(id: jobId)
         if let assignedId = job?.assignedUserId {
             assignedTechnician = localStorage.fetchUser(id: assignedId)
-            
-            // Start listening to technician location
+
+            // Listen to technician location
             locationListener?.remove()
             locationListener = FirebaseService.shared.listenToUserLocation(userId: assignedId) { [weak self] coord in
                 DispatchQueue.main.async {
@@ -26,10 +28,22 @@ final class JobDetailsViewModel: ObservableObject {
                 }
             }
         }
+
+        // Attach a real-time Firestore listener for the job document.
+        // This keeps the details view live even if the manager changes the status remotely.
+        jobListener?.remove()
+        jobListener = firebase.listenToJob(jobId: jobId) { [weak self] updatedJob in
+            guard let self, let updatedJob else { return }
+            DispatchQueue.main.async {
+                self.localStorage.saveJobs([updatedJob])
+                self.job = updatedJob
+            }
+        }
     }
 
     deinit {
         locationListener?.remove()
+        jobListener?.remove()
     }
 
     func updateStatus(jobId: String, status: String, user: User, isOnline: Bool, holdReasonOverride: String? = nil, completion: (() -> Void)? = nil) {
@@ -73,6 +87,9 @@ final class JobDetailsViewModel: ObservableObject {
             }
         }
 
+        // Notify list views to refresh from cache
+        NotificationCenter.default.post(name: .jobStatusDidChange, object: jobId)
+
         var fields: [String: Any] = [
             "status": status,
             "isOnHold": isOnHold
@@ -85,7 +102,7 @@ final class JobDetailsViewModel: ObservableObject {
         }
 
         if isOnline {
-            firebase.updateJobFields(jobId: jobId, fields: fields) { _ in 
+            firebase.updateJobFields(jobId: jobId, fields: fields) { _ in
                 DispatchQueue.main.async { completion?() }
             }
         } else {

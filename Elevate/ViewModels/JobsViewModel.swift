@@ -1,6 +1,10 @@
 import Foundation
 import Combine
 
+extension Notification.Name {
+    static let jobStatusDidChange = Notification.Name("jobStatusDidChange")
+}
+
 final class JobsViewModel: ObservableObject {
     @Published var jobs: [Job] = []
     @Published var searchText = ""
@@ -19,15 +23,17 @@ final class JobsViewModel: ObservableObject {
     var filteredJobs: [Job] {
         let calendar = Calendar.current
         let filteredByDate: [Job] = jobs.filter { job in
+            let status = job.status.uppercased()
             switch selectedFilter {
             case .today:
-                return calendar.isDateInToday(job.scheduledAt) && job.status.uppercased() != "COMPLETED"
+                return calendar.isDateInToday(job.scheduledAt)
+                    && status != "COMPLETED"
+                    && status != "CANCELLED"
             case .upcoming:
-                // Include all jobs not completed (past, today, future)
-                // The view will handle sectioning them into "Past" and "Upcoming"
-                return job.status.uppercased() != "COMPLETED"
+                // Show all non-terminal active jobs; view handles Past/Upcoming sections
+                return status != "COMPLETED" && status != "CANCELLED"
             case .completed:
-                return job.status.uppercased() == "COMPLETED"
+                return status == "COMPLETED" || status == "CANCELLED"
             }
         }
 
@@ -54,5 +60,29 @@ final class JobsViewModel: ObservableObject {
         } else {
             isLoading = false
         }
+    }
+
+    // Called by NotificationCenter when a status update fires from JobDetailsViewModel.
+    private func reloadFromCache(organizationId: String, userId: String, role: String) {
+        let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+        let refreshed = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
+        DispatchQueue.main.async {
+            self.jobs = refreshed
+        }
+    }
+
+    /// Call once from the owning View's onAppear to wire up live refresh.
+    func startObservingStatusChanges(organizationId: String, userId: String, role: String) {
+        NotificationCenter.default.addObserver(
+            forName: .jobStatusDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.reloadFromCache(organizationId: organizationId, userId: userId, role: role)
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }

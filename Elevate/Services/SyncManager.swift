@@ -619,14 +619,27 @@ final class SyncManager: ObservableObject {
 
     private func syncJobs(organizationId: String, userId: String, role: String, completion: (() -> Void)? = nil) {
         let assignedUserId = (role == "TECHNICIAN") ? userId : nil
-        
+
         firebase.fetchJobs(organizationId: organizationId, assignedUserId: assignedUserId) { result in
             switch result {
-            case .success(let jobs):
+            case .success(let remoteJobs):
                 if role == "TECHNICIAN" {
                     self.local.purgeOtherUsersJobs(organizationId: organizationId, currentUserId: userId)
                 }
-                self.local.saveJobs(jobs)
+
+                // Save / update all jobs that exist in Firebase
+                self.local.saveJobs(remoteJobs)
+
+                // Purge any locally cached jobs that Firebase no longer has
+                let remoteIds = Set(remoteJobs.map { $0.id })
+                let localJobs = self.local.fetchJobs(
+                    organizationId: organizationId,
+                    userId: assignedUserId
+                )
+                for localJob in localJobs where !remoteIds.contains(localJob.id) {
+                    self.local.deleteJob(id: localJob.id)
+                }
+
             case .failure:
                 break
             }

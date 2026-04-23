@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseFirestore
 
 extension Notification.Name {
     static let jobStatusDidChange = Notification.Name("jobStatusDidChange")
@@ -13,6 +14,8 @@ final class JobsViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let localStorage = LocalStorageService.shared
+    private let firebase = FirebaseService.shared
+    private var jobsListener: ListenerRegistration?
 
     enum JobFilter: Int, CaseIterable {
         case today = 0
@@ -47,18 +50,64 @@ final class JobsViewModel: ObservableObject {
     func loadJobs(organizationId: String, userId: String, role: String, isOnline: Bool) {
         isLoading = true
         let assignedUserId = (role == "TECHNICIAN") ? userId : nil
+
+        // Immediately show cached data while the network loads
         jobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
-        
+
         if isOnline {
-            SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId, role: role) { [weak self] in
-                let refreshed = self?.localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId) ?? []
-                DispatchQueue.main.async {
-                    self?.isLoading = false
-                    self?.jobs = refreshed
+            // Attach a real-time Firestore listener so any add/update/delete
+            // in Firebase is reflected in the UI immediately.
+            jobsListener?.remove()
+            if role == "TECHNICIAN" {
+                jobsListener = firebase.listenToJobs(
+                    organizationId: organizationId,
+                    assignedUserId: userId
+                ) { [weak self] remoteJobs in
+                    self?.handleRealtimeJobs(
+                        remoteJobs,
+                        organizationId: organizationId,
+                        assignedUserId: assignedUserId
+                    )
                 }
+            } else {
+                jobsListener = firebase.listenToOrganizationJobs(
+                    organizationId: organizationId
+                ) { [weak self] remoteJobs in
+                    self?.handleRealtimeJobs(
+                        remoteJobs,
+                        organizationId: organizationId,
+                        assignedUserId: nil
+                    )
+                }
+            }
+
+            // Also run the full sync (handles pending offline actions, photos, etc.)
+            SyncManager.shared.startSyncing(
+                organizationId: organizationId,
+                userId: userId,
+                role: role
+            ) { [weak self] in
+                DispatchQueue.main.async { self?.isLoading = false }
             }
         } else {
             isLoading = false
+        }
+    }
+
+    /// Applies the snapshot from Firestore: updates the published list AND syncs the local cache.
+    private func handleRealtimeJobs(_ remoteJobs: [Job], organizationId: String, assignedUserId: String?) {
+        // Purge locally deleted jobs
+        let remoteIds = Set(remoteJobs.map { $0.id })
+        let localJobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
+        for localJob in localJobs where !remoteIds.contains(localJob.id) {
+            localStorage.deleteJob(id: localJob.id)
+        }
+        // Upsert the latest data
+        localStorage.saveJobs(remoteJobs)
+
+        DispatchQueue.main.async {
+            self.jobs = remoteJobs
+            self.isLoading = false
         }
     }
 
@@ -83,6 +132,7 @@ final class JobsViewModel: ObservableObject {
     }
 
     deinit {
+        jobsListener?.remove()
         NotificationCenter.default.removeObserver(self)
     }
 }

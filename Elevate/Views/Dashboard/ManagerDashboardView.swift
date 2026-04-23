@@ -234,7 +234,11 @@ struct ManagerDashboardView: View {
                                         SkeletonTaskRow()
                                     }
                                 } else {
-                                    ForEach(viewModel.jobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                    ForEach(viewModel.jobs.filter { 
+                                        Calendar.current.isDateInToday($0.scheduledAt) && 
+                                        $0.status.uppercased() != "COMPLETED" && 
+                                        $0.status.uppercased() != "CANCELLED" 
+                                    }.prefix(3), id: \.id) { job in
                                         Button(action: {
                                             router.selectedJobId = job.id
                                             router.path.append(ManagerScreen.jobDetails)

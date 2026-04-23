@@ -202,7 +202,11 @@ struct TechnicianDashboardView: View {
                                         SkeletonTaskRow()
                                     }
                                 } else {
-                                    ForEach(technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }.prefix(3), id: \.id) { job in
+                                    ForEach(technicianJobs.filter { 
+                                        Calendar.current.isDateInToday($0.scheduledAt) && 
+                                        $0.status.uppercased() != "COMPLETED" && 
+                                        $0.status.uppercased() != "CANCELLED" 
+                                    }.prefix(3), id: \.id) { job in
                                         Button(action: {
                                             router.selectedJobId = job.id
                                             router.path.append(TechnicianScreen.jobDetails)

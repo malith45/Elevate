@@ -72,7 +72,11 @@ final class DashboardViewModel: ObservableObject {
     private func applyJobs(_ jobs: [Job]) {
         self.jobs = jobs
         let calendar = Calendar.current
-        let todayJobs = jobs.filter { calendar.isDateInToday($0.scheduledAt) }
+        let todayJobs = jobs.filter { 
+            calendar.isDateInToday($0.scheduledAt) &&
+            $0.status.uppercased() != "COMPLETED" &&
+            $0.status.uppercased() != "CANCELLED"
+        }
         totalJobsToday = todayJobs.count
 
         // Count all pending urgent jobs (not just today)

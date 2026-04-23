@@ -28,6 +28,8 @@ final class ManagerCreateJobViewModel: ObservableObject {
     }
 
     func createJob(organizationId: String, userId: String, assignedUserId: String, title: String, location: String, scheduledAt: Date, notes: String?, isUrgent: Bool, siteLatitude: Double?, siteLongitude: Double?, isOnline: Bool, completion: @escaping (Job?) -> Void) {
+        guard !isSaving else { return }
+        
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {

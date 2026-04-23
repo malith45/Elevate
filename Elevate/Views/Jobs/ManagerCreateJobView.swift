@@ -248,9 +248,11 @@ struct ManagerCreateJobView: View {
                         }
                         .padding(.horizontal, 24)
 
-                        PrimaryButton(title: "Create Dispatch", iconName: "paperplane.fill") {
+                        PrimaryButton(title: viewModel.isSaving ? "Dispatching..." : "Create Dispatch", iconName: viewModel.isSaving ? nil : "paperplane.fill") {
                             createJob()
                         }
+                        .disabled(viewModel.isSaving)
+                        .opacity(viewModel.isSaving ? 0.6 : 1.0)
                         .padding(.horizontal, 24)
                         .padding(.bottom, 40)
                     }

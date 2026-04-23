@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseFirestore
 
 final class NotificationsViewModel: ObservableObject {
     @Published var notifications: [NotificationItem] = []
@@ -7,6 +8,7 @@ final class NotificationsViewModel: ObservableObject {
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
+    private var notificationsListener: ListenerRegistration?
 
     var todayItems: [NotificationItem] {
         notifications.filter { Calendar.current.isDateInToday($0.createdAt) }
@@ -23,14 +25,33 @@ final class NotificationsViewModel: ObservableObject {
     }
 
     func load(organizationId: String, userId: String, isOnline: Bool) {
+        // Show cached data immediately
         notifications = localStorage.fetchNotifications(organizationId: organizationId, userId: userId)
 
-        if isOnline {
-            SyncManager.shared.syncNotifications(organizationId: organizationId, userId: userId) { [weak self] in
-                let refreshed = self?.localStorage.fetchNotifications(organizationId: organizationId, userId: userId) ?? []
-                DispatchQueue.main.async {
-                    self?.notifications = refreshed
-                }
+        guard isOnline else { return }
+
+        // Real-time listener — fires on any add, update, or delete in Firebase
+        notificationsListener?.remove()
+        notificationsListener = firebase.listenToNotifications(
+            organizationId: organizationId,
+            userId: userId
+        ) { [weak self] remoteItems in
+            guard let self = self else { return }
+
+            // Purge locally cached notifications no longer in Firebase
+            let remoteIds = Set(remoteItems.map { $0.id })
+            let localItems = self.localStorage.fetchNotifications(organizationId: organizationId, userId: userId)
+            for localItem in localItems where !remoteIds.contains(localItem.id) {
+                // Mark as cleared by deleting individually
+                // (clearNotifications is bulk; here we need per-item deletion)
+                self.localStorage.deleteNotification(id: localItem.id)
+            }
+
+            // Upsert the latest remote state
+            self.localStorage.saveNotifications(remoteItems)
+
+            DispatchQueue.main.async {
+                self.notifications = remoteItems
             }
         }
     }
@@ -71,5 +92,9 @@ final class NotificationsViewModel: ObservableObject {
             return
         }
         firebase.updateNotificationRead(notificationId: item.id, isRead: true) { _ in }
+    }
+
+    deinit {
+        notificationsListener?.remove()
     }
 }

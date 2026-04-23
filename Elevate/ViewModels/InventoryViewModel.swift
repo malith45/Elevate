@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import FirebaseFirestore
 
 final class InventoryViewModel: ObservableObject {
     @Published var items: [InventoryItem] = []
@@ -10,22 +11,36 @@ final class InventoryViewModel: ObservableObject {
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
+    private var inventoryListener: ListenerRegistration?
 
     func loadItems(organizationId: String, isOnline: Bool) {
         isLoading = true
+        // Show cached data immediately
         items = localStorage.fetchInventoryItems(organizationId: organizationId)
-        if isOnline {
-            firebase.fetchInventoryItems(organizationId: organizationId) { result in
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    if case .success(let fetched) = result {
-                        self.localStorage.saveInventoryItems(fetched)
-                        self.items = fetched
-                    }
-                }
-            }
-        } else {
+
+        guard isOnline else {
             isLoading = false
+            return
+        }
+
+        // Attach a real-time listener — fires on any add/update/delete in Firebase
+        inventoryListener?.remove()
+        inventoryListener = firebase.listenToInventory(organizationId: organizationId) { [weak self] remoteItems in
+            self?.handleRealtimeInventory(remoteItems, organizationId: organizationId)
+        }
+    }
+
+    /// Syncs the real-time snapshot: upserts new/changed items and purges deleted ones.
+    private func handleRealtimeInventory(_ remoteItems: [InventoryItem], organizationId: String) {
+        let remoteIds = Set(remoteItems.map { $0.id })
+        let localItems = localStorage.fetchInventoryItems(organizationId: organizationId)
+        for localItem in localItems where !remoteIds.contains(localItem.id) {
+            localStorage.deleteInventoryItem(id: localItem.id)
+        }
+        localStorage.saveInventoryItems(remoteItems)
+        DispatchQueue.main.async {
+            self.items = remoteItems
+            self.isLoading = false
         }
     }
 
@@ -314,5 +329,9 @@ final class InventoryViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    deinit {
+        inventoryListener?.remove()
     }
 }

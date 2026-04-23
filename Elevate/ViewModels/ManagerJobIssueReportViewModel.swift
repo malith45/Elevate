@@ -28,6 +28,13 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let reports):
+                    // Purge any locally cached reports not present in Firebase
+                    let remoteIds = Set(reports.map { $0.id })
+                    let localReports = self.localStorage.fetchIssueReports(jobId: jobId)
+                    for localReport in localReports where !remoteIds.contains(localReport.id) {
+                        self.localStorage.deleteIssueReport(id: localReport.id)
+                    }
+                    // Upsert the latest remote data
                     reports.forEach { self.localStorage.saveIssueReport($0, isSynced: true) }
                     self.reports = reports.sorted { $0.createdAt > $1.createdAt }
                     self.report = self.reports.first

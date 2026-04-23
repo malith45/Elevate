@@ -1050,6 +1050,92 @@ final class FirebaseService {
         ], merge: true)
     }
 
+    // MARK: - Real-time listeners for inventory, users, and notifications
+
+    func listenToInventory(organizationId: String, completion: @escaping ([InventoryItem]) -> Void) -> ListenerRegistration {
+        db.collection("inventory")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .addSnapshotListener { snapshot, error in
+                guard error == nil, let documents = snapshot?.documents else { return }
+                let items = documents.compactMap { doc -> InventoryItem? in
+                    let data = doc.data()
+                    guard let name = data["name"] as? String,
+                          let category = data["category"] as? String,
+                          let quantity = data["quantity"] as? Int,
+                          let unitPrice = data["unitPrice"] as? Double
+                    else { return nil }
+                    return InventoryItem(
+                        id: doc.documentID,
+                        organizationId: data["organizationId"] as? String ?? "",
+                        name: name,
+                        category: category,
+                        quantity: quantity,
+                        unitPrice: unitPrice,
+                        sku: data["sku"] as? String,
+                        imageUrl: data["imageUrl"] as? String
+                    )
+                }
+                completion(items)
+            }
+    }
+
+    func listenToUsers(organizationId: String, completion: @escaping ([User]) -> Void) -> ListenerRegistration {
+        db.collection("users")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .addSnapshotListener { snapshot, error in
+                guard error == nil, let documents = snapshot?.documents else { return }
+                let users = documents.compactMap { doc -> User? in
+                    let data = doc.data()
+                    if let photoUrl = data["photoUrl"] as? String {
+                        ProfileImageCache.shared.saveRemoteUrl(photoUrl, for: doc.documentID)
+                    }
+                    return User(
+                        id: doc.documentID,
+                        organizationId: data["organizationId"] as? String ?? "",
+                        username: data["username"] as? String ?? "",
+                        displayName: data["displayName"] as? String ?? "",
+                        role: data["role"] as? String ?? "",
+                        email: data["email"] as? String,
+                        phone: data["phone"] as? String,
+                        latitude: data["latitude"] as? Double,
+                        longitude: data["longitude"] as? Double
+                    )
+                }
+                completion(users)
+            }
+    }
+
+    func listenToNotifications(organizationId: String, userId: String, completion: @escaping ([NotificationItem]) -> Void) -> ListenerRegistration {
+        db.collection("notifications")
+            .whereField("organizationId", isEqualTo: organizationId)
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "createdAt", descending: true)
+            .limit(to: 100)
+            .addSnapshotListener { snapshot, error in
+                guard error == nil, let documents = snapshot?.documents else { return }
+                let items = documents.compactMap { doc -> NotificationItem? in
+                    let data = doc.data()
+                    guard let title = data["title"] as? String,
+                          let body = data["body"] as? String,
+                          let type = data["type"] as? String,
+                          let timestamp = data["createdAt"] as? Timestamp
+                    else { return nil }
+                    return NotificationItem(
+                        id: doc.documentID,
+                        organizationId: data["organizationId"] as? String ?? "",
+                        userId: data["userId"] as? String ?? "",
+                        title: title,
+                        body: body,
+                        type: type,
+                        targetId: data["targetId"] as? String,
+                        createdAt: timestamp.dateValue(),
+                        isRead: data["isRead"] as? Bool ?? false
+                    )
+                }
+                completion(items)
+            }
+    }
+
     func deleteJob(jobId: String, completion: @escaping (Result<Void, Error>) -> Void) {
         db.collection("jobs").document(jobId).delete { error in
             if let error = error {

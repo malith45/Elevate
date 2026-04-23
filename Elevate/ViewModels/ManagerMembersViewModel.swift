@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import FirebaseFirestore
 
 final class ManagerMembersViewModel: ObservableObject {
     @Published var members: [User] = []
@@ -8,24 +9,32 @@ final class ManagerMembersViewModel: ObservableObject {
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
+    private var membersListener: ListenerRegistration?
 
     func load(organizationId: String, isOnline: Bool) {
+        // Show cached data immediately
         members = localStorage.fetchUsers(organizationId: organizationId)
 
         guard isOnline else { return }
-        firebase.fetchUsers(organizationId: organizationId) { result in
+
+        // Real-time listener — fires on any add/update/delete in Firebase
+        membersListener?.remove()
+        membersListener = firebase.listenToUsers(organizationId: organizationId) { [weak self] remoteUsers in
+            guard let self = self else { return }
+
+            // Purge locally deleted members
+            let remoteIds = Set(remoteUsers.map { $0.id })
+            let localUsers = self.localStorage.fetchUsers(organizationId: organizationId)
+            for localUser in localUsers where !remoteIds.contains(localUser.id) {
+                self.localStorage.deleteUser(id: localUser.id)
+            }
+
+            // Upsert all remote users + sync their profile photos
+            self.localStorage.saveUsers(remoteUsers)
+            remoteUsers.forEach { ProfileImageSync.shared.syncProfilePhotoUrl(userId: $0.id) }
+
             DispatchQueue.main.async {
-                switch result {
-                case .success(let users):
-                    self.localStorage.saveUsers(users)
-                    self.members = users
-                    // Sync each member's profile photo URL into the local cache
-                    users.forEach { user in
-                        ProfileImageSync.shared.syncProfilePhotoUrl(userId: user.id)
-                    }
-                case .failure(let error):
-                    self.errorMessage = error.localizedDescription
-                }
+                self.members = remoteUsers
             }
         }
     }
@@ -111,5 +120,9 @@ final class ManagerMembersViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    deinit {
+        membersListener?.remove()
     }
 }

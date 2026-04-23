@@ -422,6 +422,16 @@ final class LocalStorageService {
         }
     }
 
+    func deleteIssueReport(id: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "IssueReportEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        if let item = try? context.fetch(request).first {
+            context.delete(item)
+            saveContext(context)
+        }
+    }
+
     func markIssueReportSynced(id: String) {
         let context = stack.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "IssueReportEntity")
@@ -493,6 +503,16 @@ final class LocalStorageService {
         _ = try? context.execute(deleteRequest)
         saveContext(context)
         NotificationCenter.default.post(name: .notificationsDidChange, object: nil)
+    }
+
+    func deleteNotification(id: String) {
+        let context = stack.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "NotificationEntity")
+        request.predicate = NSPredicate(format: "id == %@", id)
+        if let item = try? context.fetch(request).first {
+            context.delete(item)
+            saveContext(context)
+        }
     }
 
     func unreadNotificationCount(organizationId: String, userId: String) -> Int {

@@ -475,19 +475,16 @@ struct ManagerJobDetailsView: View {
 
     private func verifyPasswordAndCancel() {
         guard !cancelPassword.isEmpty,
-              let user = Auth.auth().currentUser,
-              let email = user.email else {
+              let user = appSession.currentUser else {
             showPasswordError = true
             cancelPassword = ""
             return
         }
 
-        let credential = EmailAuthProvider.credential(withEmail: email, password: cancelPassword)
-        cancelPassword = ""
-
-        user.reauthenticate(with: credential) { _, error in
+        FirebaseService.shared.verifyPassword(userId: user.id, password: cancelPassword) { success in
             DispatchQueue.main.async {
-                if error == nil {
+                self.cancelPassword = ""
+                if success {
                     self.confirmDeletion()
                 } else {
                     self.showPasswordError = true

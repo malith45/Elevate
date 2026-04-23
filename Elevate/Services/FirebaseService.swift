@@ -13,6 +13,17 @@ final class FirebaseService {
 
     private init() {}
 
+    func verifyPassword(userId: String, password: String, completion: @escaping (Bool) -> Void) {
+        db.collection("users").document(userId).getDocument { snapshot, error in
+            guard error == nil, let data = snapshot?.data() else {
+                completion(false)
+                return
+            }
+            let storedPassword = data["password"] as? String ?? ""
+            completion(storedPassword == password)
+        }
+    }
+
     func signIn(organizationId: String, username: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
         // Example: auth using Firebase Auth email/password or custom Firestore user collection.
         // This sample assumes a users collection keyed by username + orgId.

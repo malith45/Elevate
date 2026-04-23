@@ -66,13 +66,24 @@ final class AppSession: ObservableObject {
 
     private func setupJobSync() {
         jobsListener?.remove()
-        guard let user = currentUser, user.role == "TECHNICIAN" else { return }
+        guard let user = currentUser else { return }
 
-        jobsListener = FirebaseService.shared.listenToJobs(organizationId: user.organizationId, assignedUserId: user.id) { [weak self] jobs in
-            Task { @MainActor in
-                guard let self = self else { return }
-                self.localStorage.saveJobs(jobs)
-                self.calendarSync.syncJobsIfAuthorized(jobs)
+        if user.role == "TECHNICIAN" {
+            jobsListener = FirebaseService.shared.listenToJobs(organizationId: user.organizationId, assignedUserId: user.id) { [weak self] jobs in
+                Task { @MainActor in
+                    guard let self = self else { return }
+                    self.localStorage.saveJobs(jobs)
+                    self.calendarSync.syncJobsIfAuthorized(jobs)
+                }
+            }
+        } else if user.role == "MANAGER" {
+            // Managers listen to all jobs in organization to sync their own + others' events
+            jobsListener = FirebaseService.shared.listenToOrganizationJobs(organizationId: user.organizationId) { [weak self] jobs in
+                Task { @MainActor in
+                    guard let self = self else { return }
+                    self.localStorage.saveJobs(jobs)
+                    self.calendarSync.syncJobsIfAuthorized(jobs)
+                }
             }
         }
     }

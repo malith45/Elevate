@@ -2,9 +2,7 @@ import SwiftUI
 import Charts
 
 struct ManagerStatisticsView: View {
-    @Environment(\.managerTabRouter) private var router
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appSession: AppSession
     @StateObject private var viewModel = StatisticsViewModel()
     @ObservedObject private var network = NetworkService.shared
@@ -15,238 +13,245 @@ struct ManagerStatisticsView: View {
         ZStack {
             settings.appBackground.ignoresSafeArea()
             
+            // Decorative background elements
+            GeometryReader { geo in
+                Circle()
+                    .fill(Color.orange.opacity(0.12))
+                    .frame(width: 350, height: 350)
+                    .blur(radius: 90)
+                    .offset(x: geo.size.width * 0.6, y: geo.size.height * 0.1)
+                
+                Circle()
+                    .fill(settings.accentColor.opacity(0.1))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 80)
+                    .offset(x: -50, y: geo.size.height * 0.6)
+            }
+            
             VStack(spacing: 0) {
                 // Top Nav
                 BackHeaderNav(isManager: true, onBack: {
                     dismiss()
                 })
+                .padding(.bottom, 8)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 28) {
                         
-                        // Header with Picker
+                        // Header with Selector
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("CHOOSE A MEMBER")
-                                .scaledFont(size: 12, weight: .bold)
+                            Text("ORGANIZATIONAL INTEL")
+                                .scaledFont(size: 12, weight: .black)
                                 .foregroundColor(settings.secondaryText)
-                                .tracking(1.5)
-                                .padding(.horizontal, 24)
+                                .tracking(2)
                             
                             Menu {
-                                Picker("Technician", selection: $selectedTechnicianId) {
-                                    Text("All Team").tag(Optional<String>(nil))
-                                    ForEach(viewModel.technicians, id: \.id) { tech in
-                                        Text(displayName(for: tech)).tag(Optional(tech.id))
+                                Button(action: { selectedTechnicianId = nil }) {
+                                    Label("All Organization", systemImage: "building.2.fill")
+                                }
+                                
+                                Divider()
+                                
+                                ForEach(viewModel.technicians, id: \.id) { tech in
+                                    Button(action: { selectedTechnicianId = tech.id }) {
+                                        Label(displayName(for: tech), systemImage: "person.fill")
                                     }
                                 }
                             } label: {
                                 HStack(spacing: 16) {
-                                    ZStack(alignment: .bottomTrailing) {
+                                    ZStack {
                                         Circle()
-                                            .fill(settings.surfaceColor)
-                                            .frame(width: 64, height: 64)
-                                            .overlay(
-                                                Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                            )
-                                            .overlay(
-                                                Image(systemName: selectedTechnicianId == nil ? "person.3.fill" : "person.fill")
-                                                    .font(.system(size: 32))
-                                                    .foregroundColor(settings.accentColor)
-                                            )
+                                            .fill(settings.accentColor.opacity(0.1))
+                                            .frame(width: 52, height: 52)
                                         
-                                        Circle()
-                                            .fill(Color.green)
-                                            .frame(width: 14, height: 14)
-                                            .overlay(
-                                                Circle().stroke(settings.appBackground, lineWidth: 3)
-                                            )
-                                            .offset(x: -4, y: -4)
+                                        Image(systemName: selectedTechnicianId == nil ? "building.2.fill" : "person.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(settings.accentColor)
                                     }
                                     
-                                    VStack(alignment: .leading, spacing: 4) {
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(selectedTechnicianLabel())
-                                            .scaledFont(size: 22, weight: .bold, design: .rounded)
+                                            .scaledFont(size: 20, weight: .bold, design: .rounded)
                                             .foregroundColor(settings.primaryText)
-                                        
-                                        Text("ONLINE")
-                                            .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(settings.primaryText)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(settings.surfaceColor)
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                            )
+                                        Text(selectedTechnicianId == nil ? "Full Workforce" : "Technician Insights")
+                                            .scaledFont(size: 12)
+                                            .foregroundColor(settings.secondaryText)
                                     }
                                     
                                     Spacer()
                                     
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 20, weight: .medium))
-                                        .foregroundColor(settings.primaryText)
+                                    Image(systemName: "chevron.up.down")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(settings.secondaryText)
                                 }
-                                .padding(.vertical, 16)
-                                .padding(.horizontal, 24)
-                                .background(settings.surfaceColor)
+                                .padding(16)
+                                .background(.ultraThinMaterial)
                                 .cornerRadius(24)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 24)
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
-                                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
                             }
-                            .padding(.horizontal, 24)
-                            
-                            Text(selectedTechnicianId == nil ? "Team Performance" : "\(selectedTechnicianLabel())'s Performance")
-                                .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.primaryText)
-                                .padding(.horizontal, 24)
-                                .padding(.top, 8)
                         }
+                        .padding(.horizontal, 24)
                         
-                        // Jobs Completed Chart
-                        VStack(spacing: 24) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Jobs Completed")
-                                        .scaledFont(size: 14, weight: .bold)
-                                        .foregroundColor(settings.primaryText)
-                                    Text("Last 30 Days")
-                                        .scaledFont(size: 12)
-                                        .foregroundColor(settings.secondaryText)
-                                }
-                                Spacer()
-                                Text("\(viewModel.weeklyStats.reduce(0) { $0 + $1.completed })")
-                                    .scaledFont(size: 28, weight: .bold)
-                                    .foregroundColor(settings.accentColor)
-                            }
+                        // Top Level KPIs
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            GlassStatCard(
+                                icon: "person.2.fill",
+                                title: "TEAM SIZE",
+                                value: "\(viewModel.technicians.count)",
+                                subtitle: "Active staff"
+                            )
+                            GlassStatCard(
+                                icon: "target",
+                                title: "AVG EFFICIENCY",
+                                value: percentString(viewModel.completionRate),
+                                subtitle: "Organization"
+                            )
+                        }
+                        .padding(.horizontal, 24)
+                        
+                        // Performance Breakdown Chart
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text(selectedTechnicianId == nil ? "TEAM COMPLETIONS" : "ACTIVITY TREND")
+                                .scaledFont(size: 12, weight: .black)
+                                .foregroundColor(settings.secondaryText)
+                                .tracking(1.5)
                             
                             Chart {
                                 ForEach(viewModel.weeklyStats) { item in
-                                    // Background light grey bar
-                                    BarMark(
-                                        x: .value("Week", item.label),
-                                        y: .value("Total", item.total),
-                                        width: .ratio(0.8)
-                                    )
-                                    .foregroundStyle(settings.isHighContrast ? settings.secondaryText.opacity(0.3) : Color.elevateLightGray)
-                                    .cornerRadius(8)
-                                    
-                                    // Foreground dark green bar
-                                    BarMark(
-                                        x: .value("Week", item.label),
-                                        y: .value("Completed", item.completed),
-                                        width: .ratio(0.4)
-                                    )
-                                    .foregroundStyle(settings.accentColor)
-                                    .cornerRadius(8)
-                                }
-                            }
-                            .frame(height: 140)
-                            .chartXAxis {
-                                AxisMarks { value in
-                                    AxisValueLabel {
-                                        if let week = value.as(String.self) {
-                                            Text(week)
-                                                .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(settings.secondaryText)
-                                        }
-                                    }
-                                }
-                            }
-                            .chartYAxis(.hidden)
-                        }
-                        .padding(24)
-                        .background(settings.surfaceColor)
-                        .cornerRadius(16)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                        )
-                        .padding(.horizontal, 24)
-                        .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
-                        
-                        // Efficiency Score Chart
-                        VStack(spacing: 24) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Efficiency Score")
-                                        .scaledFont(size: 14, weight: .bold)
-                                        .foregroundColor(settings.primaryText)
-                                    Text(viewModel.comparisonLabel)
-                                        .scaledFont(size: 12)
-                                        .foregroundColor(settings.secondaryText)
-                                }
-                                Spacer()
-                                HStack(spacing: 4) {
-                                    Image(systemName: viewModel.comparisonIsPositive ? "arrow.up.right" : "arrow.down.right")
-                                    Text(comparisonPercentString())
-                                }
-                                .scaledFont(size: 16, weight: .bold)
-                                .foregroundColor(viewModel.comparisonIsPositive ? settings.accentColor : .red)
-                            }
-                            
-                            Chart {
-                                ForEach(viewModel.efficiencyStats) { item in
-                                    LineMark(
-                                        x: .value("Day", item.dayIndex),
-                                        y: .value("Value", item.value)
-                                    )
-                                    .interpolationMethod(.catmullRom)
-                                    .foregroundStyle(Color.elevateDarkGreen)
-                                    .lineStyle(StrokeStyle(lineWidth: 3))
-                                    
                                     AreaMark(
-                                        x: .value("Day", item.dayIndex),
-                                        y: .value("Value", item.value)
+                                        x: .value("Week", item.label),
+                                        y: .value("Completed", item.completed)
                                     )
                                     .interpolationMethod(.catmullRom)
                                     .foregroundStyle(
                                         LinearGradient(
-                                            gradient: Gradient(colors: [Color.elevateDarkGreen.opacity(0.1), Color.clear]),
+                                            colors: [settings.accentColor.opacity(0.3), settings.accentColor.opacity(0)],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )
                                     )
+                                    
+                                    LineMark(
+                                        x: .value("Week", item.label),
+                                        y: .value("Completed", item.completed)
+                                    )
+                                    .interpolationMethod(.catmullRom)
+                                    .foregroundStyle(settings.accentColor)
+                                    .lineStyle(StrokeStyle(lineWidth: 3))
                                 }
                             }
-                            .frame(height: 60)
-                            .chartXAxis(.hidden)
-                            .chartYAxis(.hidden)
-                            .chartYScale(domain: 40...90) // To give some headroom matching the image
+                            .frame(height: 180)
+                            .chartXAxis {
+                                AxisMarks { value in
+                                    AxisValueLabel {
+                                        if let label = value.as(String.self) {
+                                            Text(label).scaledFont(size: 10, weight: .bold)
+                                        }
+                                    }
+                                }
+                            }
                         }
                         .padding(24)
-                        .background(settings.surfaceColor)
-                        .cornerRadius(16)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(32)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: 32)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                         .padding(.horizontal, 24)
-                        .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
                         
+                        // Technician Leaderboard (Only if no tech selected)
+                        if selectedTechnicianId == nil {
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("WORKFORCE EFFICIENCY")
+                                    .scaledFont(size: 12, weight: .black)
+                                    .foregroundColor(settings.secondaryText)
+                                    .tracking(1.5)
+                                
+                                VStack(spacing: 16) {
+                                    ForEach(viewModel.technicians.prefix(5), id: \.id) { tech in
+                                        HStack(spacing: 12) {
+                                            Text(displayName(for: tech).prefix(1))
+                                                .scaledFont(size: 14, weight: .bold)
+                                                .frame(width: 32, height: 32)
+                                                .background(settings.accentColor.opacity(0.2))
+                                                .clipShape(Circle())
+                                            
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(displayName(for: tech))
+                                                    .scaledFont(size: 14, weight: .bold)
+                                                Text("Senior Technician")
+                                                    .scaledFont(size: 10)
+                                                    .foregroundColor(settings.secondaryText)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            Text("Top Performer")
+                                                .scaledFont(size: 10, weight: .bold)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.green.opacity(0.1))
+                                                .foregroundColor(.green)
+                                                .cornerRadius(8)
+                                        }
+                                        if tech.id != viewModel.technicians.prefix(5).last?.id {
+                                            Divider().background(settings.cardStroke)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(24)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(32)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 32)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                            )
+                            .padding(.horizontal, 24)
+                        } else {
+                            // Status Distribution for individual
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("JOB STATUS SPREAD")
+                                    .scaledFont(size: 12, weight: .black)
+                                    .foregroundColor(settings.secondaryText)
+                                    .tracking(1.5)
+                                
+                                Chart(viewModel.jobsByStatus) { item in
+                                    BarMark(
+                                        x: .value("Count", item.count),
+                                        y: .value("Status", item.status)
+                                    )
+                                    .foregroundStyle(by: .value("Status", item.status))
+                                    .cornerRadius(6)
+                                }
+                                .frame(height: 150)
+                                .chartLegend(.hidden)
+                            }
+                            .padding(24)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(32)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 32)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                            )
+                            .padding(.horizontal, 24)
+                        }
+                        
+                        Color.clear.frame(height: 100)
                     }
-                }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 96)
+                    .padding(.top, 16)
                 }
             }
-            
         }
         .navigationBarHidden(true)
-        .onAppear {
-            loadStats()
-        }
-        .onChange(of: selectedTechnicianId) { _, _ in
-            loadStats()
-        }
-        .onChange(of: network.isOnline) { _, _ in
-            loadStats()
-        }
+        .onAppear { loadStats() }
+        .onChange(of: selectedTechnicianId) { _, _ in loadStats() }
     }
-
+    
     private func loadStats() {
         guard let user = appSession.currentUser else { return }
         viewModel.load(
@@ -257,15 +262,15 @@ struct ManagerStatisticsView: View {
             technicianId: selectedTechnicianId
         )
     }
-
+    
     private func displayName(for user: User) -> String {
         user.displayName.isEmpty ? user.username : user.displayName
     }
-
+    
     private func selectedTechnicianLabel() -> String {
         guard let selectedId = selectedTechnicianId,
               let tech = viewModel.technicians.first(where: { $0.id == selectedId })
-        else { return "All Team" }
+        else { return "Organization Overview" }
         return displayName(for: tech)
     }
 
@@ -273,19 +278,9 @@ struct ManagerStatisticsView: View {
         let percent = Int((value * 100).rounded())
         return "\(percent)%"
     }
-
-    private func ratingString() -> String {
-        let rating = max(3.0, min(5.0, 5.0 * viewModel.completionRate))
-        return String(format: "%.1f", rating)
-    }
-
-    private func comparisonPercentString() -> String {
-        let delta = abs(viewModel.comparisonDelta)
-        let percent = Int((delta * 100).rounded())
-        return "\(percent)%"
-    }
 }
 
 #Preview {
     ManagerStatisticsView()
+        .environmentObject(AppSession())
 }

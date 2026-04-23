@@ -324,11 +324,11 @@ struct ManagerJobDetailsView: View {
                                     if status == "HOLD" {
                                         HStack(spacing: 12) {
                                             actionButton(title: "CONTINUE", icon: "play.fill", color: .blue) {
-                                                updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                                updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                             }
                                             cancelButton
                                         }
-                                    } else if status == "IN_PROGRESS" {
+                                    } else if status == "IN-PROGRESS" {
                                         HStack(spacing: 12) {
                                             Button(action: {
                                                 holdReasonText = job.holdReason ?? ""

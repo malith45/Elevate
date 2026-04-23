@@ -368,9 +368,9 @@ struct JobDetailsView: View {
                                 VStack(spacing: 12) {
                                     if status == "HOLD" {
                                         actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
-                                            updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                            updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                         }
-                                    } else if status == "IN_PROGRESS" {
+                                    } else if status == "IN-PROGRESS" {
                                         HStack(spacing: 12) {
                                             Button(action: {
                                                 holdReasonText = job.holdReason ?? ""
@@ -400,7 +400,7 @@ struct JobDetailsView: View {
                                     } else {
                                         // PENDING or Fallback
                                         actionButton(title: "START WORK", icon: "play.circle.fill", color: settings.accentColor) {
-                                            updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                            updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                         }
                                     }
                                 }

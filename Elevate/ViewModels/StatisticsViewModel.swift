@@ -24,6 +24,22 @@ final class StatisticsViewModel: ObservableObject {
     @Published var comparisonLabel: String = "Vs. Team Average"
     @Published var comparisonDelta: Double = 0
     @Published var comparisonIsPositive: Bool = true
+    
+    // New Metrics
+    @Published var jobsByStatus: [StatusDistribution] = []
+    @Published var jobsByPriority: [PriorityDistribution] = []
+
+    struct StatusDistribution: Identifiable {
+        let id = UUID()
+        let status: String
+        let count: Int
+    }
+
+    struct PriorityDistribution: Identifiable {
+        let id = UUID()
+        let priority: String
+        let count: Int
+    }
 
     private let localStorage = LocalStorageService.shared
 
@@ -62,8 +78,17 @@ final class StatisticsViewModel: ObservableObject {
         completionRate = completionRate(for: jobs)
 
         let scheduled = jobs.filter { $0.status.uppercased() != "CANCELLED" }.count
-        let completed = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
-        onScheduleRate = scheduled == 0 ? 0 : Double(completed) / Double(scheduled)
+        let completedCount = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+        onScheduleRate = scheduled == 0 ? 0 : Double(completedCount) / Double(scheduled)
+        
+        // Distribution Stats
+        let statusMap = Dictionary(grouping: jobs, by: { $0.status.uppercased() })
+        jobsByStatus = statusMap.map { StatusDistribution(status: $0.key, count: $0.value.count) }
+            .sorted { $0.count > $1.count }
+            
+        let priorityMap = Dictionary(grouping: jobs, by: { $0.priority.uppercased() })
+        jobsByPriority = priorityMap.map { PriorityDistribution(priority: $0.key, count: $0.value.count) }
+            .sorted { $0.count > $1.count }
     }
 
     private func computeComparison(organizationId: String, role: String, userId: String, technicianId: String?) {

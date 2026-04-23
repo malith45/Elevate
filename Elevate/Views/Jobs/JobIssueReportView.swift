@@ -96,19 +96,19 @@ struct JobIssueReportView: View {
             ZStack(alignment: .topLeading) {
                 if viewModel.issueText.isEmpty {
                     Text("Describe the technical failure in detail...")
-                        .foregroundColor(settings.secondaryText.opacity(0.6))
                         .scaledFont(size: 15)
-                        .padding(.top, 12)
-                        .padding(.leading, 12)
+                        .foregroundColor(settings.secondaryText.opacity(0.6))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 8)
                 }
+                
                 TextEditor(text: $viewModel.issueText)
-                    .frame(minHeight: 140)
-                    .scrollContentBackground(.hidden)
-                    .background(settings.surfaceColor)
-                    .foregroundColor(settings.primaryText)
                     .scaledFont(size: 15)
+                    .scrollContentBackground(.hidden)
+                    .foregroundColor(settings.primaryText)
                     .disabled(isTerminal)
             }
+            .frame(minHeight: 140)
             .padding(12)
             .background(settings.surfaceColor)
             .cornerRadius(16)

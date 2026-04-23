@@ -109,30 +109,28 @@ struct ManagerCreateJobView: View {
                                             .foregroundColor(settings.secondaryText)
                                             .tracking(1)
                                         
-                                        TextEditor(text: $descriptionText)
-                                            .frame(height: 100)
-                                            .scaledFont(size: 14)
-                                            .padding(10)
-                                            .scrollContentBackground(.hidden)
-                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
-                                            .foregroundColor(settings.primaryText)
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                Group {
-                                                    if descriptionText.isEmpty {
-                                                        Text("Additional notes or job scope...")
-                                                            .scaledFont(size: 14)
-                                                            .foregroundColor(settings.secondaryText.opacity(0.6))
-                                                            .padding(.leading, 14)
-                                                            .padding(.top, 14)
-                                                    }
-                                                },
-                                                alignment: .topLeading
-                                            )
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                            )
+                                        ZStack(alignment: .topLeading) {
+                                            if descriptionText.isEmpty {
+                                                Text("Additional notes or job scope...")
+                                                    .scaledFont(size: 14)
+                                                    .foregroundColor(settings.secondaryText.opacity(0.6))
+                                                    .padding(.horizontal, 4)
+                                                    .padding(.vertical, 8)
+                                            }
+                                            
+                                            TextEditor(text: $descriptionText)
+                                                .scaledFont(size: 14)
+                                                .scrollContentBackground(.hidden)
+                                                .foregroundColor(settings.primaryText)
+                                        }
+                                        .frame(height: 100)
+                                        .padding(10)
+                                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                     }
                                 }
                             }
@@ -256,6 +254,9 @@ struct ManagerCreateJobView: View {
                         .padding(.horizontal, 24)
                         .padding(.bottom, 40)
                     }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 100)
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .scrollDismissesKeyboard(.interactively)

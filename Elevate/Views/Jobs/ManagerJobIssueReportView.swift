@@ -158,17 +158,17 @@ struct ManagerJobIssueReportView: View {
                     Text("Enter your instructions or response here...")
                         .scaledFont(size: 15)
                         .foregroundColor(settings.secondaryText.opacity(0.6))
-                        .padding(.top, 12)
-                        .padding(.leading, 12)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 8)
                 }
+                
                 TextEditor(text: $responseText)
-                    .frame(minHeight: 120)
-                    .scrollContentBackground(.hidden)
-                    .background(settings.surfaceColor)
-                    .foregroundColor(settings.primaryText)
                     .scaledFont(size: 15)
+                    .scrollContentBackground(.hidden)
+                    .foregroundColor(settings.primaryText)
                     .disabled(isTerminal)
             }
+            .frame(minHeight: 120)
             .padding(12)
             .background(settings.surfaceColor)
             .cornerRadius(16)

@@ -8,6 +8,12 @@ struct ManagerJobIssueReportView: View {
     @StateObject private var viewModel = ManagerJobIssueReportViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var responseText = ""
+    @State private var jobStatus: String = "PENDING"
+    
+    private var isTerminal: Bool {
+        let status = jobStatus.uppercased()
+        return status == "COMPLETED" || status == "CANCELLED"
+    }
 
     var body: some View {
         ZStack {
@@ -26,7 +32,9 @@ struct ManagerJobIssueReportView: View {
                             reportDetailsCard(report)
                             if !report.attachmentUrls.isEmpty { photoGridCard(report) }
                             managerResponseCard
-                            actionButtons
+                            if !isTerminal {
+                                actionButtons
+                            }
                         } else {
                             emptyStateView
                         }
@@ -37,7 +45,12 @@ struct ManagerJobIssueReportView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear { viewModel.load(jobId: jobId) }
+        .onAppear { 
+            viewModel.load(jobId: jobId)
+            if let job = LocalStorageService.shared.fetchJob(id: jobId) {
+                jobStatus = job.status
+            }
+        }
         .onChange(of: viewModel.report?.managerResponse) { _, newValue in
             if let newValue = newValue, responseText.isEmpty {
                 responseText = newValue
@@ -154,6 +167,7 @@ struct ManagerJobIssueReportView: View {
                     .background(settings.surfaceColor)
                     .foregroundColor(settings.primaryText)
                     .scaledFont(size: 15)
+                    .disabled(isTerminal)
             }
             .padding(12)
             .background(settings.surfaceColor)

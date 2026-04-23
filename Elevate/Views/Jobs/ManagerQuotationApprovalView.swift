@@ -10,6 +10,11 @@ struct ManagerQuotationApprovalView: View {
     @Environment(\.dismiss) private var dismiss
     private let localStorage = LocalStorageService.shared
 
+    private var isTerminal: Bool {
+        let status = viewModel.job?.status.uppercased() ?? ""
+        return status == "COMPLETED" || status == "CANCELLED"
+    }
+
     var body: some View {
         ZStack {
             settings.appBackground.ignoresSafeArea()
@@ -55,7 +60,7 @@ struct ManagerQuotationApprovalView: View {
                             }
                         }
 
-                        if !viewModel.items.isEmpty {
+                        if !viewModel.items.isEmpty && !isTerminal {
                             bottomApprovalBar
                                 .padding(.top, 16)
                                 .padding(.bottom, 32) // Gentle breathing room at the end
@@ -158,35 +163,37 @@ struct ManagerQuotationApprovalView: View {
 
                 Spacer()
 
-                HStack(spacing: 8) {
-                    Button(action: {
-                        if let jobId = jobId {
-                            HapticManager.shared.playImpact(style: .rigid)
-                            viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "APPROVED")
+                if !isTerminal {
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            if let jobId = jobId {
+                                HapticManager.shared.playImpact(style: .rigid)
+                                viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "APPROVED")
+                            }
+                        }) {
+                            Image(systemName: isApproved ? "checkmark.circle.fill" : "checkmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(isApproved ? .white : .green)
+                                .padding(10)
+                                .background(isApproved ? (settings.isHighContrast ? Color.black : Color.green) : Color.green.opacity(0.1))
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.green.opacity(0.2), lineWidth: 1))
                         }
-                    }) {
-                        Image(systemName: isApproved ? "checkmark.circle.fill" : "checkmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(isApproved ? .white : .green)
-                            .padding(10)
-                            .background(isApproved ? (settings.isHighContrast ? Color.black : Color.green) : Color.green.opacity(0.1))
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.green.opacity(0.2), lineWidth: 1))
-                    }
 
-                    Button(action: {
-                        if let jobId = jobId {
-                            HapticManager.shared.playImpact(style: .rigid)
-                            viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "REJECTED")
+                        Button(action: {
+                            if let jobId = jobId {
+                                HapticManager.shared.playImpact(style: .rigid)
+                                viewModel.updateStatus(jobId: jobId, itemId: item.id, status: "REJECTED")
+                            }
+                        }) {
+                            Image(systemName: isRejected ? "xmark.circle.fill" : "xmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(isRejected ? .white : .red)
+                                .padding(10)
+                                .background(isRejected ? (settings.isHighContrast ? Color.black : Color.red) : Color.red.opacity(0.1))
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.red.opacity(0.2), lineWidth: 1))
                         }
-                    }) {
-                        Image(systemName: isRejected ? "xmark.circle.fill" : "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(isRejected ? .white : .red)
-                            .padding(10)
-                            .background(isRejected ? (settings.isHighContrast ? Color.black : Color.red) : Color.red.opacity(0.1))
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.red.opacity(0.2), lineWidth: 1))
                     }
                 }
             }

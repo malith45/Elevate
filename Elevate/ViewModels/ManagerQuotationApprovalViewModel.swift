@@ -90,8 +90,10 @@ final class ManagerQuotationApprovalViewModel: ObservableObject {
     }
 
     private func filteredJobs(_ jobs: [Job]) -> [Job] {
-        jobs.filter { !$0.quotationItems.isEmpty }
-            .sorted { $0.updatedAt > $1.updatedAt }
+        jobs.filter { job in
+            job.quotationItems.contains(where: { $0.status.uppercased() == "PENDING" })
+        }
+        .sorted { $0.updatedAt > $1.updatedAt }
     }
 
     private func jobFor(id: String?) -> Job? {

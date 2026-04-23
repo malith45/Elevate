@@ -3,6 +3,7 @@ import Combine
 import FirebaseFirestore
 
 final class QuotationStatusViewModel: ObservableObject {
+    @Published var job: Job?
     @Published var items: [QuotationItem] = []
     @Published var errorMessage: String?
 
@@ -28,8 +29,9 @@ final class QuotationStatusViewModel: ObservableObject {
     }
 
     func load(jobId: String) {
-        if let cached = localStorage.fetchJob(id: jobId)?.quotationItems {
-            items = cached
+        if let cached = localStorage.fetchJob(id: jobId) {
+            job = cached
+            items = cached.quotationItems
         }
 
         jobListener?.remove()
@@ -41,6 +43,7 @@ final class QuotationStatusViewModel: ObservableObject {
             guard let self = self, let job = job else { return }
             self.localStorage.saveJobs([job])
             DispatchQueue.main.async {
+                self.job = job
                 self.items = job.quotationItems
             }
         }

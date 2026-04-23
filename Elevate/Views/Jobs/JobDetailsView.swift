@@ -15,6 +15,11 @@ struct JobDetailsView: View {
     @State private var showHoldPrompt = false
     @State private var holdReasonText = ""
     
+    private var isTerminal: Bool {
+        let status = viewModel.job?.status.uppercased() ?? ""
+        return status == "COMPLETED" || status == "CANCELLED"
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
             // Background
@@ -260,40 +265,44 @@ struct JobDetailsView: View {
                                                             .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                                     )
                                                 
-                                                Button(action: {
-                                                    HapticManager.shared.playImpact(style: .medium)
-                                                    viewModel.removePhoto(jobId: job.id, url: url, isOnline: network.isOnline)
-                                                }) {
-                                                    Image(systemName: "xmark.circle.fill")
-                                                        .font(.system(size: 22))
-                                                        .symbolRenderingMode(.palette)
-                                                        .foregroundStyle(.white, .red)
-                                                        .background(Circle().fill(.white).padding(2))
-                                                        .offset(x: 6, y: -6)
-                                                        .shadow(color: .black.opacity(0.1), radius: 2)
+                                                if !isTerminal {
+                                                    Button(action: {
+                                                        HapticManager.shared.playImpact(style: .medium)
+                                                        viewModel.removePhoto(jobId: job.id, url: url, isOnline: network.isOnline)
+                                                    }) {
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .font(.system(size: 22))
+                                                            .symbolRenderingMode(.palette)
+                                                            .foregroundStyle(.white, .red)
+                                                            .background(Circle().fill(.white).padding(2))
+                                                            .offset(x: 6, y: -6)
+                                                            .shadow(color: .black.opacity(0.1), radius: 2)
+                                                    }
                                                 }
                                             }
                                         }
                                         
-                                        // Square Add Photo Placeholder
-                                        Button(action: { 
-                                            HapticManager.shared.playImpact(style: .light)
-                                            showCamera = true 
-                                        }) {
-                                            VStack(spacing: 8) {
-                                                Image(systemName: "plus.viewfinder")
-                                                    .font(.system(size: 24))
-                                                Text("ADD")
-                                                    .scaledFont(size: 10, weight: .bold)
+                                        if !isTerminal {
+                                            // Square Add Photo Placeholder
+                                            Button(action: { 
+                                                HapticManager.shared.playImpact(style: .light)
+                                                showCamera = true 
+                                            }) {
+                                                VStack(spacing: 8) {
+                                                    Image(systemName: "plus.viewfinder")
+                                                        .font(.system(size: 24))
+                                                    Text("ADD")
+                                                        .scaledFont(size: 10, weight: .bold)
+                                                }
+                                                .foregroundColor(settings.accentColor)
+                                                .frame(width: 100, height: 100)
+                                                .background(settings.surfaceColor)
+                                                .cornerRadius(16)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .stroke(settings.accentColor.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
+                                                )
                                             }
-                                            .foregroundColor(settings.accentColor)
-                                            .frame(width: 100, height: 100)
-                                            .background(settings.surfaceColor)
-                                            .cornerRadius(16)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(settings.accentColor.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
-                                            )
                                         }
                                     }
                                     .padding(.vertical, 4)

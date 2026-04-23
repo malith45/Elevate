@@ -11,6 +11,12 @@ struct JobIssueReportView: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var selectedTab: TabItem = .jobs
     @State private var showCamera = false
+    @State private var jobStatus: String = "PENDING"
+    
+    private var isTerminal: Bool {
+        let status = jobStatus.uppercased()
+        return status == "COMPLETED" || status == "CANCELLED"
+    }
     
     var body: some View {
         ZStack {
@@ -25,12 +31,20 @@ struct JobIssueReportView: View {
                         descriptionCard
                         priorityCard
                         photosCard
-                        submitButton
+                        
+                        if !isTerminal {
+                            submitButton
+                        }
                         
                         Spacer().frame(height: 120)
                     }
                     .padding(.horizontal, 24)
                 }
+            }
+        }
+        .onAppear {
+            if let job = LocalStorageService.shared.fetchJob(id: jobId) {
+                jobStatus = job.status
             }
         }
         .navigationBarHidden(true)
@@ -93,6 +107,7 @@ struct JobIssueReportView: View {
                     .background(settings.surfaceColor)
                     .foregroundColor(settings.primaryText)
                     .scaledFont(size: 15)
+                    .disabled(isTerminal)
             }
             .padding(12)
             .background(settings.surfaceColor)
@@ -128,6 +143,7 @@ struct JobIssueReportView: View {
                 PriorityButton(title: "MEDIUM", isSelected: viewModel.priority == "MEDIUM") { viewModel.priority = "MEDIUM" }
                 PriorityButton(title: "HIGH", isSelected: viewModel.priority == "HIGH") { viewModel.priority = "HIGH" }
             }
+            .disabled(isTerminal)
         }
         .padding(20)
         .background(settings.surfaceColor)
@@ -166,40 +182,44 @@ struct JobIssueReportView: View {
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                             
-                            Button(action: {
-                                HapticManager.shared.playImpact(style: .medium)
-                                viewModel.removeAttachment(url: url)
+                                if !isTerminal {
+                                    Button(action: {
+                                        HapticManager.shared.playImpact(style: .medium)
+                                        viewModel.removeAttachment(url: url)
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.system(size: 20))
+                                            .symbolRenderingMode(.palette)
+                                            .foregroundStyle(.white, .red)
+                                            .background(Circle().fill(.white).padding(2))
+                                            .offset(x: 5, y: -5)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if !isTerminal {
+                            Button(action: { 
+                                HapticManager.shared.playImpact(style: .light)
+                                showCamera = true 
                             }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 20))
-                                    .symbolRenderingMode(.palette)
-                                    .foregroundStyle(.white, .red)
-                                    .background(Circle().fill(.white).padding(2))
-                                    .offset(x: 5, y: -5)
+                                VStack(spacing: 6) {
+                                    Image(systemName: "plus.viewfinder")
+                                        .font(.system(size: 22))
+                                    Text("ADD")
+                                        .scaledFont(size: 9, weight: .bold)
+                                }
+                                .foregroundColor(settings.accentColor)
+                                .frame(width: 90, height: 90)
+                                .background(settings.surfaceColor)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(settings.accentColor.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                                )
                             }
                         }
                     }
-                    
-                    Button(action: { 
-                        HapticManager.shared.playImpact(style: .light)
-                        showCamera = true 
-                    }) {
-                        VStack(spacing: 6) {
-                            Image(systemName: "plus.viewfinder")
-                                .font(.system(size: 22))
-                            Text("ADD")
-                                .scaledFont(size: 9, weight: .bold)
-                        }
-                        .foregroundColor(settings.accentColor)
-                        .frame(width: 90, height: 90)
-                        .background(settings.surfaceColor)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(settings.accentColor.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-                        )
-                    }
-                }
                 .padding(.vertical, 4)
                 .padding(.trailing, 20)
             }

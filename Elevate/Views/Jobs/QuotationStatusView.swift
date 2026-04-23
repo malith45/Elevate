@@ -9,6 +9,11 @@ struct QuotationStatusView: View {
     @StateObject private var viewModel = QuotationStatusViewModel()
     @ObservedObject var settings = AccessibilitySettings.shared
     
+    private var isTerminal: Bool {
+        let status = viewModel.job?.status.uppercased() ?? ""
+        return status == "COMPLETED" || status == "CANCELLED"
+    }
+    
     var body: some View {
         ZStack {
             settings.appBackground.ignoresSafeArea()
@@ -92,7 +97,7 @@ struct QuotationStatusView: View {
                                         priceText: currencyString(Double(item.quantity) * item.unitPrice),
                                         statusText: nil,
                                         isApproved: false,
-                                        removeAction: {
+                                        removeAction: isTerminal ? nil : {
                                             guard let user = appSession.currentUser else { return }
                                             viewModel.removePendingItem(
                                                 jobId: jobId,
@@ -200,27 +205,29 @@ struct QuotationStatusView: View {
                                         )
                                 }
 
-                                Button(action: {
-                                    router.selectedJobId = jobId
-                                    router.path.append(TechnicianScreen.inventory)
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "plus.circle.fill")
-                                        Text("ADD ITEMS")
+                                if !isTerminal {
+                                    Button(action: {
+                                        router.selectedJobId = jobId
+                                        router.path.append(TechnicianScreen.inventory)
+                                    }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "plus.circle.fill")
+                                            Text("ADD ITEMS")
+                                        }
+                                        .scaledFont(size: 14, weight: .bold)
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 16)
+                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                        )
                                     }
-                                    .scaledFont(size: 14, weight: .bold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                    .cornerRadius(12)
-                                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
-                                    )
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 8)

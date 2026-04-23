@@ -6,30 +6,19 @@ struct ManagerMainTabView: View {
     
     var body: some View {
         NavigationStack(path: $router.path) {
-            ZStack(alignment: .bottom) {
-                Group {
-                    switch router.selectedTab {
-                    case .dashboard:
-                        ManagerDashboardView(selectedTab: $router.selectedTab)
-                    case .jobs:
-                        ManagerJobListView()
-                    case .map:
-                        ManagerMapView(viewModel: mapViewModel)
-                    case .profile:
-                        ManagerProfileView()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .safeAreaInset(edge: .bottom) {
-                    ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
-                        router.selectedTab = tab
-                        // Clear path when switching tabs to ensure we're at root
-                        router.path = NavigationPath()
-                    }
-                    .ignoresSafeArea(.keyboard, edges: .bottom)
-                    .padding(.bottom, 8)
+            Group {
+                switch router.selectedTab {
+                case .dashboard:
+                    ManagerDashboardView(selectedTab: $router.selectedTab)
+                case .jobs:
+                    ManagerJobListView()
+                case .map:
+                    ManagerMapView(viewModel: mapViewModel)
+                case .profile:
+                    ManagerProfileView()
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationDestination(for: ManagerScreen.self) { screen in
                 switch screen {
                 case .jobDetails:
@@ -74,6 +63,15 @@ struct ManagerMainTabView: View {
                     EmptyView()
                 }
             }
+        }
+        .safeAreaInset(edge: .bottom) {
+            ManagerBottomNav(selectedTab: $router.selectedTab, mode: .tabs) { tab in
+                router.selectedTab = tab
+                // Clear path when switching tabs to ensure we're at root
+                router.path = NavigationPath()
+            }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .padding(.bottom, 8)
         }
         .environment(\.managerTabRouter, router)
     }

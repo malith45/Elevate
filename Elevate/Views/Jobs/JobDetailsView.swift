@@ -16,8 +16,10 @@ struct JobDetailsView: View {
     @State private var holdReasonText = ""
     
     var body: some View {
-        ZStack {
-            settings.appBackground.ignoresSafeArea()
+        ZStack(alignment: .top) {
+            // Background
+            settings.appBackground
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -298,109 +300,106 @@ struct JobDetailsView: View {
                                 }
                             }
                             
-                            // FINAL ACTIONS
-                            VStack(spacing: 12) {
-                                let status = job.status.uppercased()
-                                
-                                if status == "COMPLETED" {
-                                    // TERMINAL: Completed banner — read-only
-                                    HStack(spacing: 14) {
-                                        Image(systemName: "checkmark.seal.fill")
-                                            .font(.system(size: 22))
+                            // TERMINAL STATE BANNERS (shown inline)
+                            let status = job.status.uppercased()
+                            if status == "COMPLETED" {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "checkmark.seal.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(.white)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("JOB COMPLETED")
+                                            .scaledFont(size: 13, weight: .bold)
                                             .foregroundColor(.white)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text("JOB COMPLETED")
-                                                .scaledFont(size: 13, weight: .bold)
-                                                .foregroundColor(.white)
-                                            Text(formattedDate(job.updatedAt))
+                                        Text(formattedDate(job.updatedAt))
+                                            .scaledFont(size: 11)
+                                            .foregroundColor(.white.opacity(0.8))
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.isHighContrast ? .white : Color.elevateDarkGreen.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                )
+                                .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                            } else if status == "CANCELLED" {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "xmark.octagon.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(.white)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("JOB CANCELLED BY MANAGER")
+                                            .scaledFont(size: 13, weight: .bold)
+                                            .foregroundColor(.white)
+                                        if let cancelledAt = job.cancelledAt {
+                                            Text(formattedDate(cancelledAt))
                                                 .scaledFont(size: 11)
                                                 .foregroundColor(.white.opacity(0.8))
                                         }
-                                        Spacer()
                                     }
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(settings.isHighContrast ? .white : Color.elevateDarkGreen.opacity(0.3), lineWidth: settings.cardStrokeWidth)
-                                    )
-                                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .background(settings.isHighContrast ? Color.black : Color.red)
+                                .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.isHighContrast ? .white : Color.red.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                )
+                                .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
+                            }
 
-                                } else if status == "CANCELLED" {
-                                    // TERMINAL: Cancelled banner — read-only, set by manager
-                                    HStack(spacing: 14) {
-                                        Image(systemName: "xmark.octagon.fill")
-                                            .font(.system(size: 22))
-                                            .foregroundColor(.white)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text("JOB CANCELLED BY MANAGER")
-                                                .scaledFont(size: 13, weight: .bold)
-                                                .foregroundColor(.white)
-                                            if let cancelledAt = job.cancelledAt {
-                                                Text(formattedDate(cancelledAt))
-                                                    .scaledFont(size: 11)
-                                                    .foregroundColor(.white.opacity(0.8))
+                            // ACTION BUTTONS AT THE BOTTOM OF CONTENT
+                            if status != "COMPLETED" && status != "CANCELLED" {
+                                VStack(spacing: 12) {
+                                    if status == "HOLD" {
+                                        actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
+                                            updateStatus(jobId: job.id, status: "IN_PROGRESS")
+                                        }
+                                    } else if status == "IN_PROGRESS" {
+                                        HStack(spacing: 12) {
+                                            Button(action: {
+                                                holdReasonText = job.holdReason ?? ""
+                                                showHoldPrompt = true
+                                            }) {
+                                                HStack {
+                                                    Image(systemName: "pause.fill")
+                                                    Text("HOLD")
+                                                }
+                                                .scaledFont(size: 15, weight: .bold)
+                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.vertical, 16)
+                                                .background(settings.surfaceColor)
+                                                .cornerRadius(16)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                )
+                                            }
+                                            actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: Color.elevateDarkGreen) {
+                                                updateStatus(jobId: job.id, status: "COMPLETED") {
+                                                    dismiss()
+                                                }
                                             }
                                         }
-                                        Spacer()
-                                    }
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? Color.black : Color.red)
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(settings.isHighContrast ? .white : Color.red.opacity(0.3), lineWidth: settings.cardStrokeWidth)
-                                    )
-                                    .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
-
-                                } else if status == "HOLD" {
-                                    // HOLD -> CONTINUE
-                                    actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
-                                        updateStatus(jobId: job.id, status: "IN_PROGRESS")
-                                    }
-                                } else if status == "IN_PROGRESS" {
-                                    // IN_PROGRESS -> HOLD | COMPLETE
-                                    HStack(spacing: 12) {
-                                        Button(action: {
-                                            holdReasonText = job.holdReason ?? ""
-                                            showHoldPrompt = true
-                                        }) {
-                                            HStack {
-                                                Image(systemName: "pause.fill")
-                                                Text("HOLD")
-                                            }
-                                            .scaledFont(size: 15, weight: .bold)
-                                            .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 16)
-                                            .background(settings.surfaceColor)
-                                            .cornerRadius(16)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                            )
+                                    } else {
+                                        // PENDING or Fallback
+                                        actionButton(title: "START WORK", icon: "play.circle.fill", color: settings.accentColor) {
+                                            updateStatus(jobId: job.id, status: "IN_PROGRESS")
                                         }
-                                        
-                                        actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: Color.elevateDarkGreen) {
-                                            updateStatus(jobId: job.id, status: "COMPLETED") {
-                                                dismiss()
-                                            }
-                                        }
-                                    }
-                                } else if status == "PENDING" {
-                                    // PENDING -> START
-                                    actionButton(title: "START WORK", icon: "play.circle.fill", color: settings.accentColor) {
-                                        updateStatus(jobId: job.id, status: "IN_PROGRESS")
                                     }
                                 }
+                                .padding(.top, 12)
                             }
-                            .padding(.top, 12)
 
-                            
-                            Spacer().frame(height: 120)
+                            // Spacer for bottom tab bar clearance
+                            Spacer().frame(height: 100)
                         } else {
                             SkeletonDetailHeader()
                         }
@@ -410,7 +409,7 @@ struct JobDetailsView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear { 
+        .onAppear {
             HapticManager.shared.playImpact(style: .light)
             viewModel.load(jobId: jobId) 
         }

@@ -57,12 +57,12 @@ struct ManagerJobIssueReportView: View {
             }
         }
         .alert("Issue Report", isPresented: Binding(
-            get: { viewModel.errorMessage != nil },
-            set: { _ in viewModel.errorMessage = nil }
+            get: { viewModel.errorMessage != nil || viewModel.didSubmit },
+            set: { if !$0 { viewModel.errorMessage = nil; viewModel.didSubmit = false } }
         )) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(viewModel.errorMessage ?? "")
+            Text(viewModel.errorMessage ?? "Action successful.")
         }
     }
 

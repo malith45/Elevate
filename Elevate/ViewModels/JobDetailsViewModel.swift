@@ -140,7 +140,7 @@ final class JobDetailsViewModel: ObservableObject {
         }
     }
 
-    func deleteJobAndCleanup(job: Job, user: User, isOnline: Bool, completion: @escaping (Bool) -> Void) {
+    func cancelJobAndCleanup(job: Job, user: User, isOnline: Bool, completion: @escaping (Bool) -> Void) {
         // 1. Restore Inventory for approved items
         let approvedItems = job.quotationItems.filter { $0.status == "APPROVED" }
         for item in approvedItems {
@@ -161,33 +161,9 @@ final class JobDetailsViewModel: ObservableObject {
             }
         }
 
-        // 2. Delete Issue Reports
-        localStorage.deleteIssueReportsForJob(jobId: job.id)
-        if isOnline {
-            firebase.deleteIssueReportsForJob(jobId: job.id) { _ in }
-        }
-
-        // 3. Delete Job
-        localStorage.deleteJob(id: job.id)
-        
-        if isOnline {
-            firebase.deleteJob(jobId: job.id) { result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success:
-                        HapticManager.shared.playNotification(type: .success)
-                        completion(true)
-                    case .failure:
-                        completion(false)
-                    }
-                }
-            }
-        } else {
-            SyncManager.shared.enqueueDeleteJob(jobId: job.id, organizationId: user.organizationId, userId: user.id)
-            DispatchQueue.main.async {
-                HapticManager.shared.playNotification(type: .success)
-                completion(true)
-            }
+        // 2. Update Job Status to CANCELLED (Preserves the job record for history)
+        updateStatus(jobId: job.id, status: "CANCELLED", user: user, isOnline: isOnline) {
+            completion(true)
         }
     }
 }

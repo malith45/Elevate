@@ -7,6 +7,7 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
     @Published var reports: [IssueReport] = []
     @Published var technician: User?
     @Published var errorMessage: String?
+    @Published var didSubmit = false
 
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
@@ -16,6 +17,7 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
         job = localStorage.fetchJob(id: jobId)
         reports = localStorage.fetchIssueReports(jobId: jobId)
         report = reports.first
+        didSubmit = false
 
         if let selected = report {
             technician = localStorage.fetchUser(id: selected.userId)
@@ -50,6 +52,7 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
 
     func selectReport(_ report: IssueReport) {
         self.report = report
+        didSubmit = false
         technician = localStorage.fetchUser(id: report.userId)
     }
 
@@ -83,6 +86,7 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
                     )
                     self.localStorage.saveIssueReport(updated, isSynced: true)
                     self.report = updated
+                    self.didSubmit = true
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }
@@ -119,6 +123,7 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
                     )
                     self.localStorage.saveIssueReport(updated, isSynced: true)
                     self.report = updated
+                    self.didSubmit = true
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }

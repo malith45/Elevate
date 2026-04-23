@@ -18,6 +18,8 @@ struct ManagerJobDetailsView: View {
     @State private var holdReasonText = ""
     @State private var cancelPassword = ""
     @State private var showPasswordError = false
+    @State private var showSuccessAlert = false
+    @State private var successMessage = ""
     @Environment(\.dismiss) private var dismiss
 
     private let localStorage = LocalStorageService.shared
@@ -401,6 +403,11 @@ struct ManagerJobDetailsView: View {
         } message: {
             Text("The password you entered is incorrect. Cancellation denied.")
         }
+        .alert("Success", isPresented: $showSuccessAlert) {
+            Button("OK") { dismiss() }
+        } message: {
+            Text(successMessage)
+        }
     }
 
     private func updateStatus(jobId: String, status: String, holdReason: String? = nil, completion: (() -> Void)? = nil) {
@@ -495,9 +502,10 @@ struct ManagerJobDetailsView: View {
 
     private func confirmDeletion() {
         guard let job = viewModel.job, let user = appSession.currentUser else { return }
-        viewModel.deleteJobAndCleanup(job: job, user: user, isOnline: network.isOnline) { success in
+        viewModel.cancelJobAndCleanup(job: job, user: user, isOnline: network.isOnline) { success in
             if success {
-                dismiss()
+                successMessage = "Job has been successfully cancelled and removed."
+                showSuccessAlert = true
             }
         }
     }

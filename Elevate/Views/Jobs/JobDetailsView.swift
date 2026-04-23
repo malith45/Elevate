@@ -14,6 +14,8 @@ struct JobDetailsView: View {
     @State private var showCamera = false
     @State private var showHoldPrompt = false
     @State private var holdReasonText = ""
+    @State private var showSuccessAlert = false
+    @State private var successMessage = ""
     
     private var isTerminal: Bool {
         let status = viewModel.job?.status.uppercased() ?? ""
@@ -393,7 +395,8 @@ struct JobDetailsView: View {
                                             }
                                             actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: Color.elevateDarkGreen) {
                                                 updateStatus(jobId: job.id, status: "COMPLETED") {
-                                                    dismiss()
+                                                    successMessage = "Job marked as completed successfully."
+                                                    showSuccessAlert = true
                                                 }
                                             }
                                         }
@@ -435,6 +438,11 @@ struct JobDetailsView: View {
             }
         } message: {
             Text("Provide a brief reason for pausing this service.")
+        }
+        .alert("Success", isPresented: $showSuccessAlert) {
+            Button("OK") { dismiss() }
+        } message: {
+            Text(successMessage)
         }
     }
 

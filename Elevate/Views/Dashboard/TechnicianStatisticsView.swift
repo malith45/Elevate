@@ -12,21 +12,6 @@ struct TechnicianStatisticsView: View {
         ZStack {
             settings.appBackground.ignoresSafeArea()
             
-            // Decorative background elements for "Liquid Glass" effect
-            GeometryReader { geo in
-                Circle()
-                    .fill(settings.accentColor.opacity(0.15))
-                    .frame(width: 300, height: 300)
-                    .blur(radius: 80)
-                    .offset(x: geo.size.width * 0.7, y: -50)
-                
-                Circle()
-                    .fill(Color.blue.opacity(0.1))
-                    .frame(width: 250, height: 250)
-                    .blur(radius: 70)
-                    .offset(x: -50, y: geo.size.height * 0.4)
-            }
-            
             VStack(spacing: 0) {
                 // Top Nav
                 BackHeaderNav(onBack: {
@@ -35,14 +20,14 @@ struct TechnicianStatisticsView: View {
                 .padding(.bottom, 8)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 24) {
                         
                         // Header
                         VStack(alignment: .leading, spacing: 8) {
                             Text("PERSONAL INSIGHTS")
-                                .scaledFont(size: 12, weight: .black)
+                                .scaledFont(size: 11, weight: .bold)
                                 .foregroundColor(settings.secondaryText)
-                                .tracking(2)
+                                .tracking(1.0)
                             
                             Text("Performance Dashboard")
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
@@ -89,24 +74,24 @@ struct TechnicianStatisticsView: View {
                             .padding(.vertical, 10)
                         }
                         .padding(24)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(32)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(24)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 32)
+                            RoundedRectangle(cornerRadius: 24)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
                         .padding(.horizontal, 24)
-                        .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 8)
+                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         
                         // Summary Grid
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            GlassStatCard(
+                            StatCard(
                                 icon: "briefcase.fill",
                                 title: "JOBS DONE",
                                 value: "\(viewModel.jobs.filter { $0.status.uppercased() == "COMPLETED" }.count)",
                                 subtitle: "Total work"
                             )
-                            GlassStatCard(
+                            StatCard(
                                 icon: "calendar.badge.checkmark",
                                 title: "ON SCHEDULE",
                                 value: percentString(viewModel.onScheduleRate),
@@ -118,9 +103,9 @@ struct TechnicianStatisticsView: View {
                         // Job Activity Chart
                         VStack(alignment: .leading, spacing: 20) {
                             Text("WORKLOAD TREND")
-                                .scaledFont(size: 12, weight: .black)
+                                .scaledFont(size: 11, weight: .bold)
                                 .foregroundColor(settings.secondaryText)
-                                .tracking(1.5)
+                                .tracking(1.0)
                             
                             Chart {
                                 ForEach(viewModel.weeklyStats) { item in
@@ -161,20 +146,21 @@ struct TechnicianStatisticsView: View {
                             }
                         }
                         .padding(24)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(32)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(24)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 32)
+                            RoundedRectangle(cornerRadius: 24)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
+                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         .padding(.horizontal, 24)
                         
                         // Priority Distribution
                         VStack(alignment: .leading, spacing: 20) {
                             Text("TASK DISTRIBUTION")
-                                .scaledFont(size: 12, weight: .black)
+                                .scaledFont(size: 11, weight: .bold)
                                 .foregroundColor(settings.secondaryText)
-                                .tracking(1.5)
+                                .tracking(1.0)
                             
                             Chart(viewModel.jobsByPriority) { item in
                                 SectorMark(
@@ -189,12 +175,13 @@ struct TechnicianStatisticsView: View {
                             .chartLegend(position: .bottom, spacing: 16)
                         }
                         .padding(24)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(32)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(24)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 32)
+                            RoundedRectangle(cornerRadius: 24)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
+                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         .padding(.horizontal, 24)
                         
                         // Bottom Padding
@@ -224,47 +211,6 @@ struct TechnicianStatisticsView: View {
     private func percentString(_ value: Double) -> String {
         let percent = Int((value * 100).rounded())
         return "\(percent)%"
-    }
-}
-
-struct GlassStatCard: View {
-    var icon: String
-    var title: String
-    var value: String
-    var subtitle: String
-    @ObservedObject var settings = AccessibilitySettings.shared
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(settings.accentColor)
-                .padding(10)
-                .background(settings.accentColor.opacity(0.1))
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .scaledFont(size: 24, weight: .bold, design: .rounded)
-                    .foregroundColor(settings.primaryText)
-                
-                Text(title)
-                    .scaledFont(size: 10, weight: .black)
-                    .foregroundColor(settings.secondaryText)
-            }
-            
-            Text(subtitle)
-                .scaledFont(size: 11)
-                .foregroundColor(settings.secondaryText.opacity(0.8))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(.ultraThinMaterial)
-        .cornerRadius(24)
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-        )
     }
 }
 

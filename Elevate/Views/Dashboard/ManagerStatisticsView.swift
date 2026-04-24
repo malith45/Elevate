@@ -13,21 +13,6 @@ struct ManagerStatisticsView: View {
         ZStack {
             settings.appBackground.ignoresSafeArea()
             
-            // Decorative background elements
-            GeometryReader { geo in
-                Circle()
-                    .fill(Color.orange.opacity(0.12))
-                    .frame(width: 350, height: 350)
-                    .blur(radius: 90)
-                    .offset(x: geo.size.width * 0.6, y: geo.size.height * 0.1)
-                
-                Circle()
-                    .fill(settings.accentColor.opacity(0.1))
-                    .frame(width: 300, height: 300)
-                    .blur(radius: 80)
-                    .offset(x: -50, y: geo.size.height * 0.6)
-            }
-            
             VStack(spacing: 0) {
                 // Top Nav
                 BackHeaderNav(isManager: true, onBack: {
@@ -36,14 +21,14 @@ struct ManagerStatisticsView: View {
                 .padding(.bottom, 8)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 24) {
                         
                         // Header with Selector
                         VStack(alignment: .leading, spacing: 16) {
                             Text("ORGANIZATIONAL INTEL")
-                                .scaledFont(size: 12, weight: .black)
+                                .scaledFont(size: 11, weight: .bold)
                                 .foregroundColor(settings.secondaryText)
-                                .tracking(2)
+                                .tracking(1.0)
                             
                             Menu {
                                 Button(action: { selectedTechnicianId = nil }) {
@@ -61,8 +46,11 @@ struct ManagerStatisticsView: View {
                                 HStack(spacing: 16) {
                                     ZStack {
                                         Circle()
-                                            .fill(settings.accentColor.opacity(0.1))
+                                            .fill(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
                                             .frame(width: 52, height: 52)
+                                            .overlay(
+                                                Circle().stroke(settings.primaryText, lineWidth: settings.isHighContrast ? 1.5 : 0)
+                                            )
                                         
                                         Image(systemName: selectedTechnicianId == nil ? "building.2.fill" : "person.fill")
                                             .font(.system(size: 24))
@@ -80,30 +68,31 @@ struct ManagerStatisticsView: View {
                                     
                                     Spacer()
                                     
-                                    Image(systemName: "chevron.up.down")
-                                        .font(.system(size: 16, weight: .medium))
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(settings.secondaryText)
                                 }
                                 .padding(16)
-                                .background(.ultraThinMaterial)
+                                .background(settings.surfaceColor)
                                 .cornerRadius(24)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 24)
                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
+                                .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                             }
                         }
                         .padding(.horizontal, 24)
                         
                         // Top Level KPIs
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            GlassStatCard(
+                            StatCard(
                                 icon: "person.2.fill",
                                 title: "TEAM SIZE",
                                 value: "\(viewModel.technicians.count)",
                                 subtitle: "Active staff"
                             )
-                            GlassStatCard(
+                            StatCard(
                                 icon: "target",
                                 title: "AVG EFFICIENCY",
                                 value: percentString(viewModel.completionRate),
@@ -115,9 +104,9 @@ struct ManagerStatisticsView: View {
                         // Performance Breakdown Chart
                         VStack(alignment: .leading, spacing: 20) {
                             Text(selectedTechnicianId == nil ? "TEAM COMPLETIONS" : "ACTIVITY TREND")
-                                .scaledFont(size: 12, weight: .black)
+                                .scaledFont(size: 11, weight: .bold)
                                 .foregroundColor(settings.secondaryText)
-                                .tracking(1.5)
+                                .tracking(1.0)
                             
                             Chart {
                                 ForEach(viewModel.weeklyStats) { item in
@@ -155,21 +144,22 @@ struct ManagerStatisticsView: View {
                             }
                         }
                         .padding(24)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(32)
+                        .background(settings.surfaceColor)
+                        .cornerRadius(24)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 32)
+                            RoundedRectangle(cornerRadius: 24)
                                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                         )
+                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                         .padding(.horizontal, 24)
                         
                         // Technician Leaderboard (Only if no tech selected)
                         if selectedTechnicianId == nil {
                             VStack(alignment: .leading, spacing: 20) {
                                 Text("WORKFORCE EFFICIENCY")
-                                    .scaledFont(size: 12, weight: .black)
+                                    .scaledFont(size: 11, weight: .bold)
                                     .foregroundColor(settings.secondaryText)
-                                    .tracking(1.5)
+                                    .tracking(1.0)
                                 
                                 VStack(spacing: 16) {
                                     ForEach(viewModel.technicians.prefix(5), id: \.id) { tech in
@@ -177,7 +167,7 @@ struct ManagerStatisticsView: View {
                                             Text(displayName(for: tech).prefix(1))
                                                 .scaledFont(size: 14, weight: .bold)
                                                 .frame(width: 32, height: 32)
-                                                .background(settings.accentColor.opacity(0.2))
+                                                .background(settings.accentColor.opacity(0.1))
                                                 .clipShape(Circle())
                                             
                                             VStack(alignment: .leading, spacing: 2) {
@@ -205,20 +195,21 @@ struct ManagerStatisticsView: View {
                                 }
                             }
                             .padding(24)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(32)
+                            .background(settings.surfaceColor)
+                            .cornerRadius(24)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 32)
+                                RoundedRectangle(cornerRadius: 24)
                                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
+                            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                             .padding(.horizontal, 24)
                         } else {
                             // Status Distribution for individual
                             VStack(alignment: .leading, spacing: 20) {
                                 Text("JOB STATUS SPREAD")
-                                    .scaledFont(size: 12, weight: .black)
+                                    .scaledFont(size: 11, weight: .bold)
                                     .foregroundColor(settings.secondaryText)
-                                    .tracking(1.5)
+                                    .tracking(1.0)
                                 
                                 Chart(viewModel.jobsByStatus) { item in
                                     BarMark(
@@ -232,12 +223,13 @@ struct ManagerStatisticsView: View {
                                 .chartLegend(.hidden)
                             }
                             .padding(24)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(32)
+                            .background(settings.surfaceColor)
+                            .cornerRadius(24)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 32)
+                                RoundedRectangle(cornerRadius: 24)
                                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
+                            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
                             .padding(.horizontal, 24)
                         }
                         
@@ -247,6 +239,7 @@ struct ManagerStatisticsView: View {
                 }
             }
         }
+
         .navigationBarHidden(true)
         .onAppear { loadStats() }
         .onChange(of: selectedTechnicianId) { _, _ in loadStats() }

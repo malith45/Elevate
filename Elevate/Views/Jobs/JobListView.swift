@@ -169,7 +169,7 @@ struct JobListView: View {
                         // Bottom Stats
                         HStack(spacing: 16) {
                             StatPill(icon: "checkmark.circle", value: "\(viewModel.jobs.filter { $0.status.uppercased() == "COMPLETED" }.count)", title: "JOBS COMPLETED", isPrimary: true)
-                            StatPill(icon: "clock", value: "\(viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" }.count)", title: "PENDING JOBS", isPrimary: false)
+                            StatPill(icon: "clock", value: "\(viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" && $0.status.uppercased() != "CANCELLED" }.count)", title: "PENDING JOBS", isPrimary: false)
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
@@ -281,7 +281,7 @@ struct JobCard: View {
                 
                 // Title
                 Text(job.title)
-                    .scaledFont(size: 20, weight: .bold, design: .rounded)
+                    .scaledFont(size: 18, weight: .bold, design: .rounded)
                     .foregroundColor(settings.primaryText)
                     .lineLimit(2)
                 
@@ -290,10 +290,10 @@ struct JobCard: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(Color.elevateLightGray.opacity(0.3))
-                            .frame(width: 40, height: 40)
+                            .frame(width: 36, height: 36)
                         Image(systemName: "mappin.and.ellipse")
                             .foregroundColor(settings.accentColor)
-                            .font(.system(size: 18))
+                            .font(.system(size: 16))
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -305,7 +305,7 @@ struct JobCard: View {
                             Text(notes)
                                 .scaledFont(size: 12)
                                 .foregroundColor(settings.secondaryText)
-                                .lineLimit(2)
+                                .lineLimit(1)
                         }
                     }
                 }

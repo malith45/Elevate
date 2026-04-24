@@ -175,7 +175,7 @@ struct ManagerJobListView: View {
                         // Bottom Stats
                         HStack(spacing: 16) {
                             let completedCount = viewModel.jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
-                            let pendingCount = viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" }.count
+                            let pendingCount = viewModel.jobs.filter { $0.status.uppercased() != "COMPLETED" && $0.status.uppercased() != "CANCELLED" }.count
                             StatPill(icon: "checkmark.circle", value: "\(completedCount)", title: "JOBS COMPLETED", isPrimary: true)
                             StatPill(icon: "clock", value: "\(pendingCount)", title: "PENDING JOBS", isPrimary: false)
                         }

@@ -23,6 +23,18 @@ struct ManagerStatisticsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         
+                        // Time Filter Picker
+                        Picker("Time Period", selection: $viewModel.selectedTimeFilter) {
+                            ForEach(TimeFilter.allCases, id: \.self) { filter in
+                                Text(filter.rawValue).tag(filter)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, 24)
+                        .onChange(of: viewModel.selectedTimeFilter) { _, _ in
+                            loadStats()
+                        }
+                        
                         // Header with Selector
                         VStack(alignment: .leading, spacing: 16) {
                             Text("ORGANIZATIONAL INTEL")
@@ -84,6 +96,18 @@ struct ManagerStatisticsView: View {
                         }
                         .padding(.horizontal, 24)
                         
+                        // Expanded KPIs
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                MiniStatPill(title: "PENDING", value: "\(viewModel.pendingCount)", color: .orange)
+                                MiniStatPill(title: "STARTED", value: "\(viewModel.startedCount)", color: .blue)
+                                MiniStatPill(title: "HOLD", value: "\(viewModel.onHoldCount)", color: .purple)
+                                MiniStatPill(title: "CANCELLED", value: "\(viewModel.cancelledCount)", color: .red)
+                                MiniStatPill(title: "COMPLETED", value: "\(viewModel.completedCount)", color: .green)
+                            }
+                            .padding(.horizontal, 24)
+                        }
+
                         // Top Level KPIs
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                             StatCard(
@@ -96,7 +120,7 @@ struct ManagerStatisticsView: View {
                                 icon: "target",
                                 title: "AVG EFFICIENCY",
                                 value: percentString(viewModel.completionRate),
-                                subtitle: "Organization"
+                                subtitle: viewModel.selectedTimeFilter.rawValue
                             )
                         }
                         .padding(.horizontal, 24)
@@ -162,16 +186,16 @@ struct ManagerStatisticsView: View {
                                     .tracking(1.0)
                                 
                                 VStack(spacing: 16) {
-                                    ForEach(viewModel.technicians.prefix(5), id: \.id) { tech in
+                                    ForEach(viewModel.technicianJobCounts.prefix(5)) { techCount in
                                         HStack(spacing: 12) {
-                                            Text(displayName(for: tech).prefix(1))
+                                            Text(techCount.name.prefix(1))
                                                 .scaledFont(size: 14, weight: .bold)
                                                 .frame(width: 32, height: 32)
                                                 .background(settings.accentColor.opacity(0.1))
                                                 .clipShape(Circle())
                                             
                                             VStack(alignment: .leading, spacing: 2) {
-                                                Text(displayName(for: tech))
+                                                Text(techCount.name)
                                                     .scaledFont(size: 14, weight: .bold)
                                                 Text("Senior Technician")
                                                     .scaledFont(size: 10)
@@ -180,15 +204,16 @@ struct ManagerStatisticsView: View {
                                             
                                             Spacer()
                                             
-                                            Text("Top Performer")
-                                                .scaledFont(size: 10, weight: .bold)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(Color.green.opacity(0.1))
-                                                .foregroundColor(.green)
-                                                .cornerRadius(8)
+                                            VStack(alignment: .trailing, spacing: 2) {
+                                                Text("\(techCount.completed) / \(techCount.assigned)")
+                                                    .scaledFont(size: 12, weight: .bold)
+                                                    .foregroundColor(settings.primaryText)
+                                                Text("COMPLETED")
+                                                    .scaledFont(size: 8, weight: .bold)
+                                                    .foregroundColor(settings.secondaryText)
+                                            }
                                         }
-                                        if tech.id != viewModel.technicians.prefix(5).last?.id {
+                                        if techCount.id != viewModel.technicianJobCounts.prefix(5).last?.id {
                                             Divider().background(settings.cardStroke)
                                         }
                                     }

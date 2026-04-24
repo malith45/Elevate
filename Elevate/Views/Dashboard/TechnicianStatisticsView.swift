@@ -22,6 +22,18 @@ struct TechnicianStatisticsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         
+                        // Time Filter Picker
+                        Picker("Time Period", selection: $viewModel.selectedTimeFilter) {
+                            ForEach(TimeFilter.allCases, id: \.self) { filter in
+                                Text(filter.rawValue).tag(filter)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, 24)
+                        .onChange(of: viewModel.selectedTimeFilter) { _, _ in
+                            loadStats()
+                        }
+                        
                         // Header
                         VStack(alignment: .leading, spacing: 8) {
                             Text("PERSONAL INSIGHTS")
@@ -34,6 +46,17 @@ struct TechnicianStatisticsView: View {
                                 .foregroundColor(settings.primaryText)
                         }
                         .padding(.horizontal, 24)
+                        
+                        // Status Strip
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                MiniStatPill(title: "PENDING", value: "\(viewModel.pendingCount)", color: .orange)
+                                MiniStatPill(title: "STARTED", value: "\(viewModel.startedCount)", color: .blue)
+                                MiniStatPill(title: "HOLD", value: "\(viewModel.onHoldCount)", color: .purple)
+                                MiniStatPill(title: "COMPLETED", value: "\(viewModel.completedCount)", color: .green)
+                            }
+                            .padding(.horizontal, 24)
+                        }
                         
                         // Hero KPI - Completion Rate Gauge
                         VStack(spacing: 20) {

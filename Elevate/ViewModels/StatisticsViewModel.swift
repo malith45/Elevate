@@ -14,7 +14,21 @@ struct DailyEfficiencyStat: Identifiable {
     let value: Double
 }
 
+enum TimeFilter: String, CaseIterable {
+    case sevenDays = "Last 7 Days"
+    case month = "Last Month"
+    case year = "Last Year"
+}
+
+struct TechnicianJobCount: Identifiable {
+    let id: String
+    let name: String
+    let assigned: Int
+    let completed: Int
+}
+
 final class StatisticsViewModel: ObservableObject {
+    @Published var selectedTimeFilter: TimeFilter = .month
     @Published var jobs: [Job] = []
     @Published var technicians: [User] = []
     @Published var weeklyStats: [WeeklyJobStat] = []
@@ -24,6 +38,16 @@ final class StatisticsViewModel: ObservableObject {
     @Published var comparisonLabel: String = "Vs. Team Average"
     @Published var comparisonDelta: Double = 0
     @Published var comparisonIsPositive: Bool = true
+    
+    // Status Counts for Top KPIs
+    @Published var pendingCount: Int = 0
+    @Published var startedCount: Int = 0
+    @Published var onHoldCount: Int = 0
+    @Published var cancelledCount: Int = 0
+    @Published var completedCount: Int = 0
+    
+    // Technician Performance for Manager
+    @Published var technicianJobCounts: [TechnicianJobCount] = []
     
     // New Metrics
     @Published var jobsByStatus: [StatusDistribution] = []
@@ -55,13 +79,13 @@ final class StatisticsViewModel: ObservableObject {
         SyncManager.shared.startSyncing(organizationId: organizationId, userId: userId, role: role) { [weak self] in
             guard let self = self else { return }
             let refreshed = self.filteredJobs(organizationId: organizationId, userId: assignedUserId, technicianId: technicianId)
-            DispatchQueue.main.async(execute: DispatchWorkItem(block: {
+            DispatchQueue.main.async {
                 self.jobs = refreshed
                 self.computeStats(from: refreshed)
                 self.computeComparison(organizationId: organizationId, role: role, userId: userId, technicianId: technicianId)
                 self.technicians = self.localStorage.fetchUsers(organizationId: organizationId)
                     .filter { $0.role.uppercased() == "TECHNICIAN" }
-            }))
+            }
         }
     }
 
@@ -72,21 +96,46 @@ final class StatisticsViewModel: ObservableObject {
     }
 
     private func computeStats(from jobs: [Job]) {
-        weeklyStats = makeWeeklyStats(from: jobs)
-        efficiencyStats = makeEfficiencyStats(from: jobs)
-
-        completionRate = completionRate(for: jobs)
-
-        let scheduled = jobs.filter { $0.status.uppercased() != "CANCELLED" }.count
-        let completedCount = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
-        onScheduleRate = scheduled == 0 ? 0 : Double(completedCount) / Double(scheduled)
+        let calendar = Calendar.current
+        let now = Date()
         
-        // Distribution Stats
-        let statusMap = Dictionary(grouping: jobs, by: { $0.status.uppercased() })
+        let filteredByTime = jobs.filter { job in
+            switch selectedTimeFilter {
+            case .sevenDays:
+                return calendar.isDate(job.scheduledAt, withinDays: 7, from: now)
+            case .month:
+                return calendar.isDate(job.scheduledAt, inSameMonthAs: now)
+            case .year:
+                return calendar.isDate(job.scheduledAt, inSameYearAs: now)
+            }
+        }
+        
+        weeklyStats = makeWeeklyStats(from: filteredByTime)
+        efficiencyStats = makeEfficiencyStats(from: filteredByTime)
+        completionRate = calculateCompletionRate(for: filteredByTime)
+
+        let activeJobs = filteredByTime.filter { $0.status.uppercased() != "CANCELLED" }
+        let completedJobsCount = activeJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+        onScheduleRate = activeJobs.isEmpty ? 0 : Double(completedJobsCount) / Double(activeJobs.count)
+        
+        let statusMap = Dictionary(grouping: filteredByTime, by: { $0.status.uppercased() })
         jobsByStatus = statusMap.map { StatusDistribution(status: $0.key, count: $0.value.count) }
             .sorted { $0.count > $1.count }
             
-        let priorityMap = Dictionary(grouping: jobs, by: { $0.priority.uppercased() })
+        pendingCount = filteredByTime.filter { $0.status.uppercased() == "PENDING" }.count
+        startedCount = filteredByTime.filter { $0.status.uppercased() == "STARTED" || $0.status.uppercased() == "IN-PROGRESS" }.count
+        onHoldCount = filteredByTime.filter { $0.status.uppercased() == "ON-HOLD" || $0.status.uppercased() == "HOLD" }.count
+        cancelledCount = filteredByTime.filter { $0.status.uppercased() == "CANCELLED" }.count
+        completedCount = filteredByTime.filter { $0.status.uppercased() == "COMPLETED" }.count
+
+        let techMap = Dictionary(grouping: filteredByTime, by: { $0.assignedUserId })
+        technicianJobCounts = technicians.map { tech in
+            let techJobs = techMap[tech.id] ?? []
+            let completed = techJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+            return TechnicianJobCount(id: tech.id, name: tech.displayName.isEmpty ? tech.username : tech.displayName, assigned: techJobs.count, completed: completed)
+        }
+        
+        let priorityMap = Dictionary(grouping: filteredByTime, by: { $0.priority.uppercased() })
         jobsByPriority = priorityMap.map { PriorityDistribution(priority: $0.key, count: $0.value.count) }
             .sorted { $0.count > $1.count }
     }
@@ -94,7 +143,7 @@ final class StatisticsViewModel: ObservableObject {
     private func computeComparison(organizationId: String, role: String, userId: String, technicianId: String?) {
         let assignedUserId = (role == "TECHNICIAN") ? userId : nil
         let allJobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
-        let teamRate = completionRate(for: allJobs)
+        let teamRate = calculateCompletionRate(for: allJobs)
         let targetRate = 0.8
 
         if technicianId == nil {
@@ -108,7 +157,7 @@ final class StatisticsViewModel: ObservableObject {
         comparisonIsPositive = comparisonDelta >= 0
     }
 
-    private func completionRate(for jobs: [Job]) -> Double {
+    private func calculateCompletionRate(for jobs: [Job]) -> Double {
         let activeJobs = jobs.filter { $0.status.uppercased() != "CANCELLED" }
         let total = activeJobs.count
         let completed = activeJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
@@ -156,5 +205,32 @@ final class StatisticsViewModel: ObservableObject {
         calendar.firstWeekday = 2
         let components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
         return calendar.date(from: components) ?? date
+    }
+}
+
+extension Calendar {
+    func isDate(_ date: Date, withinDays days: Int, from now: Date) -> Bool {
+        guard let cutoff = self.date(byAdding: .day, value: -days, to: now) else { return false }
+        return date >= cutoff && date <= now
+    }
+    
+    func isSameMonthAs(_ date1: Date, _ date2: Date) -> Bool {
+        let comp1 = dateComponents([.year, .month], from: date1)
+        let comp2 = dateComponents([.year, .month], from: date2)
+        return comp1.year == comp2.year && comp1.month == comp2.month
+    }
+
+    func isSameYearAs(_ date1: Date, _ date2: Date) -> Bool {
+        let comp1 = dateComponents([.year], from: date1)
+        let comp2 = dateComponents([.year], from: date2)
+        return comp1.year == comp2.year
+    }
+    
+    func isDate(_ date: Date, inSameMonthAs now: Date) -> Bool {
+        return isSameMonthAs(date, now)
+    }
+    
+    func isDate(_ date: Date, inSameYearAs now: Date) -> Bool {
+        return isSameYearAs(date, now)
     }
 }

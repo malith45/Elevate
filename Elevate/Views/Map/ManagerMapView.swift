@@ -65,18 +65,18 @@ struct ManagerMapView: View {
                 HStack {
                     Spacer()
 
-                    VStack(spacing: 10) {
+                    VStack(spacing: 12) {
                         Button(action: centerOnUser) {
                             Image(systemName: "location.fill")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.elevateDarkGreen)
-                                .frame(width: 40, height: 40)
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+                                .frame(width: 48, height: 48)
+                                .background(.white)
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         }
                     }
-                    .padding(.bottom, 260)
+                    .padding(.bottom, 120)
                     .padding(.trailing, 20)
                 }
             }

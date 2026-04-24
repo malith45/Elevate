@@ -123,7 +123,7 @@ struct TechnicianProfileView: View {
                                             RoundedRectangle(cornerRadius: 10)
                                                 .fill(Color.elevateDarkGreen.opacity(0.05))
                                                 .frame(width: 36, height: 36)
-                                            Image(systemName: "figure.arms.open")
+                                            Image(systemName: "waveform.circle.fill")
                                                 .foregroundColor(.elevateDarkGreen)
                                                 .font(.system(size: 16, weight: .bold))
                                         }

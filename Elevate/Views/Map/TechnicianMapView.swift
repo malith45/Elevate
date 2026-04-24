@@ -137,18 +137,22 @@ struct TechnicianMapView: View {
                 HStack {
                     Spacer()
 
-                    VStack(spacing: 10) {
+                    VStack(spacing: 12) {
                         Button(action: centerOnUser) {
                             Image(systemName: "location.fill")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.elevateDarkGreen)
-                                .frame(width: 40, height: 40)
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(settings.accentColor)
+                                .frame(width: 48, height: 48)
+                                .background(settings.surfaceColor)
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                .overlay(
+                                    Circle()
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
                         }
                     }
-                    .padding(.bottom, 260)
+                    .padding(.bottom, shouldShowTripCard ? 180 : 120)
                     .padding(.trailing, 20)
                 }
             }

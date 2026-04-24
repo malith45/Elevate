@@ -47,21 +47,14 @@ struct NotificationCard: View {
                     .padding(.top, 20)
             }
         }
-        .background(
-            ZStack {
-                // Glassmorphism effect
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(settings.surfaceColor.opacity(0.4))
-                
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-            }
-        )
+        .background(settings.surfaceColor)
+        .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
         .padding(.horizontal, 24)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
         .onTapGesture {
             onTap?()
@@ -170,15 +163,16 @@ struct InAppNotificationToast: View {
                     .padding(8)
                     .background(Circle().fill(Color.black.opacity(0.05)))
             }
+            .buttonStyle(.plain)
         }
         .padding(16)
-        .background(.ultraThinMaterial)
-        .cornerRadius(16)
+        .background(settings.surfaceColor)
+        .cornerRadius(20)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 20)
                 .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
-        .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: 10)
         .padding(.horizontal, 16)
         .transition(.move(edge: .top).combined(with: .opacity))
     }

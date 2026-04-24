@@ -24,34 +24,8 @@ struct TechnicianDashboardView: View {
                 // Content Spacer
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        
-                        // Header text
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(todayString())
-                                .scaledFont(size: 12, weight: .bold)
-                                .foregroundColor(settings.secondaryText)
-                            
-                            Text("Good morning, \(appSession.currentUser?.displayName ?? "Technician")")
-                                .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.primaryText)
-                        }
-
-                        if shouldShowSyncStatus {
-                            HStack(spacing: 8) {
-                                Circle()
-                                    .fill(syncStatusColor())
-                                    .frame(width: 8, height: 8)
-                                Text(syncStatusText())
-                                    .scaledFont(size: 12, weight: .bold)
-                                    .foregroundColor(syncStatusColor())
-                                if syncManager.pendingCount > 0 {
-                                    Text("Pending: \(syncManager.pendingCount)")
-                                        .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
-                                }
-                            }
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
+                        headerSection
+                        syncStatusSection
 
                         // Header title for stats
                         Text("MY WORKLOAD")
@@ -59,173 +33,20 @@ struct TechnicianDashboardView: View {
                             .foregroundColor(settings.secondaryText)
                             .padding(.top, 8)
 
-                        // Unified Overview Card
-                        VStack(spacing: 0) {
-                            HStack(spacing: 0) {
-                                // Column 1: Today's Pending
-                                VStack(alignment: .center, spacing: 4) {
-                                    Text("TODAY")
-                                        .scaledFont(size: 9, weight: .bold)
-                                        .foregroundColor(settings.secondaryText)
-                                    Text("\(technicianPendingTodayCount)")
-                                        .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                        .foregroundColor(settings.primaryText)
-                                }
-                                .frame(maxWidth: .infinity)
-                                
-                                Divider()
-                                    .frame(height: 32)
-                                    .background(settings.cardStroke)
-                                
-                                // Column 2: Today's Urgent
-                                VStack(alignment: .center, spacing: 4) {
-                                    Text("URGENT")
-                                        .scaledFont(size: 9, weight: .bold)
-                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .red.opacity(0.8))
-                                    Text("\(technicianUrgentTodayCount)")
-                                        .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
-                                }
-                                .frame(maxWidth: .infinity)
-                                
-                                Divider()
-                                    .frame(height: 32)
-                                    .background(settings.cardStroke)
-                                
-                                // Column 3: All Pending
-                                VStack(alignment: .center, spacing: 4) {
-                                    Text("TOTAL")
-                                        .scaledFont(size: 9, weight: .bold)
-                                        .foregroundColor(settings.secondaryText)
-                                    Text("\(technicianTotalPendingCount)")
-                                        .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                        .foregroundColor(settings.primaryText)
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .padding(.vertical, 20)
-                        .background(settings.surfaceColor)
-                        .cornerRadius(24)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                        )
-                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+                        workloadOverview
                         
                         // Smart Navigation Card
                         SmartNavigationCard(job: upcomingJob, travelTime: travelTime) {
                             if let job = upcomingJob {
-                                openInAppleMaps(job: job)
+                                router.selectedTab = .map
+                                router.mapFocusJobId = job.id
+                                router.path = NavigationPath()
                             }
                         }
 
-                        if let urgentMessage = urgentUpdateMessage {
-                            Button(action: {
-                                if let jobId = urgentJobId {
-                                    router.selectedJobId = jobId
-                                    router.path.append(TechnicianScreen.jobDetails)
-                                }
-                            }) {
-                                HStack(spacing: 16) {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: "exclamationmark.triangle.fill")
-                                                .font(.system(size: 12))
-                                            Text("URGENT UPDATE")
-                                                .scaledFont(size: 10, weight: .heavy)
-                                        }
-                                        .foregroundColor(.white.opacity(0.8))
-                                        
-                                        Text(urgentMessage)
-                                            .scaledFont(size: 16, weight: .bold, design: .rounded)
-                                            .foregroundColor(.white)
-                                            .lineLimit(2)
-                                    }
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.white.opacity(0.7))
-                                }
-                                .padding(24)
-                                .background(
-                                    settings.isHighContrast ? AnyView(settings.surfaceColor) : 
-                                    AnyView(LinearGradient(gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                                )
-                                .cornerRadius(24)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                )
-                                .shadow(color: settings.isHighContrast ? .clear : Color.red.opacity(0.3), radius: 10, x: 0, y: 6)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        
-                        // Shortcuts
-                        HStack(spacing: 8) {
-                            TechnicianShortcutItem(title: "START\nJOB", icon: "play.fill", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
-                                if let nextJobId = nextJobId {
-                                    router.selectedJobId = nextJobId
-                                    router.path.append(TechnicianScreen.jobDetails)
-                                } else {
-                                    router.selectedTab = .jobs
-                                }
-                            }
-                            TechnicianShortcutItem(title: "CALENDAR", icon: "calendar", color: Color.elevateLightGray, iconColor: .black) {
-                                router.path.append(TechnicianScreen.calendar)
-                            }
-                            
-                            TechnicianShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
-                                router.path.append(TechnicianScreen.statistics)
-                            }
-                        }
-                        
-                        // Today's Tasks
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("TODAY'S TASKS")
-                                    .scaledFont(size: 14, weight: .bold)
-                                    .foregroundColor(settings.secondaryText)
-                                Spacer()
-                                NavigationLink(value: TechnicianScreen.jobs) {
-                                    Text("View All")
-                                        .scaledFont(size: 12, weight: .bold)
-                                        .foregroundColor(settings.accentColor)
-                                }
-                            }
-                            
-                            VStack(spacing: 16) {
-                                if viewModel.isLoading && technicianJobs.isEmpty {
-                                    ForEach(0..<3) { _ in
-                                        SkeletonTaskRow()
-                                    }
-                                } else {
-                                    ForEach(technicianJobs.filter { 
-                                        Calendar.current.isDateInToday($0.scheduledAt) && 
-                                        $0.status.uppercased() != "COMPLETED" && 
-                                        $0.status.uppercased() != "CANCELLED" 
-                                    }.prefix(3), id: \.id) { job in
-                                        Button(action: {
-                                            router.selectedJobId = job.id
-                                            router.path.append(TechnicianScreen.jobDetails)
-                                        }) {
-                                            TaskRow(
-                                                time: timeString(from: job.scheduledAt),
-                                                ampm: ampmString(from: job.scheduledAt),
-                                                title: job.title,
-                                                location: job.location,
-                                                priority: job.priority.uppercased(),
-                                                color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
-                                            )
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                        }
-                        
+                        urgentUpdateSection
+                        shortcutSection
+                        tasksSection
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
@@ -488,6 +309,210 @@ struct TechnicianDashboardView: View {
         upcomingJob?.id
     }
 
+    @ViewBuilder
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(todayString())
+                .scaledFont(size: 12, weight: .bold)
+                .foregroundColor(settings.secondaryText)
+            
+            Text("Good morning, \(appSession.currentUser?.displayName ?? "Technician")")
+                .scaledFont(size: 24, weight: .bold, design: .rounded)
+                .foregroundColor(settings.primaryText)
+        }
+    }
+
+    @ViewBuilder
+    private var syncStatusSection: some View {
+        if shouldShowSyncStatus {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(syncStatusColor())
+                    .frame(width: 8, height: 8)
+                Text(syncStatusText())
+                    .scaledFont(size: 12, weight: .bold)
+                    .foregroundColor(syncStatusColor())
+                if syncManager.pendingCount > 0 {
+                    Text("Pending: \(syncManager.pendingCount)")
+                        .scaledFont(size: 10, weight: .bold)
+                        .foregroundColor(.elevateTextGray)
+                }
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+
+    @ViewBuilder
+    private var workloadOverview: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                // Column 1: Today's Pending
+                VStack(alignment: .center, spacing: 4) {
+                    Text("TODAY")
+                        .scaledFont(size: 9, weight: .bold)
+                        .foregroundColor(settings.secondaryText)
+                    Text("\(technicianPendingTodayCount)")
+                        .scaledFont(size: 24, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.primaryText)
+                }
+                .frame(maxWidth: .infinity)
+                
+                Divider()
+                    .frame(height: 32)
+                    .background(settings.cardStroke)
+                
+                // Column 2: Today's Urgent
+                VStack(alignment: .center, spacing: 4) {
+                    Text("URGENT")
+                        .scaledFont(size: 9, weight: .bold)
+                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .red.opacity(0.8))
+                    Text("\(technicianUrgentTodayCount)")
+                        .scaledFont(size: 24, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
+                }
+                .frame(maxWidth: .infinity)
+                
+                Divider()
+                    .frame(height: 32)
+                    .background(settings.cardStroke)
+                
+                // Column 3: All Pending
+                VStack(alignment: .center, spacing: 4) {
+                    Text("TOTAL")
+                        .scaledFont(size: 9, weight: .bold)
+                        .foregroundColor(settings.secondaryText)
+                    Text("\(technicianTotalPendingCount)")
+                        .scaledFont(size: 24, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.primaryText)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.vertical, 20)
+        .background(settings.surfaceColor)
+        .cornerRadius(24)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
+        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+    }
+
+    @ViewBuilder
+    private var urgentUpdateSection: some View {
+        if let urgentMessage = urgentUpdateMessage {
+            Button(action: {
+                if let jobId = urgentJobId {
+                    router.selectedJobId = jobId
+                    router.path.append(TechnicianScreen.jobDetails)
+                }
+            }) {
+                HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12))
+                            Text("URGENT UPDATE")
+                                .scaledFont(size: 10, weight: .heavy)
+                        }
+                        .foregroundColor(.white.opacity(0.8))
+                        
+                        Text(urgentMessage)
+                            .scaledFont(size: 16, weight: .bold, design: .rounded)
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                    }
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .padding(24)
+                .background(
+                    settings.isHighContrast ? AnyView(settings.surfaceColor) : 
+                    AnyView(LinearGradient(gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                )
+                .cornerRadius(24)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                )
+                .shadow(color: settings.isHighContrast ? .clear : Color.red.opacity(0.3), radius: 10, x: 0, y: 6)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private var shortcutSection: some View {
+        HStack(spacing: 8) {
+            TechnicianShortcutItem(title: "START\nJOB", icon: "play.fill", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
+                if let nextJobId = nextJobId {
+                    router.selectedJobId = nextJobId
+                    router.path.append(TechnicianScreen.jobDetails)
+                } else {
+                    router.selectedTab = .jobs
+                }
+            }
+            TechnicianShortcutItem(title: "CALENDAR", icon: "calendar", color: Color.elevateLightGray, iconColor: .black) {
+                router.path.append(TechnicianScreen.calendar)
+            }
+            
+            TechnicianShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
+                router.path.append(TechnicianScreen.statistics)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var tasksSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("TODAY'S TASKS")
+                    .scaledFont(size: 14, weight: .bold)
+                    .foregroundColor(settings.secondaryText)
+                Spacer()
+                NavigationLink(value: TechnicianScreen.jobs) {
+                    Text("View All")
+                        .scaledFont(size: 12, weight: .bold)
+                        .foregroundColor(settings.accentColor)
+                }
+            }
+            
+            VStack(spacing: 16) {
+                if viewModel.isLoading && technicianJobs.isEmpty {
+                    ForEach(0..<3) { _ in
+                        SkeletonTaskRow()
+                    }
+                } else {
+                    let jobs = technicianJobs.filter { 
+                        Calendar.current.isDateInToday($0.scheduledAt) && 
+                        $0.status.uppercased() != "COMPLETED" && 
+                        $0.status.uppercased() != "CANCELLED" 
+                    }.prefix(3)
+                    
+                    ForEach(jobs, id: \.id) { job in
+                        Button(action: {
+                            router.selectedJobId = job.id
+                            router.path.append(TechnicianScreen.jobDetails)
+                        }) {
+                            TaskRow(
+                                time: timeString(from: job.scheduledAt),
+                                ampm: ampmString(from: job.scheduledAt),
+                                title: job.title,
+                                location: job.location,
+                                priority: job.priority.uppercased(),
+                                color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
     private var technicianJobs: [Job] {
         guard let user = appSession.currentUser else { return [] }
         return viewModel.jobs.filter { $0.assignedUserId == user.id }
@@ -632,13 +657,13 @@ struct SmartNavigationCard: View {
             
             if let _ = job {
                 Button(action: onNavigate) {
-                    Text("Navigate")
-                        .scaledFont(size: 12, weight: .bold)
+                    Image(systemName: "arrow.turn.up.right")
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .frame(width: 44, height: 44)
                         .background(settings.accentColor)
-                        .cornerRadius(20)
+                        .cornerRadius(12)
+                        .shadow(color: settings.accentColor.opacity(0.3), radius: 6, x: 0, y: 3)
                 }
                 .buttonStyle(.plain)
             }

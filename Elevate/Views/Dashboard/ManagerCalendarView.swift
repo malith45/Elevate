@@ -9,6 +9,7 @@ struct ManagerCalendarView: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var isShowingEventEditor = false
     @State private var shouldOpenEventEditor = false
+    @State private var isLoadingEvent = false
     private let localStorage = LocalStorageService.shared
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -49,7 +50,12 @@ struct ManagerCalendarView: View {
                                 // Manager Adding Events Button
                                 Button(action: {
                                     if viewModel.isAuthorized {
-                                        isShowingEventEditor = true
+                                        isLoadingEvent = true
+                                        // Minimized delay for faster response
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                            isShowingEventEditor = true
+                                            isLoadingEvent = false
+                                        }
                                     } else {
                                         shouldOpenEventEditor = true
                                         viewModel.requestAccessIfNeeded()
@@ -206,7 +212,13 @@ struct ManagerCalendarView: View {
                     Color.clear.frame(height: 96)
                 }
             }
-            
+
+            if isLoadingEvent {
+                Color.black.opacity(0.3).ignoresSafeArea()
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: settings.accentColor))
+                    .scaleEffect(1.5)
+            }
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -218,7 +230,11 @@ struct ManagerCalendarView: View {
         .onChange(of: viewModel.authorizationStatus) { _, _ in
             if shouldOpenEventEditor, viewModel.isAuthorized {
                 shouldOpenEventEditor = false
-                isShowingEventEditor = true
+                isLoadingEvent = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    isShowingEventEditor = true
+                    isLoadingEvent = false
+                }
             }
         }
         .sheet(isPresented: $isShowingEventEditor) {
@@ -258,5 +274,4 @@ private extension ManagerCalendarView {
         ampmFormatter.dateFormat = "a"
         return (timeFormatter.string(from: event.startDate), ampmFormatter.string(from: event.startDate))
     }
-
 }

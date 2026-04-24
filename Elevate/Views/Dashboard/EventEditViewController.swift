@@ -12,9 +12,11 @@ struct EventEditViewController: UIViewControllerRepresentable {
         controller.eventStore = eventStore
         controller.editViewDelegate = context.coordinator
         
+        // Let the controller handle its own default event creation if possible
+        // or set a minimal event if required
         let newEvent = EKEvent(eventStore: eventStore)
         newEvent.startDate = Date()
-        newEvent.endDate = Date().addingTimeInterval(60 * 60) // Default 1 hour duration
+        newEvent.endDate = Date().addingTimeInterval(3600)
         controller.event = newEvent
         
         return controller

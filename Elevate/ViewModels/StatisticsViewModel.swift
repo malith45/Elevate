@@ -109,8 +109,9 @@ final class StatisticsViewModel: ObservableObject {
     }
 
     private func completionRate(for jobs: [Job]) -> Double {
-        let total = jobs.count
-        let completed = jobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+        let activeJobs = jobs.filter { $0.status.uppercased() != "CANCELLED" }
+        let total = activeJobs.count
+        let completed = activeJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
         return total == 0 ? 0 : Double(completed) / Double(total)
     }
 
@@ -123,9 +124,10 @@ final class StatisticsViewModel: ObservableObject {
             let start = calendar.date(byAdding: .day, value: -(offset * 7), to: startOfWeek(for: today)) ?? today
             let end = calendar.date(byAdding: .day, value: 7, to: start) ?? today
             let weekJobs = jobs.filter { $0.scheduledAt >= start && $0.scheduledAt < end }
-            let completed = weekJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+            let nonCancelledWeekJobs = weekJobs.filter { $0.status.uppercased() != "CANCELLED" }
+            let completed = nonCancelledWeekJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
             let label = "WEEK \(4 - offset)"
-            stats.append(WeeklyJobStat(label: label, total: weekJobs.count, completed: completed))
+            stats.append(WeeklyJobStat(label: label, total: nonCancelledWeekJobs.count, completed: completed))
         }
 
         return stats
@@ -139,8 +141,9 @@ final class StatisticsViewModel: ObservableObject {
         for dayOffset in (0..<6).reversed() {
             guard let day = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { continue }
             let dayJobs = jobs.filter { calendar.isDate($0.scheduledAt, inSameDayAs: day) }
-            let completed = dayJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
-            let rate = dayJobs.isEmpty ? 0.5 : Double(completed) / Double(dayJobs.count)
+            let nonCancelledDayJobs = dayJobs.filter { $0.status.uppercased() != "CANCELLED" }
+            let completed = nonCancelledDayJobs.filter { $0.status.uppercased() == "COMPLETED" }.count
+            let rate = nonCancelledDayJobs.isEmpty ? 0.5 : Double(completed) / Double(nonCancelledDayJobs.count)
             let value = min(100, max(40, rate * 100))
             stats.append(DailyEfficiencyStat(dayIndex: 6 - dayOffset, value: value))
         }

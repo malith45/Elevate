@@ -9,7 +9,7 @@ final class CalendarViewModel: ObservableObject {
     @Published var authorizationStatus: EKAuthorizationStatus = EKEventStore.authorizationStatus(for: .event)
     @Published var errorMessage: String?
 
-    let eventStore = EKEventStore()
+    let eventStore = CalendarSyncService.shared.eventStore
     private let jobsCalendarTitle = "Elevate Jobs"
 
     init() {
@@ -19,20 +19,20 @@ final class CalendarViewModel: ObservableObject {
     }
 
     var isAuthorized: Bool {
+        let status = EKEventStore.authorizationStatus(for: .event)
         if #available(iOS 17.0, *) {
-            return authorizationStatus == .fullAccess
+            return status == .fullAccess || status == .writeOnly
         } else {
-            return legacyIsAuthorized(authorizationStatus)
+            return status.rawValue == 3
         }
     }
 
     func requestAccessIfNeeded() {
         let status = EKEventStore.authorizationStatus(for: .event)
-        authorizationStatus = status
-
+        
         if #available(iOS 17.0, *) {
             switch status {
-            case .fullAccess:
+            case .fullAccess, .writeOnly:
                 loadEvents(for: currentMonth)
             case .notDetermined:
                 eventStore.requestFullAccessToEvents { [weak self] granted, error in
@@ -50,10 +50,10 @@ final class CalendarViewModel: ObservableObject {
                 errorMessage = "Calendar access is disabled."
             }
         } else {
-            if legacyIsAuthorized(status) {
+            if status.rawValue == 3 {
                 loadEvents(for: currentMonth)
             } else if status == .notDetermined {
-                requestLegacyAccess { [weak self] granted, error in
+                eventStore.requestAccess(to: .event) { [weak self] granted, error in
                     DispatchQueue.main.async {
                         self?.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
                         if let error = error {
@@ -71,14 +71,16 @@ final class CalendarViewModel: ObservableObject {
     }
 
     func loadEventsIfAuthorized() {
-        if isAuthorized {
-            loadEvents(for: currentMonth)
+        let status = EKEventStore.authorizationStatus(for: .event)
+        if #available(iOS 17.0, *) {
+            if status == .fullAccess || status == .writeOnly {
+                loadEvents(for: currentMonth)
+            }
+        } else {
+            if status.rawValue == 3 {
+                loadEvents(for: currentMonth)
+            }
         }
-    }
-
-    func syncJobsIfAuthorized(_ jobs: [Job]) {
-        guard isAuthorized else { return }
-        syncJobs(jobs)
     }
 
     func loadEvents(for month: Date) {
@@ -88,7 +90,12 @@ final class CalendarViewModel: ObservableObject {
             return
         }
 
-        let predicate = eventStore.predicateForEvents(withStart: startOfMonth, end: endOfMonth, calendars: nil)
+        guard let jobsCalendar = eventStore.calendars(for: .event).first(where: { $0.title == jobsCalendarTitle }) else {
+            eventsByDay = [:]
+            return
+        }
+
+        let predicate = eventStore.predicateForEvents(withStart: startOfMonth, end: endOfMonth, calendars: [jobsCalendar])
         let events = eventStore.events(matching: predicate)
 
         let grouped = Dictionary(grouping: events) { event in
@@ -98,94 +105,34 @@ final class CalendarViewModel: ObservableObject {
         eventsByDay = grouped
     }
 
-    private func syncJobs(_ jobs: [Job]) {
-        guard let jobsCalendar = ensureJobsCalendar() else { return }
-        guard let dateRange = jobsDateRange(jobs) else { return }
-
-        let predicate = eventStore.predicateForEvents(withStart: dateRange.start, end: dateRange.end, calendars: [jobsCalendar])
-        let existingEvents = eventStore.events(matching: predicate)
-        var eventByJobId: [String: EKEvent] = [:]
-
-        existingEvents.forEach { event in
-            if let jobId = jobId(from: event.notes) {
-                eventByJobId[jobId] = event
+    func events(for date: Date) -> [EKEvent] {
+        let key = Calendar.current.startOfDay(for: date)
+        let dayEvents = eventsByDay[key] ?? []
+        
+        var uniqueEvents: [EKEvent] = []
+        var seenJobIds = Set<String>()
+        
+        for event in dayEvents {
+            if let jobId = extractJobId(from: event.notes) {
+                if !seenJobIds.contains(jobId) {
+                    seenJobIds.insert(jobId)
+                    uniqueEvents.append(event)
+                }
+            } else {
+                uniqueEvents.append(event)
             }
         }
-
-        let jobIds = Set(jobs.map { $0.id })
-        existingEvents.forEach { event in
-            if let jobId = jobId(from: event.notes), !jobIds.contains(jobId) {
-                try? eventStore.remove(event, span: .thisEvent)
-            }
-        }
-
-        jobs.forEach { job in
-            let event = eventByJobId[job.id] ?? EKEvent(eventStore: eventStore)
-            event.calendar = jobsCalendar
-            event.title = job.title
-            event.startDate = job.scheduledAt
-            event.endDate = Calendar.current.date(byAdding: .hour, value: 1, to: job.scheduledAt) ?? job.scheduledAt
-            event.location = job.location
-            event.notes = jobNotes(for: job)
-            try? eventStore.save(event, span: .thisEvent)
-        }
+        
+        return uniqueEvents
     }
 
-    private func ensureJobsCalendar() -> EKCalendar? {
-        if let existing = eventStore.calendars(for: .event).first(where: { $0.title == jobsCalendarTitle }) {
-            return existing
-        }
-
-        let calendar = EKCalendar(for: .event, eventStore: eventStore)
-        calendar.title = jobsCalendarTitle
-        if let source = eventStore.defaultCalendarForNewEvents?.source {
-            calendar.source = source
-        } else if let source = eventStore.sources.first(where: { $0.sourceType == .local }) {
-            calendar.source = source
-        } else {
-            calendar.source = eventStore.sources.first
-        }
-
-        do {
-            try eventStore.saveCalendar(calendar, commit: true)
-            return calendar
-        } catch {
-            errorMessage = "Unable to create calendar."
-            return nil
-        }
-    }
-
-    private func jobsDateRange(_ jobs: [Job]) -> (start: Date, end: Date)? {
-        guard let minDate = jobs.map({ $0.scheduledAt }).min(),
-              let maxDate = jobs.map({ $0.scheduledAt }).max()
-        else { return nil }
-
-        let start = Calendar.current.date(byAdding: .day, value: -1, to: minDate) ?? minDate
-        let end = Calendar.current.date(byAdding: .day, value: 2, to: maxDate) ?? maxDate
-        return (start, end)
-    }
-
-    private func jobNotes(for job: Job) -> String {
-        var notes = "ElevateJobId: \(job.id)"
-        if let jobNotes = job.notes, !jobNotes.isEmpty {
-            notes += "\n\n\(jobNotes)"
-        }
-        return notes
-    }
-
-    private func jobId(from notes: String?) -> String? {
+    private func extractJobId(from notes: String?) -> String? {
         guard let notes = notes else { return nil }
         let prefix = "ElevateJobId: "
         guard let range = notes.range(of: prefix) else { return nil }
         let idStart = range.upperBound
         let suffix = notes[idStart...]
-        let id = suffix.split(separator: "\n").first.map(String.init)
-        return id
-    }
-
-    func events(for date: Date) -> [EKEvent] {
-        let key = Calendar.current.startOfDay(for: date)
-        return eventsByDay[key] ?? []
+        return suffix.split(separator: "\n").first.map(String.init)
     }
 
     func hasEvents(on date: Date) -> Bool {

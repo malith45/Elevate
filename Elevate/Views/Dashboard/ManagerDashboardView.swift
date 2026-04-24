@@ -74,14 +74,18 @@ struct ManagerDashboardView: View {
                                 router.path.append(ManagerScreen.calendar)
                             }) {
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(settings.surfaceColor)
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(settings.isHighContrast ? Color.white.opacity(0.1) : settings.accentColor.opacity(0.1))
                                         .frame(width: 48, height: 48)
-                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
-                                    Image(systemName: "calendar.badge.plus")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(settings.primaryText)
+                                    
+                                    Image(systemName: "calendar")
+                                        .font(.system(size: 22, weight: .semibold))
+                                        .foregroundColor(settings.isHighContrast ? .white : settings.accentColor)
                                 }
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(settings.isHighContrast ? .white : settings.accentColor.opacity(0.2), lineWidth: 1)
+                                )
                             }
                             .buttonStyle(.plain)
                         }

@@ -186,11 +186,9 @@ struct TechnicianCalendarView: View {
         .navigationBarHidden(true)
         .onAppear {
             viewModel.requestAccessIfNeeded()
-            syncJobs()
         }
         .onChange(of: viewModel.currentMonth) { _, _ in
             viewModel.loadEventsIfAuthorized()
-            syncJobs()
         }
     }
 }
@@ -267,22 +265,4 @@ private extension TechnicianCalendarView {
         return (timeFormatter.string(from: event.startDate), ampmFormatter.string(from: event.startDate))
     }
 
-    func syncJobs() {
-        guard let user = appSession.currentUser else { return }
-        let assignedUserId = (user.role == "TECHNICIAN") ? user.id : nil
-        
-        let refreshLocal = {
-            let jobs = localStorage.fetchJobs(organizationId: user.organizationId, userId: assignedUserId)
-            self.viewModel.syncJobsIfAuthorized(jobs)
-            self.viewModel.loadEventsIfAuthorized()
-        }
-
-        if NetworkService.shared.isOnline {
-            SyncManager.shared.startSyncing(organizationId: user.organizationId, userId: user.id, role: user.role) {
-                refreshLocal()
-            }
-        } else {
-            refreshLocal()
-        }
-    }
 }

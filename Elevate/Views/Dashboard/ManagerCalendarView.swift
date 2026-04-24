@@ -211,11 +211,9 @@ struct ManagerCalendarView: View {
         .navigationBarHidden(true)
         .onAppear {
             viewModel.requestAccessIfNeeded()
-            syncJobs()
         }
         .onChange(of: viewModel.currentMonth) { _, _ in
             viewModel.loadEventsIfAuthorized()
-            syncJobs()
         }
         .onChange(of: viewModel.authorizationStatus) { _, _ in
             if shouldOpenEventEditor, viewModel.isAuthorized {
@@ -261,10 +259,4 @@ private extension ManagerCalendarView {
         return (timeFormatter.string(from: event.startDate), ampmFormatter.string(from: event.startDate))
     }
 
-    func syncJobs() {
-        guard let user = appSession.currentUser else { return }
-        let jobs = localStorage.fetchJobs(organizationId: user.organizationId)
-        viewModel.syncJobsIfAuthorized(jobs)
-        viewModel.loadEventsIfAuthorized()
-    }
 }

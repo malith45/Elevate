@@ -33,9 +33,32 @@ final class SyncManager: ObservableObject {
 
         status = .syncing
         syncPendingActions(organizationId: organizationId, userId: userId) { [weak self] in
-            self?.syncJobs(organizationId: organizationId, userId: userId, role: role) { [weak self] in
+            let group = DispatchGroup()
+            
+            group.enter()
+            self?.syncJobs(organizationId: organizationId, userId: userId, role: role) {
+                if let jobs = self?.local.fetchJobs(organizationId: organizationId) {
+                    CalendarSyncService.shared.syncJobsIfAuthorized(jobs)
+                }
+                group.leave()
+            }
+            
+            group.enter()
+            self?.syncInventory(organizationId: organizationId) {
+                group.leave()
+            }
+            
+            if role == "MANAGER" {
+                group.enter()
+                self?.syncUsers(organizationId: organizationId) {
+                    group.leave()
+                }
+            }
+            
+            group.notify(queue: .main) {
                 self?.syncPendingJobPhotos(organizationId: organizationId)
                 self?.syncPendingIssueReports()
+                CalendarSyncService.shared.cleanupDuplicates()
                 self?.pendingCount = self?.local.pendingActionsCount(organizationId: organizationId, userId: userId) ?? 0
                 self?.lastSyncAt = Date()
                 self?.status = (self?.pendingCount == 0) ? .upToDate : .syncing
@@ -642,6 +665,34 @@ final class SyncManager: ObservableObject {
 
             case .failure:
                 break
+            }
+            completion?()
+        }
+    }
+
+    private func syncInventory(organizationId: String, completion: (() -> Void)? = nil) {
+        guard network.isOnline else {
+            completion?()
+            return
+        }
+        
+        firebase.fetchInventoryItems(organizationId: organizationId) { result in
+            if case .success(let items) = result {
+                self.local.saveInventoryItems(items)
+            }
+            completion?()
+        }
+    }
+    
+    private func syncUsers(organizationId: String, completion: (() -> Void)? = nil) {
+        guard network.isOnline else {
+            completion?()
+            return
+        }
+        
+        firebase.fetchUsers(organizationId: organizationId) { result in
+            if case .success(let users) = result {
+                self.local.saveUsers(users)
             }
             completion?()
         }

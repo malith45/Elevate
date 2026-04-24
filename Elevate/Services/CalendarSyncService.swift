@@ -3,8 +3,7 @@ import EventKit
 
 final class CalendarSyncService {
     static let shared = CalendarSyncService()
-
-    private let eventStore = EKEventStore()
+    let eventStore = EKEventStore()
     private let jobsCalendarTitle = "Elevate Jobs"
 
     private init() {}
@@ -54,6 +53,40 @@ final class CalendarSyncService {
             event.location = job.location
             event.notes = jobNotes(for: job)
             try? eventStore.save(event, span: .thisEvent)
+        }
+        
+        try? eventStore.commit()
+    }
+    
+    func cleanupDuplicates() {
+        guard isAuthorized, let jobsCalendar = ensureJobsCalendar() else { return }
+        
+        let now = Date()
+        let start = Calendar.current.date(byAdding: .month, value: -6, to: now) ?? now
+        let end = Calendar.current.date(byAdding: .month, value: 6, to: now) ?? now
+        
+        let predicate = eventStore.predicateForEvents(withStart: start, end: end, calendars: [jobsCalendar])
+        let events = eventStore.events(matching: predicate)
+        
+        var seenJobIds = Set<String>()
+        var duplicates: [EKEvent] = []
+        
+        for event in events {
+            if let jobId = jobId(from: event.notes) {
+                if seenJobIds.contains(jobId) {
+                    duplicates.append(event)
+                } else {
+                    seenJobIds.insert(jobId)
+                }
+            }
+        }
+        
+        for duplicate in duplicates {
+            try? eventStore.remove(duplicate, span: .thisEvent)
+        }
+        
+        if !duplicates.isEmpty {
+            try? eventStore.commit()
         }
     }
 

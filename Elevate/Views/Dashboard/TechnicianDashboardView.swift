@@ -359,8 +359,7 @@ struct TechnicianDashboardView: View {
         let sourceItem: MKMapItem
         let destinationItem: MKMapItem
         
-        // Use hardcoded Colombo start point to ensure external app works correctly
-        let startCoord = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
+        let startCoord = locationService.currentLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         let destCoord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
         
         if #available(iOS 26.0, *) {

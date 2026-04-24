@@ -9,6 +9,7 @@ struct TechnicianMapView: View {
     @State private var mapPosition: MapCameraPosition
     @State private var hasCenteredOnUser = false
     @State private var activeJob: Job?
+    @ObservedObject var settings = AccessibilitySettings.shared
     private let localStorage = LocalStorageService.shared
 
     init(viewModel: MapViewModel = MapViewModel()) {
@@ -68,55 +69,65 @@ struct TechnicianMapView: View {
                 Spacer()
                 
                 if shouldShowTripCard {
-                    HStack(spacing: 16) {
-                        VStack(spacing: 4) {
+                    HStack(spacing: 12) {
+                        // Time Badge
+                        VStack(spacing: 0) {
                             Text(routeMinutes())
-                                .scaledFont(size: 20, weight: .bold)
-                                .foregroundColor(.white)
-                            Text("MINS")
-                                .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.white)
+                                .scaledFont(size: 18, weight: .black)
+                            Text("MIN")
+                                .scaledFont(size: 8, weight: .heavy)
                         }
-                        .frame(width: 60, height: 60)
-                        .background(Color.elevateDarkGreen)
-                        .cornerRadius(10)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 8) {
+                        .foregroundColor(.white)
+                        .frame(width: 48, height: 48)
+                        .background(settings.accentColor)
+                        .cornerRadius(12)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
                                 Text(routeDistance())
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
-                                Circle().fill(Color.gray).frame(width: 3, height: 3)
-                                Text("ARRIVAL \(arrivalTime())")
-                                    .scaledFont(size: 10, weight: .bold)
+                                    .foregroundColor(settings.accentColor)
+                                
+                                Text("•")
+                                    .foregroundColor(.gray)
+                                
+                                Text(arrivalTime())
+                                    .scaledFont(size: 10, weight: .medium)
                                     .foregroundColor(.gray)
                             }
-
+                            
                             Text(jobTitle())
-                                .scaledFont(size: 16, weight: .bold)
-
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.primaryText)
+                                .lineLimit(1)
+                            
                             Text(jobLocation())
-                                .scaledFont(size: 12)
-                                .foregroundColor(.gray)
+                                .scaledFont(size: 11)
+                                .foregroundColor(settings.secondaryText)
+                                .lineLimit(1)
                         }
-
+                        
                         Spacer()
-
+                        
                         Button(action: openInMaps) {
-                            Image(systemName: "arrow.turn.up.right")
-                                .font(.system(size: 16, weight: .semibold))
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.elevateDarkGreen)
-                                .cornerRadius(8)
+                                .frame(width: 36, height: 36)
+                                .background(settings.accentColor)
+                                .clipShape(Circle())
                         }
                     }
-                    .padding(16)
-                    .background(Color.white)
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 120)
+                    .padding(12)
+                    .background(settings.surfaceColor)
+                    .cornerRadius(20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                    )
+                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 5)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 110)
                 }
             }
 
@@ -177,19 +188,25 @@ struct TechnicianMapView: View {
     }
 
     private func routeMinutes() -> String {
-        guard let route = viewModel.route else { return "--" }
-        return String(Int(route.expectedTravelTime / 60))
+        guard let time = viewModel.estimatedTravelTime else { return "--" }
+        return String(Int(time / 60))
     }
-
+    
     private func routeDistance() -> String {
-        guard let route = viewModel.route else { return "--" }
-        let miles = route.distance / 1609.34
+        if let route = viewModel.route {
+            let miles = route.distance / 1609.34
+            return String(format: "%.1f MILES", miles)
+        }
+        guard let start = locationService.currentLocation, let destination = viewModel.destination else { return "--" }
+        let startLoc = CLLocation(latitude: start.latitude, longitude: start.longitude)
+        let destLoc = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+        let miles = startLoc.distance(from: destLoc) / 1609.34
         return String(format: "%.1f MILES", miles)
     }
 
     private func arrivalTime() -> String {
-        guard let route = viewModel.route else { return "--" }
-        let arrival = Date().addingTimeInterval(route.expectedTravelTime)
+        guard let time = viewModel.estimatedTravelTime else { return "--" }
+        let arrival = Date().addingTimeInterval(time)
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: arrival)

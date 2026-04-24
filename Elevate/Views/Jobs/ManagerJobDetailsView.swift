@@ -113,7 +113,7 @@ struct ManagerJobDetailsView: View {
                                             .foregroundColor(settings.primaryText.opacity(0.8))
                                     }
                                     Spacer()
-                                    Text("ID\n\(String(job.id.prefix(8)).uppercased())")
+                                    Text("ID\n\(String(job.id.prefix(6)).uppercased())")
                                         .font(.system(size: 12, weight: .bold, design: .monospaced))
                                         .foregroundColor(settings.primaryText)
                                         .multilineTextAlignment(.leading)

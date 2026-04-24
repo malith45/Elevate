@@ -6,8 +6,9 @@ import MapKit
 final class MapViewModel: ObservableObject {
     @Published var destination: CLLocationCoordinate2D?
     @Published var route: MKRoute?
+    @Published var estimatedTravelTime: TimeInterval?
     @Published var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
+        center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     @Published var savedRegion: MKCoordinateRegion?
@@ -19,6 +20,10 @@ final class MapViewModel: ObservableObject {
 
     func setDestination(_ coordinate: CLLocationCoordinate2D?) {
         destination = coordinate
+        route = nil
+        estimatedTravelTime = nil
+        lastRouteRequestAt = nil
+        lastRouteLocation = nil
     }
 
     func updateRegionIfNeeded() {
@@ -48,6 +53,16 @@ final class MapViewModel: ObservableObject {
         directions.calculate { [weak self] response, _ in
             DispatchQueue.main.async {
                 self?.route = response?.routes.first
+                if let travelTime = response?.routes.first?.expectedTravelTime {
+                    self?.estimatedTravelTime = travelTime
+                } else {
+                    // Fallback to distance-based calculation if routing fails
+                    let startLoc = CLLocation(latitude: start.latitude, longitude: start.longitude)
+                    let destLoc = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+                    let distance = startLoc.distance(from: destLoc)
+                    // Average speed in Colombo traffic (approx 25 km/h = 6.94 m/s)
+                    self?.estimatedTravelTime = distance / 6.94
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ struct ManagerCreateJobView: View {
     @StateObject private var viewModel = ManagerCreateJobViewModel()
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
+    @ObservedObject var locationService = LocationService.shared
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTechnicianId: String?
     @State private var jobTitle = ""
@@ -16,12 +17,7 @@ struct ManagerCreateJobView: View {
     @State private var descriptionText = ""
     @State private var isUrgent = false
     @State private var siteCoordinate: CLLocationCoordinate2D?
-    @State private var mapPosition = MapCameraPosition.region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        )
-    )
+    @State private var mapPosition = MapCameraPosition.userLocation(fallback: .automatic)
 
     var body: some View {
         ZStack {
@@ -276,6 +272,11 @@ struct ManagerCreateJobView: View {
         .onAppear {
             guard let user = appSession.currentUser else { return }
             viewModel.loadTechnicians(organizationId: user.organizationId, isOnline: network.isOnline)
+            
+            // Center map on current location if available
+            if let current = locationService.currentLocation {
+                mapPosition = .region(MKCoordinateRegion(center: current, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+            }
         }
         .alert("Create Job", isPresented: Binding(
             get: { viewModel.errorMessage != nil },

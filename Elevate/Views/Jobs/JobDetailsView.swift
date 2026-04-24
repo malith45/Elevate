@@ -121,7 +121,7 @@ struct JobDetailsView: View {
                                         Text("REFERENCE")
                                             .scaledFont(size: 8, weight: .bold)
                                             .foregroundColor(settings.secondaryText)
-                                        Text(String(job.id.prefix(8)).uppercased())
+                                        Text(String(job.id.prefix(6)).uppercased())
                                             .font(.system(size: 12, weight: .bold, design: .monospaced))
                                             .foregroundColor(settings.primaryText)
                                             .padding(.horizontal, 8)
@@ -203,6 +203,7 @@ struct JobDetailsView: View {
                                             HapticManager.shared.playImpact(style: .medium)
                                             router.mapFocusJobId = job.id
                                             router.selectedTab = .map
+                                            router.path = NavigationPath()
                                         }) {
                                             HStack(spacing: 8) {
                                                 Image(systemName: "location.north.fill")

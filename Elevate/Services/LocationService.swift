@@ -5,11 +5,11 @@ import CoreLocation
 final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     static let shared = LocationService()
 
-    @Published private(set) var currentLocation: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
+    @Published private(set) var currentLocation: CLLocationCoordinate2D?
     @Published private(set) var authorizationStatus: CLAuthorizationStatus = .notDetermined
 
     private let manager = CLLocationManager()
-    private var isMockingLocation = true // Hardcoded for now per user request
+    private var isMockingLocation = false 
 
     private override init() {
         super.init()

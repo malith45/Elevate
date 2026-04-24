@@ -9,6 +9,7 @@ struct ManagerJobIssueReportView: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     @State private var responseText = ""
     @State private var jobStatus: String = "PENDING"
+    @State private var selectedPhotoUrl: String? = nil
     
     private var isTerminal: Bool {
         let status = jobStatus.uppercased()
@@ -64,6 +65,17 @@ struct ManagerJobIssueReportView: View {
         } message: {
             Text(viewModel.errorMessage ?? "Action successful.")
         }
+        .fullScreenCover(item: Binding(
+            get: { selectedPhotoUrl.map { PhotoIdentifiable(url: $0) } },
+            set: { selectedPhotoUrl = $0?.url }
+        )) { item in
+            FullScreenImageView(urlString: item.url)
+        }
+    }
+    
+    struct PhotoIdentifiable: Identifiable {
+        let id = UUID()
+        let url: String
     }
 
     private var headerSection: some View {
@@ -120,13 +132,18 @@ struct ManagerJobIssueReportView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(report.attachmentUrls, id: \.self) { url in
-                        PhotoPreview(urlString: url)
-                            .frame(width: 90, height: 90)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                            )
+                        Button(action: {
+                            selectedPhotoUrl = url
+                        }) {
+                            PhotoPreview(urlString: url)
+                                .frame(width: 90, height: 90)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.vertical, 4)

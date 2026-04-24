@@ -44,6 +44,10 @@ struct ContentView: View {
             if let item = notification.object as? NotificationItem {
                 withAnimation(.spring()) {
                     activeNotification = item
+                    // Play haptics for the receiver
+                    if AccessibilitySettings.shared.hapticFeedback {
+                        HapticManager.shared.playNotification(type: .success)
+                    }
                 }
             }
         }

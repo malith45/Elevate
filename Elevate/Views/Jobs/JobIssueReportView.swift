@@ -12,6 +12,7 @@ struct JobIssueReportView: View {
     @State private var selectedTab: TabItem = .jobs
     @State private var showCamera = false
     @State private var jobStatus: String = "PENDING"
+    @State private var selectedPhotoUrl: String? = nil
     
     private var isTerminal: Bool {
         let status = jobStatus.uppercased()
@@ -68,6 +69,17 @@ struct JobIssueReportView: View {
                 HapticManager.shared.playNotification(type: .success)
             }
         }
+        .fullScreenCover(item: Binding(
+            get: { selectedPhotoUrl.map { PhotoIdentifiable(url: $0) } },
+            set: { selectedPhotoUrl = $0?.url }
+        )) { item in
+            FullScreenImageView(urlString: item.url)
+        }
+    }
+    
+    struct PhotoIdentifiable: Identifiable {
+        let id = UUID()
+        let url: String
     }
 
     private var titleSection: some View {
@@ -174,13 +186,18 @@ struct JobIssueReportView: View {
                 HStack(spacing: 12) {
                     ForEach(viewModel.attachmentUrls, id: \.self) { url in
                         ZStack(alignment: .topTrailing) {
-                            PhotoPreview(urlString: url)
-                                .frame(width: 90, height: 90)
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                )
+                            Button(action: {
+                                selectedPhotoUrl = url
+                            }) {
+                                PhotoPreview(urlString: url)
+                                    .frame(width: 90, height: 90)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
+                            }
+                            .buttonStyle(.plain)
                             
                                 if !isTerminal {
                                     Button(action: {

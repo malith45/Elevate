@@ -115,7 +115,12 @@ final class AppSession: ObservableObject {
                 // If it's not the initial connection (which returns old notifications),
                 // and there's a new item that wasn't in cache, trigger in-app alert
                 if !isInitialLoad {
-                    let newItems = items.filter { !existingIds.contains($0.id) && !$0.isRead }
+                    let now = Date()
+                    let newItems = items.filter { 
+                        !existingIds.contains($0.id) && 
+                        !$0.isRead &&
+                        now.timeIntervalSince($0.createdAt) < 60 // Only alert for very recent notifications
+                    }
                     if let newest = newItems.first {
                         print("🔔 [NotificationSync] Posting In-App Alert for: \(newest.title)")
                         NotificationCenter.default.post(name: NSNotification.Name("ShowInAppNotification"), object: newest)

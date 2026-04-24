@@ -65,12 +65,16 @@ struct ManagerJobDetailsView: View {
                             }
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text("Job Details")
-                                        .scaledFont(size: 28, weight: .bold, design: .rounded)
-                                        .foregroundColor(settings.primaryText)
-                                    Text(job.title)
-                                        .scaledFont(size: 14, weight: .semibold)
+                                    Text("JOB DETAILS")
+                                        .scaledFont(size: 10, weight: .bold)
                                         .foregroundColor(settings.secondaryText)
+                                        .tracking(1.0)
+                                    Text(job.title)
+                                        .scaledFont(size: 22, weight: .bold, design: .rounded)
+                                        .foregroundColor(settings.primaryText)
+                                        .lineSpacing(2)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .lineLimit(2)
                                 }
 
                                 Spacer()
@@ -79,21 +83,23 @@ struct ManagerJobDetailsView: View {
                                     router.selectedJobId = job.id
                                     router.path.append(ManagerScreen.jobIssueReport)
                                 }) {
+                                    let reports = LocalStorageService.shared.fetchIssueReports(jobId: job.id)
                                     HStack(spacing: 6) {
-                                        ZStack(alignment: .topTrailing) {
-                                            Image(systemName: "doc.text.magnifyingglass")
-                                            if reportCount > 0 {
-                                                Circle()
-                                                    .fill(Color.red)
-                                                    .frame(width: 8, height: 8)
-                                                    .offset(x: 6, y: -4)
-                                            }
-                                        }
+                                        Image(systemName: "doc.text.magnifyingglass")
                                         Text("VIEW REPORTS")
+                                        if !reports.isEmpty {
+                                            Text("\(reports.count)")
+                                                .scaledFont(size: 9, weight: .black)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.red)
+                                                .foregroundColor(.white)
+                                                .clipShape(Capsule())
+                                        }
                                     }
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
+                                    .padding(.vertical, 8)
                                     .background(settings.isHighContrast ? settings.surfaceColor : Color.red.opacity(0.1))
                                     .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
                                     .cornerRadius(12)
@@ -112,8 +118,8 @@ struct ManagerJobDetailsView: View {
                                             .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(settings.secondaryText)
                                         Text(job.location)
-                                            .scaledFont(size: 22, weight: .bold)
-                                            .foregroundColor(settings.accentColor)
+                                            .scaledFont(size: 14, weight: .semibold)
+                                            .foregroundColor(settings.primaryText.opacity(0.8))
                                     }
                                     Spacer()
                                     Text("ID\n\(String(job.id.prefix(8)).uppercased())")

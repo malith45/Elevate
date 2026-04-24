@@ -28,7 +28,7 @@ struct ManagerJobIssueReportView: View {
                         headerSection
                         
                         if let report = viewModel.report {
-                            if viewModel.reports.count > 1 { reportPicker }
+                            if !viewModel.reports.isEmpty { reportPicker }
                             technicianCard
                             reportDetailsCard(report)
                             if !report.attachmentUrls.isEmpty { photoGridCard(report) }
@@ -41,7 +41,7 @@ struct ManagerJobIssueReportView: View {
                         }
                     }
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 120)
                 }
             }
         }
@@ -205,48 +205,44 @@ struct ManagerJobIssueReportView: View {
     }
 
     private var actionButtons: some View {
-        VStack(spacing: 12) {
-            Button(action: {
-                HapticManager.shared.playImpact(style: .medium)
-                viewModel.sendResponse(text: responseText)
-            }) {
-                HStack {
-                    Text("UPDATE RESPONSE")
-                    Spacer()
-                    Image(systemName: "paperplane.fill")
-                }
-                .scaledFont(size: 15, weight: .bold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .padding(.horizontal, 24)
-                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
-                .cornerRadius(16)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                )
-            }
-
+        HStack(spacing: 12) {
             Button(action: {
                 HapticManager.shared.playImpact(style: .heavy)
                 viewModel.markResolved(responseText: responseText)
             }) {
                 HStack {
-                    Text("MARK AS RESOLVED")
-                    Spacer()
                     Image(systemName: "checkmark.seal.fill")
+                    Text("RESOLVE")
                 }
-                .scaledFont(size: 15, weight: .bold)
+                .scaledFont(size: 14, weight: .bold)
                 .foregroundColor(settings.accentColor)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 18)
-                .padding(.horizontal, 24)
                 .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
                 .cornerRadius(16)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(settings.accentColor.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                )
+            }
+
+            Button(action: {
+                HapticManager.shared.playImpact(style: .medium)
+                viewModel.sendResponse(text: responseText)
+            }) {
+                HStack {
+                    Text("REPLY")
+                    Image(systemName: "paperplane.fill")
+                }
+                .scaledFont(size: 14, weight: .bold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                 )
             }
         }

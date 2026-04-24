@@ -70,8 +70,11 @@ struct JobDetailsView: View {
                                         .foregroundColor(settings.secondaryText)
                                         .tracking(1.0)
                                     Text(job.title)
-                                        .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                        .scaledFont(size: 22, weight: .bold, design: .rounded)
                                         .foregroundColor(settings.primaryText)
+                                        .lineSpacing(2)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .lineLimit(2)
                                 }
 
                                 Spacer()
@@ -80,9 +83,19 @@ struct JobDetailsView: View {
                                     router.selectedJobId = job.id
                                     router.path.append(TechnicianScreen.jobIssueReport)
                                 }) {
+                                    let reports = LocalStorageService.shared.fetchIssueReports(jobId: job.id)
                                     HStack(spacing: 6) {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                         Text("REPORTS")
+                                        if !reports.isEmpty {
+                                            Text("\(reports.count)")
+                                                .scaledFont(size: 9, weight: .black)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.red)
+                                                .foregroundColor(.white)
+                                                .clipShape(Capsule())
+                                        }
                                     }
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 12)
@@ -108,8 +121,8 @@ struct JobDetailsView: View {
                                             .foregroundColor(settings.secondaryText)
                                             .tracking(0.5)
                                         Text(job.location)
-                                            .scaledFont(size: 16, weight: .bold)
-                                            .foregroundColor(settings.accentColor)
+                                            .scaledFont(size: 14, weight: .semibold)
+                                            .foregroundColor(settings.primaryText.opacity(0.8))
                                             .fixedSize(horizontal: false, vertical: true)
                                     }
                                     Spacer()

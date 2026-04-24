@@ -214,39 +214,38 @@ final class ManagerQuotationApprovalViewModel: ObservableObject {
 
     private func sendNotification(for job: Job, mode: NotifyMode) {
         let jobTitle = job.title
+        let type: NotificationManager.NotificationType
+        let title: String
+        let body: String
 
         switch mode {
         case .bulkApproval:
-            firebase.createNotification(
-                organizationId: job.organizationId,
-                userId: job.assignedUserId,
-                title: "Quotation approved",
-                body: "Your quotation for \(jobTitle) was approved.",
-                type: "QUOTATION_APPROVED",
-                targetId: job.id
-            ) { _ in }
+            type = .quoteApproved
+            title = "Quotation Approved"
+            body = "Your quotation for \(jobTitle) was approved."
         case .singleItem(let name, let status):
             let normalized = status.uppercased()
             if normalized == "APPROVED" {
-                firebase.createNotification(
-                    organizationId: job.organizationId,
-                    userId: job.assignedUserId,
-                    title: "Item approved",
-                    body: "\(name) approved for \(jobTitle).",
-                    type: "QUOTATION_APPROVED",
-                    targetId: job.id
-                ) { _ in }
+                type = .quoteApproved
+                title = "Item Approved"
+                body = "\(name) approved for \(jobTitle)."
             } else if normalized == "REJECTED" {
-                firebase.createNotification(
-                    organizationId: job.organizationId,
-                    userId: job.assignedUserId,
-                    title: "Item rejected",
-                    body: "\(name) rejected for \(jobTitle).",
-                    type: "QUOTATION_REJECTED",
-                    targetId: job.id
-                ) { _ in }
+                type = .quoteRejected
+                title = "Item Rejected"
+                body = "\(name) rejected for \(jobTitle)."
+            } else {
+                return
             }
         }
+        
+        NotificationManager.shared.sendNotification(
+            to: job.assignedUserId,
+            organizationId: job.organizationId,
+            type: type,
+            title: title,
+            body: body,
+            targetId: job.id
+        )
     }
 
     deinit {

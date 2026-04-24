@@ -45,4 +45,10 @@ final class ProfileViewModel: ObservableObject {
             }
         }
     }
+
+    func updateNotificationPreference(userId: String, enabled: Bool) {
+        firebase.updateUserProfile(userId: userId, fields: ["notificationsEnabled": enabled]) { _ in
+            // Refresh local user if needed
+        }
+    }
 }

@@ -10,6 +10,7 @@ import FirebaseCore
 
 @main
 struct ElevateApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var appSession = AppSession()
 
     init() {

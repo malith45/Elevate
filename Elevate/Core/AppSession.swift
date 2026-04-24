@@ -13,6 +13,7 @@ final class AppSession: ObservableObject {
     private var lastSyncedLocation: CLLocationCoordinate2D?
     private var lastSyncTime: Date?
     private var jobsListener: ListenerRegistration?
+    private var notificationsListener: ListenerRegistration?
     private let calendarSync = CalendarSyncService.shared
 
     init() {
@@ -23,6 +24,7 @@ final class AppSession: ObservableObject {
             if let token = NotificationService.shared.notificationToken() {
                 FirebaseService.shared.saveFcmToken(userId: user.id, token: token)
             }
+            setupNotificationsSync()
         }
     }
 
@@ -34,19 +36,23 @@ final class AppSession: ObservableObject {
         if let token = NotificationService.shared.notificationToken() {
             FirebaseService.shared.saveFcmToken(userId: user.id, token: token)
         }
+        setupNotificationsSync()
     }
 
     func updateCurrentUser(_ user: User) {
         localStorage.saveUser(user)
         currentUser = user
         setupJobSync()
+        setupNotificationsSync()
     }
 
     @MainActor
     func signOut() {
         locationSubscriber?.cancel()
         jobsListener?.remove()
+        notificationsListener?.remove()
         jobsListener = nil
+        notificationsListener = nil
         sessionStore.clear()
         currentUser = nil
         ManagerTabRouter.shared.currentScreen = .dashboard
@@ -84,6 +90,42 @@ final class AppSession: ObservableObject {
                     self.localStorage.saveJobs(jobs)
                     self.calendarSync.syncJobsIfAuthorized(jobs)
                 }
+            }
+        }
+    }
+
+    private func setupNotificationsSync() {
+        notificationsListener?.remove()
+        guard let user = currentUser else { return }
+        
+        var isInitialLoad = true
+
+        notificationsListener = FirebaseService.shared.listenToNotifications(organizationId: user.organizationId, userId: user.id) { [weak self] items in
+            print("🔔 [NotificationSync] Received \(items.count) notifications from Firestore")
+            Task { @MainActor in
+                guard let self = self else { return }
+                
+                // Get currently cached IDs to detect brand new items
+                let localItems = self.localStorage.fetchNotifications(organizationId: user.organizationId, userId: user.id)
+                let existingIds = Set(localItems.map { $0.id })
+                
+                // Save to local storage
+                self.localStorage.saveNotifications(items)
+                
+                // If it's not the initial connection (which returns old notifications),
+                // and there's a new item that wasn't in cache, trigger in-app alert
+                if !isInitialLoad {
+                    let newItems = items.filter { !existingIds.contains($0.id) && !$0.isRead }
+                    if let newest = newItems.first {
+                        print("🔔 [NotificationSync] Posting In-App Alert for: \(newest.title)")
+                        NotificationCenter.default.post(name: NSNotification.Name("ShowInAppNotification"), object: newest)
+                    }
+                }
+                
+                isInitialLoad = false
+                
+                // Update badge count globally
+                NotificationCenter.default.post(name: NSNotification.Name("NotificationsUpdated"), object: nil)
             }
         }
     }

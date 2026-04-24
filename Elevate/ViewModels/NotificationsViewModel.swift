@@ -51,9 +51,17 @@ final class NotificationsViewModel: ObservableObject {
             self.localStorage.saveNotifications(remoteItems)
 
             DispatchQueue.main.async {
-                self.notifications = remoteItems
+                var seen = Set<String>()
+                self.notifications = remoteItems.filter { seen.insert($0.id).inserted }
             }
         }
+    }
+
+    func markAllRead(organizationId: String, userId: String) {
+        let unread = notifications.filter { !$0.isRead }
+        guard !unread.isEmpty else { return }
+        
+        unread.forEach { markRead($0, isOnline: NetworkService.shared.isOnline) }
     }
 
     func clearAll(organizationId: String, userId: String) {

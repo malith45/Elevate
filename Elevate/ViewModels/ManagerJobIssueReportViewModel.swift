@@ -87,6 +87,16 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
                     self.localStorage.saveIssueReport(updated, isSynced: true)
                     self.report = updated
                     self.didSubmit = true
+                    
+                    // Notify technician of manager response
+                    NotificationManager.shared.sendNotification(
+                        to: report.userId,
+                        organizationId: report.organizationId,
+                        type: .issueCommented,
+                        title: "Issue Feedback",
+                        body: "Manager responded to your issue report for: \(self.job?.title ?? "Job")",
+                        targetId: report.jobId
+                    )
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }
@@ -124,6 +134,16 @@ final class ManagerJobIssueReportViewModel: ObservableObject {
                     self.localStorage.saveIssueReport(updated, isSynced: true)
                     self.report = updated
                     self.didSubmit = true
+                    
+                    // Notify technician of issue resolution
+                    NotificationManager.shared.sendNotification(
+                        to: report.userId,
+                        organizationId: report.organizationId,
+                        type: .issueResolved,
+                        title: "Issue Resolved",
+                        body: "Manager marked your issue report as resolved for: \(self.job?.title ?? "Job")",
+                        targetId: report.jobId
+                    )
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }

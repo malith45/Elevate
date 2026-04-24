@@ -144,6 +144,17 @@ final class InventoryViewModel: ObservableObject {
             } else {
                 SyncManager.shared.enqueueUpdateInventoryItem(itemId: inventoryItem.id, fields: fields, organizationId: organizationId, userId: userId)
             }
+            
+            // Critical Stock Alert
+            if newQuantity < 5 {
+                NotificationManager.shared.notifyManagers(
+                    organizationId: organizationId,
+                    type: .criticalInventory,
+                    title: "Critical Stock Alert",
+                    body: "Item '\(inventoryItem.name)' is running low (\(newQuantity) left).",
+                    targetId: inventoryItem.id
+                )
+            }
         }
 
         if !updatedInventory.isEmpty {
@@ -153,25 +164,18 @@ final class InventoryViewModel: ObservableObject {
     }
 
     private func notifyManagersForQuotation(jobId: String, organizationId: String, userId: String) {
-        let managers = localStorage.fetchUsers(organizationId: organizationId)
-            .filter { $0.role.uppercased() == "MANAGER" }
-        guard !managers.isEmpty else { return }
-
-        let technicianName = localStorage.fetchUser(id: userId)?.displayName
+        let technicianName = localStorage.fetchUser(id: userId)?.displayName ?? "Technician"
         let jobTitle = localStorage.fetchJob(id: jobId)?.title ?? "Job"
-        let title = "Quotation submitted"
-        let body = "\(technicianName?.isEmpty == false ? technicianName! : "Technician") sent items for \(jobTitle)."
-
-        managers.forEach { manager in
-            firebase.createNotification(
-                organizationId: organizationId,
-                userId: manager.id,
-                title: title,
-                body: body,
-                type: "QUOTATION_SUBMITTED",
-                targetId: jobId
-            ) { _ in }
-        }
+        let title = "New Quotation Request"
+        let body = "\(technicianName) submitted a quote for: \(jobTitle)"
+        
+        NotificationManager.shared.notifyManagers(
+            organizationId: organizationId,
+            type: .quoteSubmitted,
+            title: title,
+            body: body,
+            targetId: jobId
+        )
     }
 
     func createItem(organizationId: String, userId: String, name: String, category: String, quantity: Int, unitPrice: Double, sku: String?, imageData: Data?, isOnline: Bool, completion: @escaping (InventoryItem?) -> Void) {

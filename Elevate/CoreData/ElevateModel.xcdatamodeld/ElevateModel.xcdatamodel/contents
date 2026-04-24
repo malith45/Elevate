@@ -8,6 +8,7 @@
         <attribute name="role" optional="NO" attributeType="String"/>
         <attribute name="email" optional="YES" attributeType="String"/>
         <attribute name="phone" optional="YES" attributeType="String"/>
+        <attribute name="notificationsEnabled" optional="NO" attributeType="Boolean" defaultValueString="YES"/>
     </entity>
     <entity name="JobEntity" representedClassName="JobEntity" syncable="YES">
         <attribute name="id" optional="NO" attributeType="String"/>

@@ -198,6 +198,10 @@ struct TechnicianProfileView: View {
 
         .onChange(of: pushNotificationsEnabled) { _, newValue in
             guard let user = appSession.currentUser else { return }
+            
+            // Update User model preference
+            viewModel.updateNotificationPreference(userId: user.id, enabled: newValue)
+            
             if newValue {
                 if let token = UserDefaults.standard.string(forKey: "fcmToken") {
                     FirebaseService.shared.saveFcmToken(userId: user.id, token: token)
@@ -246,6 +250,7 @@ struct TechnicianProfileView: View {
     private func loadProfile() {
         guard let user = appSession.currentUser else { return }
         viewModel.load(userId: user.id)
+        pushNotificationsEnabled = user.notificationsEnabled
     }
 
     private func signOut() {

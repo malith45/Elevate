@@ -44,7 +44,8 @@ final class ManagerEditProfileViewModel: ObservableObject {
                         email: trimmedEmail.isEmpty ? nil : trimmedEmail,
                         phone: trimmedPhone.isEmpty ? nil : trimmedPhone,
                         latitude: user.latitude,
-                        longitude: user.longitude
+                        longitude: user.longitude,
+                        notificationsEnabled: user.notificationsEnabled
                     )
                     completion(updated)
                 case .failure(let error):

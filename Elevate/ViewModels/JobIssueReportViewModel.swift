@@ -55,12 +55,22 @@ final class JobIssueReportViewModel: ObservableObject {
 
     private func submitOnline(_ report: IssueReport) {
         firebase.createIssueReport(report) { [weak self] result in
+            guard let self = self else { return }
             DispatchQueue.main.async {
                 if case .failure(let error) = result {
-                    self?.errorMessage = error.localizedDescription
+                    self.errorMessage = error.localizedDescription
                 } else {
-                    self?.localStorage.saveIssueReport(report, isSynced: true)
-                    self?.didSubmit = true
+                    self.localStorage.saveIssueReport(report, isSynced: true)
+                    self.didSubmit = true
+                    
+                    // Notify managers of new issue report
+                    NotificationManager.shared.notifyManagers(
+                        organizationId: report.organizationId,
+                        type: .issueReported,
+                        title: "New Issue Reported",
+                        body: "Technician reported an issue for a job. Priority: \(report.priority)",
+                        targetId: report.jobId
+                    )
                 }
             }
         }

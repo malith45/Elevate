@@ -463,7 +463,9 @@ struct TechnicianDashboardView: View {
     private var urgentUpdateMessage: String? {
         let urgentJobs = technicianJobs.filter {
             let priority = $0.priority.uppercased()
-            return priority == "HIGH" || priority == "URGENT"
+            let status = $0.status.uppercased()
+            return (priority == "HIGH" || priority == "URGENT") && 
+                   (status != "COMPLETED" && status != "CANCELLED")
         }
 
         guard let job = urgentJobs.first else {
@@ -477,7 +479,9 @@ struct TechnicianDashboardView: View {
     private var urgentJobId: String? {
         technicianJobs.first(where: {
             let priority = $0.priority.uppercased()
-            return priority == "HIGH" || priority == "URGENT"
+            let status = $0.status.uppercased()
+            return (priority == "HIGH" || priority == "URGENT") && 
+                   (status != "COMPLETED" && status != "CANCELLED")
         })?.id
     }
 

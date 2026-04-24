@@ -11,4 +11,5 @@ struct User: Identifiable, Codable, Equatable {
     let phone: String?
     let latitude: Double?
     let longitude: Double?
+    let notificationsEnabled: Bool
 }

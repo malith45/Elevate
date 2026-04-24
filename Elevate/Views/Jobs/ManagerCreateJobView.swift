@@ -145,6 +145,14 @@ struct ManagerCreateJobView: View {
                                                 .font(.system(size: 14))
                                             TextField("Search or pin location", text: $location)
                                                 .scaledFont(size: 15)
+                                                .onSubmit {
+                                                    performSearch()
+                                                }
+                                            
+                                            Button(action: performSearch) {
+                                                Image(systemName: "magnifyingglass")
+                                                    .foregroundColor(settings.accentColor)
+                                            }
                                         }
                                         .padding(14)
                                         .background(Color.elevateLightGray.opacity(0.4))
@@ -336,6 +344,27 @@ struct ManagerCreateJobView: View {
         ) { job in
             if job != nil {
                 dismiss()
+            }
+        }
+    }
+
+    private func performSearch() {
+        let trimmed = location.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        viewModel.searchLocation(query: trimmed) { coordinate, name in
+            if let coordinate = coordinate {
+                self.siteCoordinate = coordinate
+                self.mapPosition = MapCameraPosition.region(
+                    MKCoordinateRegion(
+                        center: coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                    )
+                )
+                if let name = name {
+                    self.location = name
+                }
+                HapticManager.shared.playImpact(style: .medium)
             }
         }
     }

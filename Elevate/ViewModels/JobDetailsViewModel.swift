@@ -103,6 +103,49 @@ final class JobDetailsViewModel: ObservableObject {
 
         if isOnline {
             firebase.updateJobFields(jobId: jobId, fields: fields) { _ in
+                // Notification Triggers
+                if user.role.uppercased() == "TECHNICIAN" {
+                    // Notify managers of technician status changes
+                    let type: NotificationManager.NotificationType
+                    let title: String
+                    let body: String
+                    
+                    switch normalized {
+                    case "STARTED":
+                        type = .jobStarted
+                        title = "Job Started"
+                        body = "Technician \(user.displayName) has started working on: \(current.title)"
+                    case "HOLD":
+                        type = .jobHold
+                        title = "Job On Hold"
+                        body = "Technician \(user.displayName) put job on hold: \(current.title). Reason: \(holdReason ?? "N/A")"
+                    case "COMPLETED":
+                        type = .jobCompleted
+                        title = "Job Completed"
+                        body = "Technician \(user.displayName) has completed: \(current.title)"
+                    default:
+                        return
+                    }
+                    
+                    NotificationManager.shared.notifyManagers(
+                        organizationId: user.organizationId,
+                        type: type,
+                        title: title,
+                        body: body,
+                        targetId: jobId
+                    )
+                } else if user.role.uppercased() == "MANAGER" && normalized == "CANCELLED" {
+                    // Notify technician of cancellation
+                    NotificationManager.shared.sendNotification(
+                        to: current.assignedUserId,
+                        organizationId: user.organizationId,
+                        type: .jobCancelled,
+                        title: "Job Cancelled",
+                        body: "Manager has cancelled job: \(current.title)",
+                        targetId: jobId
+                    )
+                }
+                
                 DispatchQueue.main.async { completion?() }
             }
         } else {

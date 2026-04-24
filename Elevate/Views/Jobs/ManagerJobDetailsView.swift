@@ -20,6 +20,7 @@ struct ManagerJobDetailsView: View {
     @State private var showPasswordError = false
     @State private var showSuccessAlert = false
     @State private var successMessage = ""
+    @State private var selectedPhotoUrl: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     private let localStorage = LocalStorageService.shared
@@ -38,6 +39,30 @@ struct ManagerJobDetailsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         if let job = viewModel.job {
+                            
+                            // HOLD REASON BANNER (NEW)
+                            if job.status.uppercased() == "HOLD", let reason = job.holdReason, !reason.isEmpty {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "pause.circle.fill")
+                                        .font(.system(size: 20))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("ON HOLD")
+                                            .scaledFont(size: 10, weight: .black)
+                                        Text(reason)
+                                            .scaledFont(size: 14, weight: .bold)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(16)
+                                .foregroundColor(.white)
+                                .background(settings.isHighContrast ? Color.black : Color.orange)
+                                .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                                )
+                                .padding(.top, 8)
+                            }
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Job Details")
@@ -253,9 +278,14 @@ struct ManagerJobDetailsView: View {
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 12) {
                                             ForEach(job.photoUrls, id: \.self) { url in
-                                                PhotoPreview(urlString: url)
-                                                    .frame(width: 88, height: 88)
-                                                    .cornerRadius(12)
+                                                Button(action: {
+                                                    selectedPhotoUrl = url
+                                                }) {
+                                                    PhotoPreview(urlString: url)
+                                                        .frame(width: 88, height: 88)
+                                                        .cornerRadius(12)
+                                                }
+                                                .buttonStyle(.plain)
                                             }
                                         }
                                     }
@@ -408,6 +438,17 @@ struct ManagerJobDetailsView: View {
         } message: {
             Text(successMessage)
         }
+        .fullScreenCover(item: Binding(
+            get: { selectedPhotoUrl.map { PhotoIdentifiable(url: $0) } },
+            set: { selectedPhotoUrl = $0?.url }
+        )) { item in
+            FullScreenImageView(urlString: item.url)
+        }
+    }
+    
+    struct PhotoIdentifiable: Identifiable {
+        let id = UUID()
+        let url: String
     }
 
     private func updateStatus(jobId: String, status: String, holdReason: String? = nil, completion: (() -> Void)? = nil) {

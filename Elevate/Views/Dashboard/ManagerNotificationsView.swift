@@ -14,7 +14,7 @@ struct ManagerNotificationsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav(isManager: true, onBack: {
+                BackHeaderNav(isManager: true, showNotificationBell: false, onBack: {
                     dismiss()
                 })
                 
@@ -27,11 +27,21 @@ struct ManagerNotificationsView: View {
                                 .scaledFont(size: 32, weight: .bold, design: .rounded)
                                 .foregroundColor(settings.primaryText)
                             Spacer()
-                            Button("Clear All") {
-                                clearNotifications()
+                            HStack(spacing: 16) {
+                                Button("Mark All") {
+                                    if let user = appSession.currentUser {
+                                        viewModel.markAllRead(organizationId: user.organizationId, userId: user.id)
+                                    }
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.accentColor)
+                                
+                                Button("Clear All") {
+                                    clearNotifications()
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.accentColor)
                             }
-                            .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -57,9 +67,6 @@ struct ManagerNotificationsView: View {
         .onChange(of: network.isOnline) { _, _ in
             loadNotifications()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .notificationsDidChange)) { _ in
-            loadNotifications()
-        }
     }
 
     private func loadNotifications() {
@@ -76,19 +83,7 @@ struct ManagerNotificationsView: View {
     private func handleTap(_ item: NotificationItem) {
         guard appSession.currentUser != nil else { return }
         viewModel.markRead(item, isOnline: NetworkService.shared.isOnline)
-        guard let targetId = item.targetId else { return }
-
-        router.selectedJobId = targetId
-        router.selectedTab = .jobs
-
-        let type = item.type.uppercased()
-        if type.contains("ISSUE") {
-            router.path.append(ManagerScreen.jobIssueReport)
-        } else if type.contains("QUOTATION") || type.contains("QUOTE") {
-            router.path.append(ManagerScreen.quotationApproval)
-        } else {
-            router.path.append(ManagerScreen.jobDetails)
-        }
+        router.handleDeepLink(type: item.type.uppercased(), targetId: item.targetId)
     }
 }
 

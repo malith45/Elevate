@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import MapKit
 
 final class ManagerCreateJobViewModel: ObservableObject {
     @Published var technicians: [User] = []
@@ -89,12 +90,38 @@ final class ManagerCreateJobViewModel: ObservableObject {
                 self.isSaving = false
                 switch result {
                 case .success:
+                    // Trigger notification to the assigned technician
+                    NotificationManager.shared.sendNotification(
+                        to: assignedUserId,
+                        organizationId: organizationId,
+                        type: .jobAssigned,
+                        title: "New Job Assigned",
+                        body: "You have a new assignment: \(trimmedTitle)",
+                        targetId: job.id
+                    )
                     completion(job)
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                     completion(nil)
                 }
             }))
+        }
+    }
+
+    func searchLocation(query: String, completion: @escaping (CLLocationCoordinate2D?, String?) -> Void) {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            guard let mapItem = response?.mapItems.first else {
+                DispatchQueue.main.async {
+                    completion(nil, nil)
+                }
+                return
+            }
+            DispatchQueue.main.async {
+                completion(mapItem.location.coordinate, mapItem.name)
+            }
         }
     }
 }

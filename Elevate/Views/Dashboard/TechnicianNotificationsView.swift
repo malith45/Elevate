@@ -14,7 +14,7 @@ struct TechnicianNotificationsView: View {
             
             VStack(spacing: 0) {
                 // Top Nav
-                BackHeaderNav(onBack: {
+                BackHeaderNav(showNotificationBell: false, onBack: {
                     dismiss()
                 })
                 
@@ -27,11 +27,21 @@ struct TechnicianNotificationsView: View {
                                 .scaledFont(size: 32, weight: .bold, design: .rounded)
                                 .foregroundColor(settings.primaryText)
                             Spacer()
-                            Button("Clear All") {
-                                clearNotifications()
+                            HStack(spacing: 16) {
+                                Button("Mark All") {
+                                    if let user = appSession.currentUser {
+                                        viewModel.markAllRead(organizationId: user.organizationId, userId: user.id)
+                                    }
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.accentColor)
+                                
+                                Button("Clear All") {
+                                    clearNotifications()
+                                }
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.accentColor)
                             }
-                            .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -63,9 +73,6 @@ struct TechnicianNotificationsView: View {
         .onChange(of: network.isOnline) { _, _ in
             loadNotifications()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .notificationsDidChange)) { _ in
-            loadNotifications()
-        }
     }
 
     private func loadNotifications() {
@@ -81,122 +88,10 @@ struct TechnicianNotificationsView: View {
 
     private func handleTap(_ item: NotificationItem) {
         viewModel.markRead(item, isOnline: NetworkService.shared.isOnline)
-        
-        guard let targetId = item.targetId else { return }
-        let type = item.type.uppercased()
-        
-        router.selectedJobId = targetId
-        if type.contains("ISSUE") {
-            router.path.append(TechnicianScreen.jobIssueReport)
-        } else if type.contains("QUOTATION") || type.contains("QUOTE") {
-            router.path.append(TechnicianScreen.quotationStatus)
-        } else if type.contains("JOB") {
-            router.path.append(TechnicianScreen.jobDetails)
-        }
+        router.handleDeepLink(type: item.type.uppercased(), targetId: item.targetId)
     }
 }
 
-struct NotificationCard: View {
-    var item: NotificationItem
-    var onTap: (() -> Void)?
-    @ObservedObject var settings = AccessibilitySettings.shared
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // Unread Indicator Bar
-            Rectangle()
-                .fill(item.isRead ? Color.clear : settings.accentColor)
-                .frame(width: 4)
-                .cornerRadius(2)
-                .overlay(
-                    Rectangle()
-                        .stroke(settings.isHighContrast && !item.isRead ? Color.white : Color.clear, lineWidth: 1)
-                )
-            
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    Text(item.title)
-                        .scaledFont(size: 16, weight: .bold)
-                        .foregroundColor(settings.primaryText)
-                    Spacer()
-                    HStack(spacing: 8) {
-                        Text(timeAgo(from: item.createdAt))
-                            .scaledFont(size: 10, weight: .bold)
-                            .foregroundColor(settings.secondaryText)
-                        
-                        if !item.isRead {
-                            Circle()
-                                .fill(settings.accentColor)
-                                .frame(width: 8, height: 8)
-                                .overlay(
-                                    Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
-                                )
-                        } else {
-                            Circle()
-                                .fill(Color.clear)
-                                .frame(width: 8, height: 8) // spacing preservation
-                        }
-                    }
-                }
-                
-                Text(item.body)
-                    .scaledFont(size: 14)
-                    .foregroundColor(settings.isHighContrast ? settings.primaryText : Color.gray)
-                    .lineSpacing(4)
-            }
-            .padding(.vertical, 16)
-            .padding(.trailing, 16)
-        }
-        .background(settings.surfaceColor)
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-        )
-        .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
-        .padding(.horizontal, 24)
-        .onTapGesture {
-            onTap?()
-        }
-    }
-
-    private func timeAgo(from date: Date) -> String {
-        let minutes = Int(Date().timeIntervalSince(date) / 60)
-        if minutes < 60 {
-            return "\(max(minutes, 1))M AGO"
-        }
-        let hours = minutes / 60
-        if hours < 24 {
-            return "\(hours)H AGO"
-        }
-        let days = hours / 24
-        return "\(days)D AGO"
-    }
-}
-
-struct NotificationSection: View {
-    let title: String
-    let items: [NotificationItem]
-    var onTap: ((NotificationItem) -> Void)?
-    @ObservedObject var settings = AccessibilitySettings.shared
-
-    var body: some View {
-        if !items.isEmpty {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(title)
-                    .scaledFont(size: 12, weight: .bold)
-                    .foregroundColor(settings.secondaryText)
-                    .padding(.horizontal, 24)
-
-                ForEach(items) { item in
-                    NotificationCard(item: item, onTap: {
-                        onTap?(item)
-                    })
-                }
-            }
-        }
-    }
-}
 
 
 #Preview {

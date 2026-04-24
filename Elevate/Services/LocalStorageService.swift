@@ -21,6 +21,7 @@ final class LocalStorageService {
         entity.setValue(user.role, forKey: "role")
         entity.setValue(user.email, forKey: "email")
         entity.setValue(user.phone, forKey: "phone")
+        entity.setValue(user.notificationsEnabled, forKey: "notificationsEnabled")
         saveContext(context)
     }
 
@@ -38,6 +39,7 @@ final class LocalStorageService {
                 entity.setValue(user.role, forKey: "role")
                 entity.setValue(user.email, forKey: "email")
                 entity.setValue(user.phone, forKey: "phone")
+                entity.setValue(user.notificationsEnabled, forKey: "notificationsEnabled")
             }
             self.saveContext(context)
         }
@@ -56,7 +58,8 @@ final class LocalStorageService {
             email: result.value(forKey: "email") as? String,
             phone: result.value(forKey: "phone") as? String,
             latitude: nil,
-            longitude: nil
+            longitude: nil,
+            notificationsEnabled: result.value(forKey: "notificationsEnabled") as? Bool ?? true
         )
     }
 
@@ -74,7 +77,8 @@ final class LocalStorageService {
                 email: result.value(forKey: "email") as? String,
                 phone: result.value(forKey: "phone") as? String,
                 latitude: nil,
-                longitude: nil
+                longitude: nil,
+                notificationsEnabled: result.value(forKey: "notificationsEnabled") as? Bool ?? true
             )
         }
     }
@@ -443,11 +447,19 @@ final class LocalStorageService {
 
     func saveNotifications(_ items: [NotificationItem]) {
         let context = stack.newBackgroundContext()
-        context.perform {
+        context.performAndWait {
             items.forEach { item in
                 let request = NSFetchRequest<NSManagedObject>(entityName: "NotificationEntity")
                 request.predicate = NSPredicate(format: "id == %@", item.id)
-                let entity = (try? context.fetch(request).first) ?? NSEntityDescription.insertNewObject(forEntityName: "NotificationEntity", into: context)
+                
+                let results = (try? context.fetch(request)) ?? []
+                if results.count > 1 {
+                    // Cleanup existing duplicates if they somehow got in
+                    results.dropFirst().forEach { context.delete($0) }
+                }
+                
+                let entity = results.first ?? NSEntityDescription.insertNewObject(forEntityName: "NotificationEntity", into: context)
+                
                 entity.setValue(item.id, forKey: "id")
                 entity.setValue(item.organizationId, forKey: "organizationId")
                 entity.setValue(item.userId, forKey: "userId")
@@ -456,13 +468,42 @@ final class LocalStorageService {
                 entity.setValue(item.type, forKey: "type")
                 entity.setValue(item.targetId, forKey: "targetId")
                 entity.setValue(item.createdAt, forKey: "createdAt")
-                entity.setValue(item.isRead, forKey: "isRead")
+                
+                // Conflict Resolution: Only update isRead if local is false or they match
+                let localRead = entity.value(forKey: "isRead") as? Bool ?? false
+                if !localRead {
+                    entity.setValue(item.isRead, forKey: "isRead")
+                }
             }
+            
             self.saveContext(context)
+            self.applyNotificationRetention(context: context)
+            
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .notificationsDidChange, object: nil)
             }
         }
+    }
+
+    private func applyNotificationRetention(context: NSManagedObjectContext) {
+        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "NotificationEntity")
+        
+        // 1. Time-based retention (28 days)
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -28, to: Date()) ?? Date()
+        fetchRequest.predicate = NSPredicate(format: "createdAt < %@", cutoffDate as NSDate)
+        let oldItems = (try? context.fetch(fetchRequest)) ?? []
+        oldItems.forEach { context.delete($0) }
+        
+        // 2. Count-based retention (400 limit)
+        let countRequest = NSFetchRequest<NSManagedObject>(entityName: "NotificationEntity")
+        countRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+        let allItems = (try? context.fetch(countRequest)) ?? []
+        if allItems.count > 400 {
+            let toDelete = allItems.suffix(from: 400)
+            toDelete.forEach { context.delete($0) }
+        }
+        
+        saveContext(context)
     }
 
     func fetchNotifications(organizationId: String, userId: String) -> [NotificationItem] {

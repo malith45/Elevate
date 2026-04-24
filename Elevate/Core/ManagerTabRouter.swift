@@ -30,6 +30,30 @@ final class ManagerTabRouter: ObservableObject {
     @Published var path = NavigationPath()
     @Published var selectedJobId: String?
     @Published var selectedMemberId: String?
+
+    func handleDeepLink(type: String, targetId: String?) {
+        guard let targetId = targetId else { return }
+        
+        switch type {
+        case "JOB_STARTED", "JOB_HOLD", "JOB_COMPLETED":
+            selectedJobId = targetId
+            selectedTab = .dashboard
+            path.append(ManagerScreen.jobDetails)
+        case "ISSUE_REPORTED":
+            selectedJobId = targetId
+            selectedTab = .dashboard
+            path.append(ManagerScreen.jobIssueReport)
+        case "QUOTE_SUBMITTED":
+            selectedJobId = targetId
+            selectedTab = .dashboard
+            path.append(ManagerScreen.quotationApproval)
+        case "CRITICAL_INVENTORY":
+            selectedTab = .dashboard
+            path.append(ManagerScreen.inventoryManager)
+        default:
+            break
+        }
+    }
 }
 
 private struct ManagerTabRouterKey: EnvironmentKey {

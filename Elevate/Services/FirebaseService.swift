@@ -53,7 +53,8 @@ final class FirebaseService {
                 email: data["email"] as? String,
                 phone: data["phone"] as? String,
                 latitude: data["latitude"] as? Double,
-                longitude: data["longitude"] as? Double
+                longitude: data["longitude"] as? Double,
+                notificationsEnabled: data["notificationsEnabled"] as? Bool ?? true
             )
 
             if let photoUrl = data["photoUrl"] as? String {
@@ -179,7 +180,8 @@ final class FirebaseService {
                 email: data["email"] as? String,
                 phone: data["phone"] as? String,
                 latitude: data["latitude"] as? Double,
-                longitude: data["longitude"] as? Double
+                longitude: data["longitude"] as? Double,
+                notificationsEnabled: data["notificationsEnabled"] as? Bool ?? true
             )
 
             if let photoUrl = data["photoUrl"] as? String {
@@ -223,7 +225,8 @@ final class FirebaseService {
                         email: data["email"] as? String,
                         phone: data["phone"] as? String,
                         latitude: data["latitude"] as? Double,
-                        longitude: data["longitude"] as? Double
+                        longitude: data["longitude"] as? Double,
+                        notificationsEnabled: data["notificationsEnabled"] as? Bool ?? true
                     )
                 } ?? []
 
@@ -259,7 +262,8 @@ final class FirebaseService {
                     email: email,
                     phone: phone,
                     latitude: nil,
-                    longitude: nil
+                    longitude: nil,
+                    notificationsEnabled: true
                 )
                 completion(.success(user))
             }
@@ -1109,7 +1113,8 @@ final class FirebaseService {
                         email: data["email"] as? String,
                         phone: data["phone"] as? String,
                         latitude: data["latitude"] as? Double,
-                        longitude: data["longitude"] as? Double
+                        longitude: data["longitude"] as? Double,
+                        notificationsEnabled: data["notificationsEnabled"] as? Bool ?? true
                     )
                 }
                 completion(users)
@@ -1118,10 +1123,7 @@ final class FirebaseService {
 
     func listenToNotifications(organizationId: String, userId: String, completion: @escaping ([NotificationItem]) -> Void) -> ListenerRegistration {
         db.collection("notifications")
-            .whereField("organizationId", isEqualTo: organizationId)
             .whereField("userId", isEqualTo: userId)
-            .order(by: "createdAt", descending: true)
-            .limit(to: 100)
             .addSnapshotListener { snapshot, error in
                 guard error == nil, let documents = snapshot?.documents else { return }
                 let items = documents.compactMap { doc -> NotificationItem? in

@@ -12,14 +12,18 @@ struct NotificationBell: View {
         Group {
             if isManager {
                 Button(action: {
-                    router.currentScreen = .notifications
-                    router.selectedTab = .dashboard
+                    router.path.append(ManagerScreen.notifications)
                 }) {
                     bellContent
                 }
                 .buttonStyle(.plain)
             } else {
-                NavigationLink(destination: TechnicianNotificationsView()) { bellContent }
+                Button(action: {
+                    TechnicianTabRouter.shared.path.append(TechnicianScreen.notifications)
+                }) {
+                    bellContent
+                }
+                .buttonStyle(.plain)
             }
         }
         .onAppear {
@@ -107,6 +111,7 @@ struct BrandHeaderNav: View {
 struct BackHeaderNav: View {
     @Environment(\.presentationMode) var presentationMode
     var isManager: Bool = false
+    var showNotificationBell: Bool = true
     var onBack: (() -> Void)? = nil
     @ObservedObject var settings = AccessibilitySettings.shared
     
@@ -128,7 +133,9 @@ struct BackHeaderNav: View {
                 .foregroundColor(settings.accentColor)
             }
             Spacer()
-            NotificationBell(isManager: isManager)
+            if showNotificationBell {
+                NotificationBell(isManager: isManager)
+            }
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)

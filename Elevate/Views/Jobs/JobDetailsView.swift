@@ -84,29 +84,20 @@ struct JobDetailsView: View {
                                     router.path.append(TechnicianScreen.jobIssueReport)
                                 }) {
                                     let reports = LocalStorageService.shared.fetchIssueReports(jobId: job.id)
-                                    HStack(spacing: 6) {
+                                    HStack(spacing: 4) {
                                         Image(systemName: "exclamationmark.triangle.fill")
-                                        Text("REPORTS")
+                                            .font(.system(size: 12, weight: .bold))
                                         if !reports.isEmpty {
                                             Text("\(reports.count)")
-                                                .scaledFont(size: 9, weight: .black)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(Color.red)
-                                                .foregroundColor(.white)
-                                                .clipShape(Capsule())
+                                                .scaledFont(size: 12, weight: .black)
                                         }
                                     }
-                                    .scaledFont(size: 10, weight: .bold)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.red.opacity(0.1))
-                                    .foregroundColor(settings.isHighContrast ? settings.primaryText : .red)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(settings.isHighContrast ? .red : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                    )
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.red)
+                                    .clipShape(Capsule())
+                                    .shadow(color: Color.red.opacity(0.3), radius: 4, x: 0, y: 2)
                                 }
                                 .buttonStyle(.plain)
                             }

@@ -9,7 +9,7 @@ struct ManagerBottomNav: View {
     var body: some View {
         ZStack {
             HStack(spacing: 0) {
-                ManagerTabBarButton(tab: .dashboard, title: "DASHBOARD", iconName: "square.grid.2x2", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
+                ManagerTabBarButton(tab: .dashboard, title: "HOME", iconName: "house", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
                 ManagerTabBarButton(tab: .jobs, title: "JOBS", iconName: "briefcase", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
                 ManagerTabBarButton(tab: .map, title: "MAP", iconName: "map", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)
                 ManagerTabBarButton(tab: .profile, title: "PROFILE", iconName: "person", selectedTab: $selectedTab, mode: mode, selectionNamespace: selectionNamespace, onSelect: onSelect)

@@ -282,21 +282,17 @@ struct ManagerJobIssueReportView: View {
                             viewModel.selectReport(report)
                             responseText = report.managerResponse ?? ""
                         }) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(report.priority)
-                                    .scaledFont(size: 9, weight: .bold)
-                                Text(shortDate(report.createdAt))
-                                    .scaledFont(size: 10, weight: .bold)
-                            }
-                            .foregroundColor(isSelected ? .white : settings.primaryText)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : settings.accentColor) : settings.surfaceColor)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected && settings.isHighContrast ? settings.primaryText : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                            )
+                            Text(shortDate(report.createdAt))
+                                .scaledFont(size: 10, weight: .bold)
+                                .foregroundColor(isSelected ? .white : settings.primaryText)
+                                .frame(height: 36)
+                                .padding(.horizontal, 12)
+                                .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : settings.accentColor) : settings.surfaceColor)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(isSelected && settings.isHighContrast ? settings.primaryText : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
                         }
                         .buttonStyle(.plain)
                     }
@@ -366,7 +362,7 @@ struct ManagerJobIssueReportView: View {
 
     private func shortDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
+        formatter.dateFormat = "MMM d, HH:mm"
         return formatter.string(from: date)
     }
 }

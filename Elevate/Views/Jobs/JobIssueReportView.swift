@@ -45,7 +45,6 @@ struct JobIssueReportView: View {
                             submitButton
                         }
                         
-                        Spacer().frame(height: 160)
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 100)
@@ -116,8 +115,8 @@ struct JobIssueReportView: View {
                         }
                         .scaledFont(size: 10, weight: .bold)
                         .foregroundColor(viewModel.isNewReport ? .white : settings.primaryText)
+                        .frame(height: 36)
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
                         .background(viewModel.isNewReport ? settings.accentColor : settings.surfaceColor)
                         .cornerRadius(12)
                         .overlay(
@@ -132,21 +131,19 @@ struct JobIssueReportView: View {
                             HapticManager.shared.playImpact(style: .light)
                             viewModel.selectReport(report)
                         }) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(report.priority)
-                                    .scaledFont(size: 8, weight: .black)
-                                Text(shortDate(report.createdAt))
-                                    .scaledFont(size: 10, weight: .bold)
-                            }
-                            .foregroundColor(isSelected ? .white : settings.primaryText)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(isSelected ? settings.accentColor : settings.surfaceColor)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected ? .clear : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                            )
+                            VStack(alignment: .leading, spacing: 0) {
+                            Text(shortDate(report.createdAt))
+                                .scaledFont(size: 10, weight: .bold)
+                        }
+                        .foregroundColor(isSelected ? .white : settings.primaryText)
+                        .frame(height: 36)
+                        .padding(.horizontal, 12)
+                        .background(isSelected ? settings.accentColor : settings.surfaceColor)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(isSelected ? .clear : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        )
                         }
                     }
                 }
@@ -432,7 +429,7 @@ struct JobIssueReportView: View {
 
     private func shortDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
+        formatter.dateFormat = "MMM d, HH:mm"
         return formatter.string(from: date)
     }
 

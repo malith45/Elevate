@@ -399,7 +399,7 @@ struct JobDetailsView: View {
                             if status != "COMPLETED" && status != "CANCELLED" {
                                 VStack(spacing: 12) {
                                     if status == "HOLD" {
-                                        actionButton(title: "CONTINUE WORK", icon: "play.fill", color: .blue) {
+                                        actionButton(title: "CONTINUE WORK", icon: "play.fill", color: Color.elevateDarkGreen) {
                                             updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                         }
                                     } else if status == "IN-PROGRESS" {

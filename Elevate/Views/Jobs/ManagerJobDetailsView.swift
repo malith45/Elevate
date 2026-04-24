@@ -355,7 +355,7 @@ struct ManagerJobDetailsView: View {
                                 VStack(spacing: 12) {
                                     if status == "HOLD" {
                                         HStack(spacing: 12) {
-                                            actionButton(title: "CONTINUE", icon: "play.fill", color: .blue) {
+                                            actionButton(title: "CONTINUE", icon: "play.fill", color: Color.elevateDarkGreen) {
                                                 updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                             }
                                             cancelButton

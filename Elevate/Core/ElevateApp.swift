@@ -24,6 +24,17 @@ struct ElevateApp: App {
                 .fontDesign(.rounded)
                 .withGlobalAccessibilitySettings()
                 .environmentObject(appSession)
+                .onOpenURL { url in
+                    handleURL(url)
+                }
+        }
+    }
+
+    private func handleURL(_ url: URL) {
+        guard url.scheme == "elevate" else { return }
+        
+        if url.host == "job", let jobId = url.pathComponents.last {
+            TechnicianTabRouter.shared.handleWidgetDeepLink(jobId: jobId)
         }
     }
 }

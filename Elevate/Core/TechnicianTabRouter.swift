@@ -44,6 +44,14 @@ final class TechnicianTabRouter: ObservableObject {
             break
         }
     }
+
+    func handleWidgetDeepLink(jobId: String) {
+        selectedJobId = jobId
+        selectedTab = .dashboard
+        // Clear existing path and jump to details
+        path = NavigationPath()
+        path.append(TechnicianScreen.jobDetails)
+    }
 }
 
 private struct TechnicianTabRouterKey: EnvironmentKey {

@@ -21,3 +21,5 @@ struct Job: Identifiable, Codable, Equatable {
     var photoUrls: [String]
     var updatedAt: Date
 }
+
+typealias AppJob = Job

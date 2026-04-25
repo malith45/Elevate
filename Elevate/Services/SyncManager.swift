@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import WidgetKit
 
 final class SyncManager: ObservableObject {
     static let shared = SyncManager()
@@ -63,6 +64,7 @@ final class SyncManager: ObservableObject {
                 self?.pendingCount = self?.local.pendingActionsCount(organizationId: organizationId, userId: userId) ?? 0
                 self?.lastSyncAt = Date()
                 self?.status = (self?.pendingCount == 0) ? .upToDate : .syncing
+                WidgetCenter.shared.reloadAllTimelines()
                 completion?()
             }
         }

@@ -30,6 +30,13 @@ final class AppSession: ObservableObject {
 
     func signIn(user: User) {
         sessionStore.saveUserId(user.id)
+        
+        // Sync to App Group for Widget support
+        if let sharedDefaults = UserDefaults(suiteName: "group.com.elevate.app") {
+            sharedDefaults.set(user.id, forKey: "currentUserId")
+            sharedDefaults.set(user.organizationId, forKey: "currentOrgId")
+        }
+        
         currentUser = user
         setupLocationTracking()
         setupJobSync()

@@ -9,6 +9,14 @@ final class CoreDataStack {
 
     private init() {
         container = NSPersistentContainer(name: "ElevateModel")
+        
+        // Use App Group shared container for Widget support
+        if let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.elevate.app") {
+            let storeURL = groupURL.appendingPathComponent("ElevateModel.sqlite")
+            let description = NSPersistentStoreDescription(url: storeURL)
+            container.persistentStoreDescriptions = [description]
+        }
+
         container.loadPersistentStores { _, error in
             if let error = error {
                 let memoryStore = NSPersistentStoreDescription()

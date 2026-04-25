@@ -114,12 +114,12 @@ struct ManagerQuotationApprovalView: View {
                 .foregroundColor(.white)
                 .padding(.vertical, 14)
                 .padding(.horizontal, 24)
-                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                .background(settings.isHighContrast ? Color.black : settings.accentColor)
                 .cornerRadius(12)
-                .shadow(color: Color.elevateDarkGreen.opacity(0.15), radius: 8, x: 0, y: 4)
+                .shadow(color: settings.accentColor.opacity(0.15), radius: 8, x: 0, y: 4)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                 )
             }
         }
@@ -173,11 +173,11 @@ struct ManagerQuotationApprovalView: View {
                         }) {
                             Image(systemName: isApproved ? "checkmark.circle.fill" : "checkmark")
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(isApproved ? .white : .green)
+                                .foregroundColor(isApproved ? .white : (settings.isHighContrast ? settings.primaryText : Color.green))
                                 .padding(10)
-                                .background(isApproved ? (settings.isHighContrast ? Color.black : Color.green) : Color.green.opacity(0.1))
+                                .background(isApproved ? (settings.isHighContrast ? Color.black : Color.green) : (settings.isHighContrast ? Color.black : Color.green.opacity(0.1)))
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.green.opacity(0.2), lineWidth: 1))
+                                .overlay(Circle().stroke(settings.isHighContrast ? settings.primaryText : Color.green.opacity(0.2), lineWidth: 1))
                         }
 
                         Button(action: {
@@ -190,16 +190,16 @@ struct ManagerQuotationApprovalView: View {
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(isRejected ? .white : .red)
                                 .padding(10)
-                                .background(isRejected ? (settings.isHighContrast ? Color.black : Color.red) : Color.red.opacity(0.1))
+                                .background(isRejected ? (settings.isHighContrast ? Color.black : Color.red) : (settings.isHighContrast ? Color.black : Color.red.opacity(0.1)))
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.red.opacity(0.2), lineWidth: 1))
+                                .overlay(Circle().stroke(settings.isHighContrast ? .red : Color.red.opacity(0.2), lineWidth: 1))
                         }
                     }
                 }
             }
         }
         .padding(16)
-        .background(settings.isHighContrast ? Color.black : settings.surfaceColor.opacity(0.6))
+        .background(settings.surfaceColor)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -225,7 +225,7 @@ struct ManagerQuotationApprovalView: View {
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 1)
+                    .stroke(settings.isHighContrast ? .white : color.opacity(0.2), lineWidth: 1)
             )
     }
 

@@ -45,10 +45,10 @@ struct NotificationBell: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
-                    .background(Color.red)
+                    .background(settings.isHighContrast ? settings.primaryText : Color.red)
                     .clipShape(Capsule())
                     .overlay(
-                        Capsule().stroke(Color.white, lineWidth: 1.5)
+                        Capsule().stroke(settings.surfaceColor, lineWidth: 1.5)
                     )
                     .offset(x: 6, y: -6)
             }
@@ -86,12 +86,16 @@ struct BrandHeaderNav: View {
                             .frame(width: 6, height: 6)
                         Text(isOnline ? "ONLINE" : "OFFLINE")
                             .scaledFont(size: 11, weight: .bold)
-                            .foregroundColor(isOnline ? .green : .red)
+                            .foregroundColor(isOnline ? (settings.isHighContrast ? settings.primaryText : .green) : (settings.isHighContrast ? settings.primaryText : .red))
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.elevateLightGray)
+                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray.opacity(0.5))
                     .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                    )
                 }
                 NotificationBell(isManager: isManager)
             }

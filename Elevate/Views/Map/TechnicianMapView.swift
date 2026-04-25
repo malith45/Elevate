@@ -28,22 +28,8 @@ struct TechnicianMapView: View {
                 }
 
                 if let destination = viewModel.destination {
-                    Annotation("", coordinate: destination) {
-                        VStack(spacing: 4) {
-                            Text("DESTINATION")
-                                .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color.elevateDarkGreen)
-                                .cornerRadius(12)
-                            
-                            Image(systemName: "mappin.and.ellipse")
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.elevateDarkGreen)
-                                .background(Circle().fill(Color.white).frame(width: 14, height: 14))
-                        }
-                    }
+                    Marker("Destination", coordinate: destination)
+                        .tint(settings.accentColor)
                 }
 
                 if let current = locationService.currentLocation {
@@ -63,7 +49,7 @@ struct TechnicianMapView: View {
             
             // Header
             BrandHeaderNav(showOnlineStatus: false)
-                .background(Color.white)
+                .background(settings.surfaceColor)
             
             VStack(spacing: 12) {
                 Spacer()

@@ -14,12 +14,11 @@ struct TechnicianProfileView: View {
     
     var body: some View {
         ZStack {
-            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
                 BrandHeaderNav(showOnlineStatus: false)
-                    .background(settings.isHighContrast ? Color.black : Color.clear)
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
@@ -28,20 +27,21 @@ struct TechnicianProfileView: View {
                         VStack(spacing: 16) {
                             if let user = appSession.currentUser {
                                 ProfilePhotoView(userId: user.id, size: 110)
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                                    .overlay(Circle().stroke(settings.surfaceColor, lineWidth: 3))
                                     .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
                             }
                             
                             VStack(spacing: 4) {
                                 Text(displayName)
                                     .scaledFont(size: 24, weight: .bold, design: .rounded)
+                                    .foregroundColor(settings.primaryText)
                                 
                                 Text(appSession.currentUser?.role.uppercased() ?? "TECHNICIAN")
                                     .scaledFont(size: 10, weight: .black)
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
-                                    .background(Color.elevateDarkGreen)
+                                    .background(settings.accentColor)
                                     .cornerRadius(6)
                                     .tracking(1)
                             }
@@ -53,50 +53,50 @@ struct TechnicianProfileView: View {
                             HStack {
                                 Text("IDENTITY")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                     .tracking(1)
                                 Spacer()
                                 Image(systemName: "building.2.fill")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.elevateDarkGreen.opacity(0.6))
+                                    .foregroundColor(settings.accentColor.opacity(0.6))
                             }
                             .padding(.horizontal, 4)
                             
                             HStack(spacing: 16) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.elevateDarkGreen.opacity(0.05))
+                                        .fill(settings.accentColor.opacity(0.05))
                                         .frame(width: 50, height: 50)
                                     Image(systemName: "building.2")
-                                        .foregroundColor(.elevateDarkGreen)
+                                        .foregroundColor(settings.accentColor)
                                         .font(.system(size: 20))
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(organizationName)
                                         .scaledFont(size: 16, weight: .bold)
-                                        .foregroundColor(settings.isHighContrast ? .white : .black)
+                                        .foregroundColor(settings.primaryText)
                                     Text(organizationCode)
                                         .scaledFont(size: 12, weight: .semibold, design: .monospaced)
-                                        .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                 }
                                 
                                 Spacer()
                                 
                                 Text("ACTIVE")
                                     .scaledFont(size: 8, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
+                                    .foregroundColor(settings.accentColor)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(Color.elevateDarkGreen.opacity(0.1))
+                                    .background(settings.accentColor.opacity(0.1))
                                     .cornerRadius(6)
                             }
                             .padding(16)
-                            .background(settings.isHighContrast ? Color.black : Color.white)
+                            .background(settings.surfaceColor)
                             .cornerRadius(16)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
                             .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
@@ -105,60 +105,64 @@ struct TechnicianProfileView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("PREFERENCES")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .tracking(1)
                                 .padding(.horizontal, 4)
                             
                             VStack(spacing: 0) {
                                 AppSettingToggleRow(title: "Face ID Authentication", subtitle: "Secure your sessions", icon: "faceid", isOn: $biometricLoginEnabled)
-                                Divider().padding(.leading, 64)
+                                Divider().padding(.leading, 64).background(settings.cardStroke)
                                 AppSettingToggleRow(title: "Push Notifications", subtitle: "Stay updated on new jobs", icon: "bell.fill", isOn: $pushNotificationsEnabled)
-                                Divider().padding(.leading, 64)
+                                Divider().padding(.leading, 64).background(settings.cardStroke)
                                 
                                 Button(action: {
+                                    HapticManager.shared.playImpact(style: .light)
                                     router.path.append(TechnicianScreen.accessibility)
                                 }) {
                                     HStack(spacing: 16) {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 10)
-                                                .fill(Color.elevateDarkGreen.opacity(0.05))
+                                                .fill(settings.accentColor.opacity(0.05))
                                                 .frame(width: 36, height: 36)
                                             Image(systemName: "waveform.circle.fill")
-                                                .foregroundColor(.elevateDarkGreen)
+                                                .foregroundColor(settings.accentColor)
                                                 .font(.system(size: 16, weight: .bold))
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Accessibility")
                                                 .scaledFont(size: 15, weight: .semibold)
-                                                .foregroundColor(settings.isHighContrast ? .white : .black)
+                                                .foregroundColor(settings.primaryText)
                                             Text("Optimize for your needs")
                                                 .scaledFont(size: 11)
-                                                .foregroundColor(settings.isHighContrast ? .white : .elevateTextGray)
+                                                .foregroundColor(settings.secondaryText)
                                         }
                                         
                                         Spacer()
                                         
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 12, weight: .bold))
-                                            .foregroundColor(.elevateLightGray)
+                                            .foregroundColor(settings.secondaryText.opacity(0.3))
                                     }
                                     .padding(16)
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .background(settings.isHighContrast ? Color.black : Color.white)
+                            .background(settings.surfaceColor)
                             .cornerRadius(16)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 3 : 0)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
                             .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                         }
                         
                         // ACCOUNT ACTIONS
                         VStack(spacing: 16) {
-                            Button(action: { showLogoutConfirmation = true }) {
+                            Button(action: { 
+                                HapticManager.shared.playImpact(style: .medium)
+                                showLogoutConfirmation = true 
+                            }) {
                                 HStack(spacing: 12) {
                                     Image(systemName: "rectangle.portrait.and.arrow.right")
                                     Text("Log Out")
@@ -169,6 +173,10 @@ struct TechnicianProfileView: View {
                                 .padding(.vertical, 16)
                                 .background(Color.red.opacity(0.05))
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.red.opacity(0.1), lineWidth: 1)
+                                )
                             }
                         }
                         .padding(.top, 8)

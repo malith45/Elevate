@@ -220,6 +220,7 @@ struct ManagerInventoryView: View {
         let status = stockStatus(for: item.quantity)
 
         return Button(action: {
+            HapticManager.shared.playImpact(style: .light)
             editingItem = item
             isEditorPresented = true
         }) {
@@ -297,7 +298,7 @@ struct ManagerInventoryView: View {
         if quantity < 5 {
             return ("LOW STOCK", Color.red.opacity(0.1), .red)
         }
-        return ("IN STOCK", Color.elevateLightGray, .elevateDarkGreen)
+        return ("IN STOCK", settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.05), settings.accentColor)
     }
 
     private func inventoryImageView(urlString: String?) -> some View {
@@ -319,11 +320,12 @@ struct ManagerInventoryView: View {
 
     private var placeholderImage: some View {
         RoundedRectangle(cornerRadius: 10)
-            .fill(Color.elevateLightGray.opacity(0.8))
+            .fill(settings.surfaceColor)
             .overlay(
                 Image(systemName: "cube.box")
-                    .foregroundColor(.elevateDarkGreen)
+                    .foregroundColor(settings.accentColor)
             )
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(settings.cardStroke, lineWidth: 1))
     }
 }
 
@@ -455,7 +457,10 @@ private struct InventoryEditorView: View {
                         .overlay(RoundedRectangle(cornerRadius: 20).stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
                         
                         if item != nil {
-                            Button(action: { isDeleteAlertPresented = true }) {
+                            Button(action: { 
+                                HapticManager.shared.playImpact(style: .medium)
+                                isDeleteAlertPresented = true 
+                            }) {
                                 HStack {
                                     Image(systemName: "trash")
                                     Text("Delete from Inventory")
@@ -547,14 +552,6 @@ private struct InventoryEditorView: View {
             return UIImage(data: data)
         }
         return nil
-    }
-
-    private var photoPlaceholder: some View {
-        ZStack {
-            Color.elevateLightGray.opacity(0.5)
-            Image(systemName: "camera.fill")
-                .foregroundColor(settings.secondaryText.opacity(0.5))
-        }
     }
 
     private func save() {

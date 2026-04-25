@@ -7,87 +7,109 @@ struct SignInView: View {
     @State private var showAuthError = false
     @State private var authErrorMessage = ""
     @AppStorage("biometricLoginEnabled") private var biometricLoginEnabled = true
+    @ObservedObject var settings = AccessibilitySettings.shared
     private let sessionStore = SessionStore.shared
     private let localStorage = LocalStorageService.shared
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Spacer()
-                
-                // Header
-                VStack(spacing: 8) {
-                    Image("AppLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 72, height: 72)
-                    Text("Welcome !")
-                        .scaledFont(size: 28, weight: .bold, design: .rounded)
-                }
-                .padding(.bottom, 16)
-                
-                // Form Fields
-                VStack(spacing: 16) {
-                    CustomTextField(
-                        title: "ORGANIZATION ID",
-                        placeholder: "ORG-000-00",
-                        iconName: "building.2",
-                        text: $viewModel.organizationId
-                    )
-                    
-                    CustomTextField(
-                        title: "USERNAME",
-                        placeholder: "Your username",
-                        iconName: "person",
-                        text: $viewModel.username
-                    )
-                    
-                    SecureCustomTextField(
-                        title: "PASSWORD",
-                        placeholder: "••••••••",
-                        iconName: "lock",
-                        text: $viewModel.password,
-                        titleAction: AnyView(
-                            NavigationLink(destination: ForgotPasswordView()) {
-                                Text("FORGOT PASSWORD?")
-                                    .scaledFont(size: 11, weight: .bold)
-                                    .foregroundColor(.elevateDarkGreen)
-                            }
-                        )
-                    )
-                }
-                
-                // Action Buttons
-                VStack(spacing: 16) {
-                    PrimaryButton(title: "Sign In", iconName: "arrow.right") {
-                        viewModel.signIn(appSession: appSession)
-                    }
+            ZStack {
+                Color.white.ignoresSafeArea()
 
-                    if biometricLoginEnabled {
-                        SecondaryButton(title: "Sign in with Face ID", iconName: "faceid") {
-                            authenticateWithBiometrics()
+                VStack(spacing: 32) {
+                    Spacer()
+                    
+                    // Header
+                    VStack(spacing: 12) {
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
+                        
+                        Text("Welcome Back")
+                            .scaledFont(size: 32, weight: .black, design: .rounded)
+                            .foregroundColor(settings.primaryText)
+                        
+                        Text("Sign in to manage your workspace")
+                            .scaledFont(size: 15)
+                            .foregroundColor(settings.secondaryText)
+                    }
+                    .padding(.bottom, 8)
+                    
+                    // Glassmorphism Form
+                    VStack(spacing: 20) {
+                        CustomTextField(
+                            title: "ORGANIZATION ID",
+                            placeholder: "ORG-000-00",
+                            iconName: "building.2",
+                            text: $viewModel.organizationId
+                        )
+                        
+                        CustomTextField(
+                            title: "USERNAME",
+                            placeholder: "Your username",
+                            iconName: "person",
+                            text: $viewModel.username
+                        )
+                        
+                        SecureCustomTextField(
+                            title: "PASSWORD",
+                            placeholder: "••••••••",
+                            iconName: "lock",
+                            text: $viewModel.password,
+                            titleAction: AnyView(
+                                NavigationLink(destination: ForgotPasswordView()) {
+                                    Text("FORGOT?")
+                                        .scaledFont(size: 11, weight: .bold)
+                                        .foregroundColor(settings.accentColor)
+                                }
+                            )
+                        )
+                    }
+                    .padding(24)
+                    .background(
+                        settings.surfaceColor.opacity(settings.isHighContrast ? 1.0 : 0.8)
+                    )
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 32)
+                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                    )
+                    .shadow(color: Color.black.opacity(0.05), radius: 20, x: 0, y: 10)
+                    
+                    // Action Buttons
+                    VStack(spacing: 16) {
+                        PrimaryButton(title: "Sign In", iconName: "arrow.right") {
+                            HapticManager.shared.playImpact(style: .medium)
+                            viewModel.signIn(appSession: appSession)
+                        }
+
+                        if biometricLoginEnabled {
+                            SecondaryButton(title: "Sign in with Face ID", iconName: "faceid") {
+                                authenticateWithBiometrics()
+                            }
                         }
                     }
-                }
-                .padding(.top, 8)
-                
-                Spacer()
-                
-                // Footer
-                VStack(spacing: 4) {
-                    Text("Don't have an organization?")
-                        .scaledFont(size: 14)
-                        .foregroundColor(.elevateTextGray)
                     
-                    NavigationLink(destination: SignUpView()) {
-                        Text("Create New Organization")
-                            .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(.elevateDarkGreen)
+                    Spacer()
+                    
+                    // Footer
+                    HStack(spacing: 4) {
+                        Text("New here?")
+                            .scaledFont(size: 14)
+                            .foregroundColor(settings.secondaryText)
+                        
+                        NavigationLink(destination: SignUpView()) {
+                            Text("Create Organization")
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.accentColor)
+                        }
                     }
+                    .padding(.bottom, 16)
                 }
-                .padding(.bottom, 16)
+                .padding(.horizontal, 24)
             }
-            .padding(.horizontal, 24)
             .navigationBarHidden(true)
             .alert("Authentication Failed", isPresented: $showAuthError) {
                 Button("OK", role: .cancel) {}

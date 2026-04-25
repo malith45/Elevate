@@ -69,7 +69,7 @@ struct ManagerPendingQuotationListView: View {
                     .overlay(Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 32))
-                    .foregroundColor(settings.primaryText)
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : Color.green)
             }
             .padding(.top, 60)
             
@@ -121,8 +121,8 @@ struct PendingQuotationJobCard: View {
                         .scaledFont(size: 9, weight: .black)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(settings.isHighContrast ? settings.surfaceColor : Color.orange.opacity(0.12))
-                        .foregroundColor(settings.isHighContrast ? settings.primaryText : .orange)
+                        .background(settings.isHighContrast ? Color.black : Color.orange.opacity(0.12))
+                        .foregroundColor(settings.isHighContrast ? .white : .orange)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)

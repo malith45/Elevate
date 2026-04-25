@@ -157,9 +157,9 @@ struct InventoryView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .padding(.horizontal, 24)
-                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                    .background(settings.accentColor)
                     .cornerRadius(14)
-                    .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .shadow(color: settings.accentColor.opacity(0.2), radius: 8, x: 0, y: 4)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
@@ -245,9 +245,9 @@ struct InventoryItemCard: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 32, height: 32)
-                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                        .background(settings.accentColor)
                         .clipShape(Circle())
-                        .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 4, x: 0, y: 2)
+                        .shadow(color: settings.accentColor.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
             }
         }

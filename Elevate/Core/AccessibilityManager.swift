@@ -40,10 +40,8 @@ import AudioToolbox
 class SoundManager {
     static let shared = SoundManager()
     
-    @AppStorage("soundEnabled") private var soundEnabled = true
-    
     func playNotificationSound() {
-        guard soundEnabled else { return }
+        guard AccessibilitySettings.shared.soundEffects else { return }
         // System Sound ID 1007 is the common 'Tri-tone' notification sound
         AudioServicesPlaySystemSound(1007)
     }
@@ -103,12 +101,18 @@ class AccessibilitySettings: ObservableObject {
             UserDefaults.standard.set(hapticFeedback, forKey: "hapticFeedback")
         }
     }
+    @Published var soundEffects: Bool {
+        didSet {
+            UserDefaults.standard.set(soundEffects, forKey: "soundEnabled")
+        }
+    }
     
     init() {
         self.isHighContrast = UserDefaults.standard.bool(forKey: "isHighContrast")
         self.isVoiceOver = VoiceOverManager.shared.isEnabled
         self.textSize = UserDefaults.standard.double(forKey: "textSize") > 0 ? UserDefaults.standard.double(forKey: "textSize") : 0.5
         self.hapticFeedback = UserDefaults.standard.object(forKey: "hapticFeedback") == nil ? true : UserDefaults.standard.bool(forKey: "hapticFeedback")
+        self.soundEffects = UserDefaults.standard.object(forKey: "soundEnabled") == nil ? true : UserDefaults.standard.bool(forKey: "soundEnabled")
     }
     
     func getScaledFontSize(_ baseSize: CGFloat) -> CGFloat {

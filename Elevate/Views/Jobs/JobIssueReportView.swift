@@ -187,7 +187,7 @@ struct JobIssueReportView: View {
                     Text("RESOLVED ON \(formattedDate(resolvedAt))")
                 }
                 .scaledFont(size: 10, weight: .bold)
-                .foregroundColor(.elevateDarkGreen)
+                .foregroundColor(settings.isHighContrast ? settings.primaryText : Color.green)
             }
         }
         .padding(20)
@@ -299,8 +299,12 @@ struct JobIssueReportView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .foregroundColor(.white)
-            .background(priorityColor(priority))
+            .background(settings.isHighContrast ? Color.black : priorityColor(priority))
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            )
     }
 
     private func priorityColor(_ priority: String) -> Color {
@@ -411,9 +415,9 @@ struct JobIssueReportView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .padding(.horizontal, 24)
-            .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+            .background(settings.isHighContrast ? Color.black : settings.accentColor)
             .cornerRadius(16)
-            .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+            .shadow(color: settings.accentColor.opacity(0.2), radius: 8, x: 0, y: 4)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
@@ -451,8 +455,12 @@ struct PriorityPill: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .foregroundColor(.white)
-            .background(priorityColor)
+            .background(settings.isHighContrast ? Color.black : priorityColor)
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            )
     }
     
     private var priorityColor: Color {
@@ -472,19 +480,22 @@ struct PriorityButton: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticManager.shared.playImpact(style: .light)
+            action()
+        }) {
             Text(title)
                 .scaledFont(size: 12, weight: .bold)
                 .foregroundColor(isSelected ? .white : settings.primaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen) : settings.surfaceColor)
+                .background(isSelected ? (settings.isHighContrast ? Color.black : settings.accentColor) : settings.surfaceColor)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected && settings.isHighContrast ? settings.primaryText : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                        .stroke(isSelected && settings.isHighContrast ? .white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                 )
-                .shadow(color: isSelected && !settings.isHighContrast ? Color.elevateDarkGreen.opacity(0.3) : Color.clear, radius: 5, x: 0, y: 3)
+                .shadow(color: isSelected && !settings.isHighContrast ? settings.accentColor.opacity(0.3) : Color.clear, radius: 5, x: 0, y: 3)
         }
     }
 }

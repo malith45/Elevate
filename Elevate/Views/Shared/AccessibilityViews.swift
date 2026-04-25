@@ -114,15 +114,22 @@ struct AccessibilityView: View {
                                 AccessToggleRow(
                                     title: "VoiceOver",
                                     desc: "Voice feedback for all app actions",
-                                    icon: "mouth.fill",
+                                    icon: "person.wave.2.fill",
                                     isOn: $settings.isVoiceOver
                                 )
                                 Divider().padding(.leading, 70)
                                 AccessToggleRow(
                                     title: "Haptic Feedback",
                                     desc: "Physical vibrations for confirmations",
-                                    icon: "waveform",
+                                    icon: "sensor.tag.radiowaves.forward.fill",
                                     isOn: $settings.hapticFeedback
+                                )
+                                Divider().padding(.leading, 70)
+                                AccessToggleRow(
+                                    title: "Sound Effects",
+                                    desc: "Audible alerts for notifications",
+                                    icon: "speaker.wave.2.fill",
+                                    isOn: $settings.soundEffects
                                 )
                             }
                             .background(settings.surfaceColor)

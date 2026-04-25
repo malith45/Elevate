@@ -56,6 +56,22 @@ final class JobDetailsViewModel: ObservableObject {
         let holdReason = isOnHold ? (trimmedHoldReason?.isEmpty == false ? trimmedHoldReason : (current.holdReason ?? "On hold")) : nil
         let cancelledAt = normalized == "CANCELLED" ? updatedAt : current.cancelledAt
 
+        var updatedQuotationItems = current.quotationItems
+        if normalized == "COMPLETED" || normalized == "CANCELLED" {
+            updatedQuotationItems = current.quotationItems.map { item in
+                if item.status.uppercased() == "PENDING" {
+                    return QuotationItem(
+                        id: item.id,
+                        name: item.name,
+                        unitPrice: item.unitPrice,
+                        quantity: item.quantity,
+                        status: "REJECTED"
+                    )
+                }
+                return item
+            }
+        }
+
         let updatedJob = Job(
             id: current.id,
             organizationId: current.organizationId,
@@ -72,7 +88,7 @@ final class JobDetailsViewModel: ObservableObject {
             cancelledAt: cancelledAt,
             assignedUserId: current.assignedUserId,
             notes: current.notes,
-            quotationItems: current.quotationItems,
+            quotationItems: updatedQuotationItems,
             approvedCost: current.approvedCost,
             photoUrls: current.photoUrls,
             updatedAt: updatedAt
@@ -185,7 +201,7 @@ final class JobDetailsViewModel: ObservableObject {
 
     func cancelJobAndCleanup(job: Job, user: User, isOnline: Bool, completion: @escaping (Bool) -> Void) {
         // 1. Restore Inventory for approved items
-        let approvedItems = job.quotationItems.filter { $0.status == "APPROVED" }
+        let approvedItems = job.quotationItems.filter { $0.status.uppercased() == "APPROVED" }
         for item in approvedItems {
             if let inventoryItem = localStorage.fetchInventoryItem(id: item.id) {
                 let newQuantity = inventoryItem.quantity + item.quantity
@@ -204,9 +220,81 @@ final class JobDetailsViewModel: ObservableObject {
             }
         }
 
-        // 2. Update Job Status to CANCELLED (Preserves the job record for history)
-        updateStatus(jobId: job.id, status: "CANCELLED", user: user, isOnline: isOnline) {
-            completion(true)
+        // 2. Reject all PENDING quotation items so they don't stay in limbo
+        let updatedItems = job.quotationItems.map { item -> QuotationItem in
+            if item.status.uppercased() == "PENDING" {
+                return QuotationItem(
+                    id: item.id,
+                    name: item.name,
+                    unitPrice: item.unitPrice,
+                    quantity: item.quantity,
+                    status: "REJECTED"
+                )
+            }
+            return item
+        }
+
+        // 3. Update Job Status to CANCELLED and persist updated items
+        let updatedJob = Job(
+            id: job.id,
+            organizationId: job.organizationId,
+            title: job.title,
+            location: job.location,
+            siteLatitude: job.siteLatitude,
+            siteLongitude: job.siteLongitude,
+            scheduledAt: job.scheduledAt,
+            status: "CANCELLED",
+            priority: job.priority,
+            isUrgent: job.isUrgent,
+            isOnHold: job.isOnHold,
+            holdReason: job.holdReason,
+            cancelledAt: Date(),
+            assignedUserId: job.assignedUserId,
+            notes: job.notes,
+            quotationItems: updatedItems,
+            approvedCost: job.approvedCost,
+            photoUrls: job.photoUrls,
+            updatedAt: Date()
+        )
+        
+        localStorage.saveJobs([updatedJob])
+        self.job = updatedJob
+
+        // Persist to Firebase
+        let fields: [String: Any] = [
+            "status": "CANCELLED",
+            "cancelledAt": Date(),
+            "updatedAt": Date(),
+            "quotationItems": updatedItems.map { [
+                "id": $0.id,
+                "name": $0.name,
+                "unitPrice": $0.unitPrice,
+                "quantity": $0.quantity,
+                "status": $0.status
+            ] }
+        ]
+
+        if isOnline {
+            firebase.updateJobFields(jobId: job.id, fields: fields) { _ in
+                // Notify technician of cancellation
+                NotificationManager.shared.sendNotification(
+                    to: job.assignedUserId,
+                    organizationId: user.organizationId,
+                    type: .jobCancelled,
+                    title: "Job Cancelled",
+                    body: "Manager has cancelled job: \(job.title)",
+                    targetId: job.id
+                )
+                DispatchQueue.main.async { completion(true) }
+            }
+        } else {
+            SyncManager.shared.enqueueJobFieldsUpdate(
+                jobId: job.id,
+                fields: fields,
+                organizationId: user.organizationId,
+                userId: user.id
+            )
+            DispatchQueue.main.async { completion(true) }
         }
     }
 }

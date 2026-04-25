@@ -49,9 +49,13 @@ struct QuotationStatusView: View {
                                     .scaledFont(size: 10, weight: .bold)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
-                                    .background(settings.isHighContrast ? Color.black : Color.green.opacity(0.12))
-                                    .foregroundColor(settings.isHighContrast ? .white : .green)
+                                    .background(settings.isHighContrast ? Color.black : (settings.isHighContrast ? settings.primaryText : Color.green.opacity(0.12)))
+                                    .foregroundColor(settings.isHighContrast ? .white : Color.green)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
                             }
 
                             if viewModel.approvedItems.isEmpty {
@@ -83,8 +87,12 @@ struct QuotationStatusView: View {
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
                                     .background(settings.isHighContrast ? Color.black : Color.orange.opacity(0.12))
-                                    .foregroundColor(settings.isHighContrast ? .white : .orange)
+                                    .foregroundColor(settings.isHighContrast ? .white : Color.orange)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
                             }
 
                             if viewModel.pendingItems.isEmpty {
@@ -127,6 +135,10 @@ struct QuotationStatusView: View {
                                         .background(settings.isHighContrast ? Color.black : Color.red.opacity(0.12))
                                         .foregroundColor(settings.isHighContrast ? .white : .red)
                                         .cornerRadius(8)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                 }
 
                                 ForEach(viewModel.rejectedItems, id: \.id) { item in
@@ -159,9 +171,13 @@ struct QuotationStatusView: View {
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                                 .padding(20)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? Color.black : settings.accentColor)
                                 .cornerRadius(16)
-                                .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 10, x: 0, y: 5)
+                                .shadow(color: settings.accentColor.opacity(0.2), radius: 10, x: 0, y: 5)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
                                 
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("TOTAL ITEMS")
@@ -218,12 +234,12 @@ struct QuotationStatusView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                        .background(settings.isHighContrast ? Color.black : settings.accentColor)
                                         .cornerRadius(12)
-                                        .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                                        .shadow(color: settings.accentColor.opacity(0.2), radius: 8, x: 0, y: 4)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: 2)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                         )
                                     }
                                     .buttonStyle(.plain)
@@ -337,7 +353,7 @@ struct QuotationItemCard: View {
             } else if isApproved {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.green)
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : Color.green)
                     .shadow(color: Color.green.opacity(0.2), radius: 4, x: 0, y: 2)
             }
         }

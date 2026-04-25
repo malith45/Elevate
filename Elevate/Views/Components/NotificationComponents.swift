@@ -10,12 +10,15 @@ struct NotificationCard: View {
             // Icon based on type
             ZStack {
                 Circle()
-                    .fill(iconBackgroundColor)
+                    .fill(settings.isHighContrast ? Color.black : iconBackgroundColor)
                     .frame(width: 44, height: 44)
+                    .overlay(
+                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                    )
                 
                 Image(systemName: iconName)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(iconForegroundColor)
+                    .foregroundColor(settings.isHighContrast ? .white : iconForegroundColor)
             }
             .padding(.leading, 12)
             .padding(.vertical, 16)
@@ -76,7 +79,7 @@ struct NotificationCard: View {
         if type.contains("QUOTE") { return Color.orange.opacity(0.1) }
         if type.contains("ISSUE") { return Color.red.opacity(0.1) }
         if type.contains("INVENTORY") { return Color.purple.opacity(0.1) }
-        return Color.gray.opacity(0.1)
+        return settings.accentColor.opacity(0.1)
     }
     
     private var iconForegroundColor: Color {
@@ -135,12 +138,15 @@ struct InAppNotificationToast: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(settings.accentColor.opacity(0.15))
+                    .fill(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.15))
                     .frame(width: 44, height: 44)
+                    .overlay(
+                        Circle().stroke(settings.isHighContrast ? settings.primaryText : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                    )
                 
                 Image(systemName: iconName(for: notification.type))
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(settings.accentColor)
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
             }
             
             VStack(alignment: .leading, spacing: 2) {
@@ -161,7 +167,7 @@ struct InAppNotificationToast: View {
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(settings.secondaryText)
                     .padding(8)
-                    .background(Circle().fill(Color.black.opacity(0.05)))
+                    .background(Circle().fill(settings.isHighContrast ? Color.white.opacity(0.2) : Color.black.opacity(0.05)))
             }
             .buttonStyle(.plain)
         }

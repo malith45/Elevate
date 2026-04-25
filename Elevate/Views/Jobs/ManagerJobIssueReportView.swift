@@ -187,7 +187,7 @@ struct ManagerJobIssueReportView: View {
             }
             .frame(minHeight: 120)
             .padding(12)
-            .background(settings.surfaceColor)
+            .background(settings.appBackground.opacity(0.4))
             .cornerRadius(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
@@ -218,11 +218,11 @@ struct ManagerJobIssueReportView: View {
                 .foregroundColor(settings.accentColor)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 18)
-                .background(settings.isHighContrast ? settings.surfaceColor : settings.accentColor.opacity(0.1))
+                .background(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.1))
                 .cornerRadius(16)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(settings.accentColor.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                        .stroke(settings.isHighContrast ? settings.primaryText : settings.accentColor.opacity(0.3), lineWidth: settings.cardStrokeWidth)
                 )
             }
 
@@ -238,7 +238,7 @@ struct ManagerJobIssueReportView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 18)
-                .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                .background(settings.isHighContrast ? Color.black : settings.accentColor)
                 .cornerRadius(16)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -287,7 +287,7 @@ struct ManagerJobIssueReportView: View {
                                 .foregroundColor(isSelected ? .white : settings.primaryText)
                                 .frame(height: 36)
                                 .padding(.horizontal, 12)
-                                .background(isSelected ? (settings.isHighContrast ? settings.surfaceColor : settings.accentColor) : settings.surfaceColor)
+                                .background(isSelected ? (settings.isHighContrast ? Color.black : settings.accentColor) : settings.surfaceColor)
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
@@ -317,13 +317,14 @@ struct ManagerJobIssueReportView: View {
         let shortId = String(memberId.prefix(6))
 
         return HStack(spacing: 16) {
-            Circle()
-                .fill(settings.accentColor.opacity(0.1))
-                .frame(width: 56, height: 56)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .foregroundColor(settings.accentColor)
-                )
+            ZStack {
+                Circle()
+                    .fill(settings.accentColor.opacity(0.1))
+                    .frame(width: 56, height: 56)
+                Image(systemName: "person.fill")
+                    .foregroundColor(settings.accentColor)
+            }
+            .overlay(Circle().stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(displayName)
@@ -351,7 +352,7 @@ struct ManagerJobIssueReportView: View {
             .scaledFont(size: 10, weight: .bold)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(settings.isHighContrast ? settings.surfaceColor : (priority == "HIGH" ? Color.red.opacity(0.1) : settings.accentColor.opacity(0.1)))
+            .background(settings.isHighContrast ? Color.black : (priority == "HIGH" ? Color.red.opacity(0.1) : settings.accentColor.opacity(0.1)))
             .foregroundColor(settings.isHighContrast ? settings.primaryText : (priority == "HIGH" ? .red : settings.accentColor))
             .cornerRadius(8)
             .overlay(

@@ -10,7 +10,7 @@ struct ManagerJobListView: View {
 
     var body: some View {
         ZStack {
-            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Top Nav
@@ -25,12 +25,21 @@ struct ManagerJobListView: View {
 
                         // Filters Segment
                         HStack(spacing: 0) {
-                            FilterButton(title: "Today", isSelected: selectedFilter == 0) { selectedFilter = 0; viewModel.selectedFilter = .today }
-                            FilterButton(title: "Upcoming", isSelected: selectedFilter == 1) { selectedFilter = 1; viewModel.selectedFilter = .upcoming }
-                            FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
+                            FilterButton(title: "Today", isSelected: selectedFilter == 0) { 
+                                HapticManager.shared.playImpact(style: .light)
+                                selectedFilter = 0; viewModel.selectedFilter = .today 
+                            }
+                            FilterButton(title: "Upcoming", isSelected: selectedFilter == 1) { 
+                                HapticManager.shared.playImpact(style: .light)
+                                selectedFilter = 1; viewModel.selectedFilter = .upcoming 
+                            }
+                            FilterButton(title: "Completed", isSelected: selectedFilter == 2) { 
+                                HapticManager.shared.playImpact(style: .light)
+                                selectedFilter = 2; viewModel.selectedFilter = .completed 
+                            }
                         }
                         .padding(4)
-                        .background(settings.isHighContrast ? Color.black : settings.surfaceColor)
+                        .background(settings.surfaceColor)
                         .cornerRadius(16)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
@@ -44,13 +53,13 @@ struct ManagerJobListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .tracking(1)
                                 .textCase(.uppercase)
                             
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
 
@@ -74,13 +83,7 @@ struct ManagerJobListView: View {
                                             .padding(.horizontal, 24)
 
                                         ForEach(past) { job in
-                                            Button(action: {
-                                                router.selectedJobId = job.id
-                                                router.path.append(ManagerScreen.jobDetails)
-                                            }) {
-                                                ManagerJobCard(job: job)
-                                            }
-                                            .buttonStyle(.plain)
+                                            ManagerJobCard(job: job)
                                         }
                                     }
                                 }
@@ -89,18 +92,12 @@ struct ManagerJobListView: View {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("UPCOMING JOBS")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
+                                            .foregroundColor(settings.accentColor)
                                             .tracking(1)
                                             .padding(.horizontal, 24)
 
                                         ForEach(future) { job in
-                                            Button(action: {
-                                                router.selectedJobId = job.id
-                                                router.path.append(ManagerScreen.jobDetails)
-                                            }) {
-                                                ManagerJobCard(job: job)
-                                            }
-                                            .buttonStyle(.plain)
+                                            ManagerJobCard(job: job)
                                         }
                                     }
                                 }
@@ -120,17 +117,11 @@ struct ManagerJobListView: View {
                                             VStack(alignment: .leading, spacing: 12) {
                                                 Text("COMPLETED")
                                                     .scaledFont(size: 10, weight: .bold)
-                                                    .foregroundColor(.elevateDarkGreen)
+                                                    .foregroundColor(settings.accentColor)
                                                     .tracking(1)
                                                     .padding(.horizontal, 24)
                                                 ForEach(completed) { job in
-                                                    Button(action: {
-                                                        router.selectedJobId = job.id
-                                                        router.path.append(ManagerScreen.jobDetails)
-                                                    }) {
-                                                        ManagerJobCard(job: job)
-                                                    }
-                                                    .buttonStyle(.plain)
+                                                    ManagerJobCard(job: job)
                                                 }
                                             }
                                         }
@@ -142,13 +133,7 @@ struct ManagerJobListView: View {
                                                     .tracking(1)
                                                     .padding(.horizontal, 24)
                                                 ForEach(cancelled) { job in
-                                                    Button(action: {
-                                                        router.selectedJobId = job.id
-                                                        router.path.append(ManagerScreen.jobDetails)
-                                                    }) {
-                                                        ManagerJobCard(job: job)
-                                                    }
-                                                    .buttonStyle(.plain)
+                                                    ManagerJobCard(job: job)
                                                 }
                                             }
                                         }
@@ -159,13 +144,7 @@ struct ManagerJobListView: View {
                                     emptyState
                                 } else {
                                     ForEach(viewModel.filteredJobs) { job in
-                                        Button(action: {
-                                            router.selectedJobId = job.id
-                                            router.path.append(ManagerScreen.jobDetails)
-                                        }) {
-                                            ManagerJobCard(job: job)
-                                        }
-                                        .buttonStyle(.plain)
+                                        ManagerJobCard(job: job)
                                     }
                                 }
                             }
@@ -206,7 +185,7 @@ struct ManagerJobListView: View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.system(size: 44))
-                .foregroundColor(.gray.opacity(0.3))
+                .foregroundColor(settings.secondaryText.opacity(0.3))
             Text("No jobs found for this filter")
                 .scaledFont(size: 14)
                 .foregroundColor(settings.secondaryText)
@@ -235,80 +214,89 @@ struct ManagerJobListView: View {
 
 private struct ManagerJobCard: View {
     let job: Job
+    @Environment(\.managerTabRouter) private var router
     @ObservedObject var settings = AccessibilitySettings.shared
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Left Status Strip
-            Rectangle()
-                .fill(statusColor)
-                .frame(width: 6)
-            
-            VStack(alignment: .leading, spacing: 16) {
-                // Top Row: Status Pill & Time
-                HStack {
-                    Text(job.status.uppercased())
-                        .scaledFont(size: 9, weight: .bold)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(statusColor.opacity(0.12))
-                        .foregroundColor(statusColor)
-                        .cornerRadius(20)
-                    
-                    Spacer()
-                    
-                    Text(timeString(from: job.scheduledAt))
-                        .scaledFont(size: 14, weight: .bold)
-                        .foregroundColor(settings.secondaryText)
-                }
+        Button(action: {
+            HapticManager.shared.playImpact(style: .light)
+            router.selectedJobId = job.id
+            router.path.append(ManagerScreen.jobDetails)
+        }) {
+            HStack(spacing: 0) {
+                // Left Status Strip
+                Rectangle()
+                    .fill(statusColor)
+                    .frame(width: 6)
                 
-                // Title
-                Text(job.title)
-                    .scaledFont(size: 18, weight: .bold, design: .rounded)
-                    .foregroundColor(settings.primaryText)
-                    .lineLimit(2)
-                
-                // Location Section
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.elevateLightGray.opacity(0.3))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "mappin.and.ellipse")
-                            .foregroundColor(settings.accentColor)
-                            .font(.system(size: 16))
+                VStack(alignment: .leading, spacing: 16) {
+                    // Top Row: Status Pill & Time
+                    HStack {
+                        Text(job.status.uppercased())
+                            .scaledFont(size: 9, weight: .bold)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(statusColor.opacity(0.12))
+                            .foregroundColor(statusColor)
+                            .cornerRadius(20)
+                        
+                        Spacer()
+                        
+                        Text(timeString(from: job.scheduledAt))
+                            .scaledFont(size: 14, weight: .bold)
+                            .foregroundColor(settings.secondaryText)
                     }
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(job.location)
-                            .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(settings.primaryText)
-                            .lineLimit(1)
-                        if let notes = job.notes, !notes.isEmpty {
-                            Text(notes)
-                                .scaledFont(size: 12)
-                                .foregroundColor(settings.secondaryText)
+                    // Title
+                    Text(job.title)
+                        .scaledFont(size: 18, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.primaryText)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    
+                    // Location Section
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(settings.accentColor.opacity(0.05))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "mappin.and.ellipse")
+                                .foregroundColor(settings.accentColor)
+                                .font(.system(size: 16))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(job.location)
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.primaryText)
                                 .lineLimit(1)
+                            if let notes = job.notes, !notes.isEmpty {
+                                Text(notes)
+                                    .scaledFont(size: 12)
+                                    .foregroundColor(settings.secondaryText)
+                                    .lineLimit(1)
+                            }
                         }
                     }
                 }
+                .padding(20)
             }
-            .padding(20)
+            .background(settings.surfaceColor)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            )
+            .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.04), radius: 10, x: 0, y: 5)
+            .padding(.horizontal, 24)
         }
-        .background(settings.isHighContrast ? Color.black : .white)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(settings.isHighContrast ? Color.white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-        )
-        .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.08), radius: 10, x: 0, y: 5)
-        .padding(.horizontal, 24)
+        .buttonStyle(.plain)
     }
 
     private var statusColor: Color {
         if job.isUrgent { return .red }
         switch job.status.uppercased() {
-        case "COMPLETED": return .elevateDarkGreen
+        case "COMPLETED": return settings.isHighContrast ? settings.primaryText : .green
         case "IN-PROGRESS": return .blue
         case "HOLD": return .orange
         case "CANCELLED": return .gray

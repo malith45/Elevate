@@ -8,6 +8,7 @@ struct ManagerMapView: View {
     @State private var mapPosition: MapCameraPosition
     @State private var hasCenteredOnUser = false
     @State private var technicians: [User] = []
+    @ObservedObject var settings = AccessibilitySettings.shared
     private let localStorage = LocalStorageService.shared
 
     init(viewModel: MapViewModel = MapViewModel()) {
@@ -29,6 +30,11 @@ struct ManagerMapView: View {
                     }
                 }
 
+                if let destination = viewModel.destination {
+                    Marker("Destination", coordinate: destination)
+                        .tint(settings.accentColor)
+                }
+
                 ForEach(technicians) { tech in
                     if let lat = tech.latitude, let lon = tech.longitude {
                         Annotation(tech.displayName, coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
@@ -37,14 +43,19 @@ struct ManagerMapView: View {
                                     .scaledFont(size: 9, weight: .bold)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(Color.white)
+                                    .background(settings.surfaceColor)
+                                    .foregroundColor(settings.primaryText)
                                     .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                    )
                                     .shadow(radius: 2)
                                 
                                 Image(systemName: "person.circle.fill")
                                     .font(.system(size: 28))
-                                    .foregroundColor(.elevateDarkGreen)
-                                    .background(Circle().fill(Color.white))
+                                    .foregroundColor(settings.accentColor)
+                                    .background(Circle().fill(settings.surfaceColor))
                             }
                         }
                     }
@@ -57,7 +68,7 @@ struct ManagerMapView: View {
             
             // Header
             BrandHeaderNav(showOnlineStatus: false, isManager: true)
-                .background(Color.white)
+                .background(settings.surfaceColor)
             
             VStack {
                 Spacer()
@@ -69,11 +80,15 @@ struct ManagerMapView: View {
                         Button(action: centerOnUser) {
                             Image(systemName: "location.fill")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.elevateDarkGreen)
+                                .foregroundColor(settings.accentColor)
                                 .frame(width: 48, height: 48)
-                                .background(.white)
+                                .background(settings.surfaceColor)
                                 .clipShape(Circle())
                                 .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                .overlay(
+                                    Circle()
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
                         }
                     }
                     .padding(.bottom, 120)

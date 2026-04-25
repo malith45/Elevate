@@ -16,7 +16,7 @@ struct CustomTextField: View {
             HStack {
                 Text(title)
                     .scaledFont(size: 11, weight: .bold)
-                    .foregroundColor(errorMessage != nil ? .red : .elevateTextGray)
+                    .foregroundColor(errorMessage != nil ? .red : settings.secondaryText)
                     .textCase(.uppercase)
                 
                 Spacer()
@@ -29,7 +29,7 @@ struct CustomTextField: View {
             
             HStack(spacing: 12) {
                 Image(systemName: iconName)
-                    .foregroundColor(errorMessage != nil ? .red : (isFocused ? .elevateDarkGreen : .elevateTextGray))
+                    .foregroundColor(errorMessage != nil ? .red : (isFocused ? settings.accentColor : settings.secondaryText))
                     .frame(width: 20)
                 
                 TextField(placeholder, text: $text)
@@ -51,7 +51,7 @@ struct CustomTextField: View {
                         lineWidth: settings.cardStrokeWidth
                     )
             )
-            .shadow(color: isFocused ? Color.elevateDarkGreen.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
+            .shadow(color: isFocused ? settings.accentColor.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
             
             if let error = errorMessage {
                 Text(error)
@@ -74,13 +74,14 @@ struct SecureCustomTextField: View {
     
     @State private var isSecure = true
     @FocusState private var isFocused: Bool
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(title)
                     .scaledFont(size: 11, weight: .bold)
-                    .foregroundColor(errorMessage != nil ? .red : .elevateTextGray)
+                    .foregroundColor(errorMessage != nil ? .red : settings.secondaryText)
                     .textCase(.uppercase)
                 
                 Spacer()
@@ -93,7 +94,7 @@ struct SecureCustomTextField: View {
             
             HStack(spacing: 12) {
                 Image(systemName: iconName)
-                    .foregroundColor(errorMessage != nil ? .red : (isFocused ? .elevateDarkGreen : .elevateTextGray))
+                    .foregroundColor(errorMessage != nil ? .red : (isFocused ? settings.accentColor : settings.secondaryText))
                     .frame(width: 20)
                 
                 Group {
@@ -105,31 +106,32 @@ struct SecureCustomTextField: View {
                     }
                 }
                 .scaledFont(size: 15)
-                .foregroundColor(AccessibilitySettings.shared.primaryText)
+                .foregroundColor(settings.primaryText)
                 .focused($isFocused)
                 
                 Button(action: {
                     isSecure.toggle()
+                    HapticManager.shared.playImpact(style: .light)
                 }) {
                     Image(systemName: isSecure ? "eye.slash" : "eye")
                         .font(.system(size: 14))
-                        .foregroundColor(.elevateTextGray)
+                        .foregroundColor(settings.secondaryText)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AccessibilitySettings.shared.surfaceColor)
+                    .fill(settings.surfaceColor)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        errorMessage != nil ? Color.red : (isFocused ? AccessibilitySettings.shared.accentColor : AccessibilitySettings.shared.cardStroke),
-                        lineWidth: AccessibilitySettings.shared.cardStrokeWidth
+                        errorMessage != nil ? Color.red : (isFocused ? settings.accentColor : settings.cardStroke),
+                        lineWidth: settings.cardStrokeWidth
                     )
             )
-            .shadow(color: isFocused ? Color.elevateDarkGreen.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
+            .shadow(color: isFocused ? settings.accentColor.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
             
             if let error = errorMessage {
                 Text(error)
@@ -146,27 +148,33 @@ struct PrimaryButton: View {
     var title: String
     var iconName: String?
     var action: () -> Void
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        Button(action: action) {
-            HStack {
+        Button(action: {
+            HapticManager.shared.playImpact(style: .medium)
+            action()
+        }) {
+            HStack(spacing: 10) {
                 Text(title)
                 if let iconName = iconName {
                     Image(systemName: iconName)
+                        .font(.system(size: 14, weight: .bold))
                 }
             }
             .scaledFont(size: 16, weight: .bold)
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : Color.elevateDarkGreen)
-            .cornerRadius(10)
+            .padding(.vertical, 18)
+            .background(settings.accentColor)
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
-            .shadow(color: AccessibilitySettings.shared.isHighContrast ? .clear : Color.elevateDarkGreen.opacity(0.3), radius: 5, x: 0, y: 3)
+            .shadow(color: settings.isHighContrast ? .clear : settings.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -174,51 +182,65 @@ struct SecondaryButton: View {
     var title: String
     var iconName: String?
     var action: () -> Void
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        Button(action: action) {
-            HStack {
+        Button(action: {
+            HapticManager.shared.playImpact(style: .light)
+            action()
+        }) {
+            HStack(spacing: 10) {
                 if let iconName = iconName {
                     Image(systemName: iconName)
-                        .foregroundColor(.elevateDarkGreen)
+                        .foregroundColor(settings.accentColor)
+                        .font(.system(size: 14, weight: .bold))
                 }
                 Text(title)
-                    .foregroundColor(.black)
+                    .foregroundColor(settings.primaryText)
             }
             .scaledFont(size: 16, weight: .bold)
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(AccessibilitySettings.shared.isHighContrast ? AccessibilitySettings.shared.surfaceColor : Color.white)
-            .cornerRadius(10)
-            .shadow(color: AccessibilitySettings.shared.isHighContrast ? .clear : Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .padding(.vertical, 18)
+            .background(settings.surfaceColor)
+            .cornerRadius(14)
+            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
         }
+        .buttonStyle(.plain)
     }
 }
 
 struct EmptyStateView: View {
     var title: String
     var message: String
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        VStack(spacing: 12) {
-            Text(title)
-                .scaledFont(size: 18, weight: .bold)
-            Text(message)
-                .scaledFont(size: 14)
-                .foregroundColor(.elevateTextGray)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 16) {
+            Image(systemName: "tray.fill")
+                .font(.system(size: 48))
+                .foregroundColor(settings.secondaryText.opacity(0.2))
+            
+            VStack(spacing: 8) {
+                Text(title)
+                    .scaledFont(size: 18, weight: .bold)
+                    .foregroundColor(settings.primaryText)
+                Text(message)
+                    .scaledFont(size: 14)
+                    .foregroundColor(settings.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
         }
-        .padding(24)
+        .padding(32)
         .frame(maxWidth: .infinity)
-        .background(AccessibilitySettings.shared.surfaceColor)
-        .cornerRadius(20)
+        .background(settings.surfaceColor)
+        .cornerRadius(24)
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(AccessibilitySettings.shared.cardStroke, lineWidth: AccessibilitySettings.shared.cardStrokeWidth)
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 24)
@@ -227,6 +249,7 @@ struct EmptyStateView: View {
 
 struct PasswordRequirementsView: View {
     let password: String
+    @ObservedObject var settings = AccessibilitySettings.shared
 
     private struct Requirement {
         let label: String
@@ -245,32 +268,33 @@ struct PasswordRequirementsView: View {
 
     var body: some View {
         if !password.isEmpty {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("PASSWORD REQUIREMENTS")
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
                     .padding(.horizontal, 4)
 
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(requirements, id: \.label) { req in
-                        HStack(spacing: 8) {
+                        HStack(spacing: 10) {
                             Image(systemName: req.isMet ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(req.isMet ? .elevateDarkGreen : Color.elevateTextGray.opacity(0.4))
-                                .animation(.easeInOut(duration: 0.2), value: req.isMet)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(req.isMet ? settings.accentColor : settings.secondaryText.opacity(0.3))
                             Text(req.label)
-                                .scaledFont(size: 12)
-                                .foregroundColor(req.isMet ? .elevateDarkGreen : Color.elevateTextGray.opacity(0.7))
-                                .animation(.easeInOut(duration: 0.2), value: req.isMet)
+                                .scaledFont(size: 12, weight: .medium)
+                                .foregroundColor(req.isMet ? settings.primaryText : settings.secondaryText.opacity(0.7))
                         }
                     }
                 }
-                .padding(12)
-                .background(Color.elevateLightGray.opacity(0.5))
-                .cornerRadius(10)
+                .padding(16)
+                .background(settings.surfaceColor)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                )
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
-            .animation(.easeInOut(duration: 0.2), value: password.isEmpty)
         }
     }
 }

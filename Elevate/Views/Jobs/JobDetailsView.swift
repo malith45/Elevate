@@ -40,6 +40,7 @@ struct JobDetailsView: View {
                         if let job = viewModel.job {
                             
                             // HOLD REASON BANNER (NEW)
+                            // HOLD REASON BANNER (NEW)
                             if job.status.uppercased() == "HOLD", let reason = job.holdReason, !reason.isEmpty {
                                 HStack(spacing: 12) {
                                     Image(systemName: "pause.circle.fill")
@@ -58,7 +59,7 @@ struct JobDetailsView: View {
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                                        .stroke(settings.isHighContrast ? .white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                                 .padding(.top, 8)
                             }
@@ -80,6 +81,7 @@ struct JobDetailsView: View {
                                 Spacer()
 
                                 Button(action: {
+                                    HapticManager.shared.playImpact(style: .light)
                                     router.selectedJobId = job.id
                                     router.path.append(TechnicianScreen.jobIssueReport)
                                 }) {
@@ -126,7 +128,7 @@ struct JobDetailsView: View {
                                             .foregroundColor(settings.primaryText)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(settings.isHighContrast ? .white.opacity(0.1) : Color.elevateLightGray.opacity(0.5))
+                                            .background(settings.accentColor.opacity(0.05))
                                             .cornerRadius(6)
                                     }
                                 }
@@ -213,24 +215,28 @@ struct JobDetailsView: View {
                                             .foregroundColor(.white)
                                             .padding(.horizontal, 24)
                                             .padding(.vertical, 14)
-                                            .background(settings.isHighContrast ? Color.black : settings.accentColor)
+                                            .background(settings.accentColor)
                                             .cornerRadius(16)
                                             .shadow(color: settings.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                         }
                                         .padding(.bottom, 20)
                                     } else {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 24)
-                                                .fill(Color.elevateLightGray.opacity(0.5))
+                                                .fill(settings.surfaceColor)
                                                 .frame(height: 180)
                                             Text("Map unavailable")
                                                 .scaledFont(size: 14, weight: .semibold)
                                                 .foregroundColor(settings.secondaryText)
                                         }
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                     }
                                 }
                             }
@@ -256,6 +262,7 @@ struct JobDetailsView: View {
                                 )
 
                                 Button(action: {
+                                    HapticManager.shared.playImpact(style: .light)
                                     router.selectedJobId = job.id
                                     router.path.append(TechnicianScreen.quotationStatus)
                                 }) {
@@ -268,11 +275,11 @@ struct JobDetailsView: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                                    .background(settings.accentColor)
                                     .cornerRadius(20)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 20)
-                                            .stroke(settings.isHighContrast ? .white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                            .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -365,13 +372,13 @@ struct JobDetailsView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 16)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? Color.black : (settings.isHighContrast ? settings.primaryText : Color.green))
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? .white : Color.elevateDarkGreen.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
-                                .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                                .shadow(color: Color.green.opacity(0.2), radius: 8, x: 0, y: 4)
                             } else if status == "CANCELLED" {
                                 HStack(spacing: 14) {
                                     Image(systemName: "xmark.octagon.fill")
@@ -395,7 +402,7 @@ struct JobDetailsView: View {
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? .white : Color.red.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                                 .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
                             }
@@ -404,12 +411,13 @@ struct JobDetailsView: View {
                             if status != "COMPLETED" && status != "CANCELLED" {
                                 VStack(spacing: 12) {
                                     if status == "HOLD" {
-                                        actionButton(title: "CONTINUE WORK", icon: "play.fill", color: Color.elevateDarkGreen) {
+                                        actionButton(title: "CONTINUE WORK", icon: "play.fill", color: settings.isHighContrast ? settings.primaryText : Color.green) {
                                             updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                         }
                                     } else if status == "IN-PROGRESS" {
                                         HStack(spacing: 12) {
                                             Button(action: {
+                                                HapticManager.shared.playImpact(style: .light)
                                                 holdReasonText = job.holdReason ?? ""
                                                 showHoldPrompt = true
                                             }) {
@@ -418,7 +426,7 @@ struct JobDetailsView: View {
                                                     Text("HOLD")
                                                 }
                                                 .scaledFont(size: 15, weight: .bold)
-                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                                .foregroundColor(settings.accentColor)
                                                 .frame(maxWidth: .infinity)
                                                 .padding(.vertical, 16)
                                                 .background(settings.surfaceColor)
@@ -428,7 +436,7 @@ struct JobDetailsView: View {
                                                         .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                                 )
                                             }
-                                            actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: Color.elevateDarkGreen) {
+                                            actionButton(title: "COMPLETE", icon: "checkmark.seal.fill", color: settings.isHighContrast ? settings.primaryText : Color.green) {
                                                 updateStatus(jobId: job.id, status: "COMPLETED") {
                                                     successMessage = "Job marked as completed successfully."
                                                     showSuccessAlert = true
@@ -510,7 +518,7 @@ struct JobDetailsView: View {
             .shadow(color: color.opacity(0.2), radius: 8, x: 0, y: 4)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
         }
     }

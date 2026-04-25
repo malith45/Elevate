@@ -12,7 +12,7 @@ struct JobListView: View {
     
     var body: some View {
         ZStack {
-            (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.3)).ignoresSafeArea()
+            settings.appBackground.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Nav
@@ -27,12 +27,21 @@ struct JobListView: View {
                         
                         // Filters Segment
                         HStack(spacing: 0) {
-                            FilterButton(title: "Today", isSelected: selectedFilter == 0) { selectedFilter = 0; viewModel.selectedFilter = .today }
-                            FilterButton(title: "Upcoming", isSelected: selectedFilter == 1) { selectedFilter = 1; viewModel.selectedFilter = .upcoming }
-                            FilterButton(title: "Completed", isSelected: selectedFilter == 2) { selectedFilter = 2; viewModel.selectedFilter = .completed }
+                            FilterButton(title: "Today", isSelected: selectedFilter == 0) { 
+                                HapticManager.shared.playImpact(style: .light)
+                                selectedFilter = 0; viewModel.selectedFilter = .today 
+                            }
+                            FilterButton(title: "Upcoming", isSelected: selectedFilter == 1) { 
+                                HapticManager.shared.playImpact(style: .light)
+                                selectedFilter = 1; viewModel.selectedFilter = .upcoming 
+                            }
+                            FilterButton(title: "Completed", isSelected: selectedFilter == 2) { 
+                                HapticManager.shared.playImpact(style: .light)
+                                selectedFilter = 2; viewModel.selectedFilter = .completed 
+                            }
                         }
                         .padding(4)
-                        .background(settings.isHighContrast ? Color.black : settings.surfaceColor)
+                        .background(settings.surfaceColor)
                         .cornerRadius(16)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
@@ -46,13 +55,13 @@ struct JobListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("CURRENT SCHEDULE")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .tracking(1)
                                 .textCase(.uppercase)
                             
                             Text(todayString())
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
-                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                .foregroundColor(settings.accentColor)
                         }
                         .padding(.horizontal, 24)
                         
@@ -76,12 +85,7 @@ struct JobListView: View {
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(past) { job in
-                                            Button(action: {
-                                                router.selectedJobId = job.id
-                                                router.path.append(TechnicianScreen.jobDetails)
-                                            }) {
-                                                JobCard(job: job)
-                                            }
+                                            JobCard(job: job)
                                         }
                                     }
                                 }
@@ -90,17 +94,12 @@ struct JobListView: View {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("UPCOMING JOBS")
                                             .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.elevateDarkGreen)
+                                            .foregroundColor(settings.accentColor)
                                             .tracking(1)
                                             .padding(.horizontal, 24)
                                         
                                         ForEach(future) { job in
-                                            Button(action: {
-                                                router.selectedJobId = job.id
-                                                router.path.append(TechnicianScreen.jobDetails)
-                                            }) {
-                                                JobCard(job: job)
-                                            }
+                                            JobCard(job: job)
                                         }
                                     }
                                 }
@@ -120,16 +119,11 @@ struct JobListView: View {
                                             VStack(alignment: .leading, spacing: 12) {
                                                 Text("COMPLETED")
                                                     .scaledFont(size: 10, weight: .bold)
-                                                    .foregroundColor(.elevateDarkGreen)
+                                                    .foregroundColor(settings.accentColor)
                                                     .tracking(1)
                                                     .padding(.horizontal, 24)
                                                 ForEach(completed) { job in
-                                                    Button(action: {
-                                                        router.selectedJobId = job.id
-                                                        router.path.append(TechnicianScreen.jobDetails)
-                                                    }) {
-                                                        JobCard(job: job)
-                                                    }
+                                                    JobCard(job: job)
                                                 }
                                             }
                                         }
@@ -141,24 +135,14 @@ struct JobListView: View {
                                                     .tracking(1)
                                                     .padding(.horizontal, 24)
                                                 ForEach(cancelled) { job in
-                                                    Button(action: {
-                                                        router.selectedJobId = job.id
-                                                        router.path.append(TechnicianScreen.jobDetails)
-                                                    }) {
-                                                        JobCard(job: job)
-                                                    }
+                                                    JobCard(job: job)
                                                 }
                                             }
                                         }
                                     }
                                 } else {
                                     ForEach(viewModel.filteredJobs) { job in
-                                        Button(action: {
-                                            router.selectedJobId = job.id
-                                            router.path.append(TechnicianScreen.jobDetails)
-                                        }) {
-                                            JobCard(job: job)
-                                        }
+                                        JobCard(job: job)
                                     }
                                 }
                             }
@@ -200,7 +184,7 @@ struct JobListView: View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.system(size: 44))
-                .foregroundColor(.gray.opacity(0.3))
+                .foregroundColor(settings.secondaryText.opacity(0.3))
             Text("No jobs found for this filter")
                 .scaledFont(size: 14)
                 .foregroundColor(settings.secondaryText)
@@ -238,12 +222,12 @@ struct FilterButton: View {
                 .foregroundColor(isSelected ? settings.accentColor : settings.secondaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(isSelected ? settings.surfaceColor : Color.clear)
+                .background(isSelected ? (settings.isHighContrast ? settings.accentColor.opacity(0.1) : settings.surfaceColor) : Color.clear)
                 .cornerRadius(6)
                 .shadow(color: isSelected && !settings.isHighContrast ? Color.black.opacity(0.05) : Color.clear, radius: 2, x: 0, y: 1)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(isSelected ? settings.cardStroke : Color.clear, lineWidth: settings.isHighContrast ? 1 : 0)
+                        .stroke(isSelected ? settings.cardStroke : Color.clear, lineWidth: settings.cardStrokeWidth)
                 )
         }
     }
@@ -255,107 +239,116 @@ struct JobCard: View {
     @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
-        HStack(spacing: 0) {
-            // Left Status Strip
-            Rectangle()
-                .fill(statusColor)
-                .frame(width: 6)
-            
-            VStack(alignment: .leading, spacing: 16) {
-                // Top Row: Status Pill & Time
-                HStack {
-                    Text(job.status.uppercased())
-                        .scaledFont(size: 9, weight: .bold)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(statusColor.opacity(0.12))
-                        .foregroundColor(statusColor)
-                        .cornerRadius(20)
-                    
-                    Spacer()
-                    
-                    Text(timeString(from: job.scheduledAt))
-                        .scaledFont(size: 14, weight: .bold)
-                        .foregroundColor(settings.secondaryText)
-                }
+        Button(action: {
+            HapticManager.shared.playImpact(style: .light)
+            router.selectedJobId = job.id
+            router.path.append(TechnicianScreen.jobDetails)
+        }) {
+            HStack(spacing: 0) {
+                // Left Status Strip
+                Rectangle()
+                    .fill(statusColor)
+                    .frame(width: 6)
                 
-                // Title
-                Text(job.title)
-                    .scaledFont(size: 18, weight: .bold, design: .rounded)
-                    .foregroundColor(settings.primaryText)
-                    .lineLimit(2)
-                
-                // Location Section
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.elevateLightGray.opacity(0.3))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "mappin.and.ellipse")
-                            .foregroundColor(settings.accentColor)
-                            .font(.system(size: 16))
+                VStack(alignment: .leading, spacing: 16) {
+                    // Top Row: Status Pill & Time
+                    HStack {
+                        Text(job.status.uppercased())
+                            .scaledFont(size: 9, weight: .bold)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(statusColor.opacity(0.12))
+                            .foregroundColor(statusColor)
+                            .cornerRadius(20)
+                        
+                        Spacer()
+                        
+                        Text(timeString(from: job.scheduledAt))
+                            .scaledFont(size: 14, weight: .bold)
+                            .foregroundColor(settings.secondaryText)
                     }
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(job.location)
-                            .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(settings.primaryText)
-                            .lineLimit(1)
-                        if let notes = job.notes, !notes.isEmpty {
-                            Text(notes)
-                                .scaledFont(size: 12)
-                                .foregroundColor(settings.secondaryText)
+                    // Title
+                    Text(job.title)
+                        .scaledFont(size: 18, weight: .bold, design: .rounded)
+                        .foregroundColor(settings.primaryText)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    
+                    // Location Section
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(settings.accentColor.opacity(0.05))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "mappin.and.ellipse")
+                                .foregroundColor(settings.accentColor)
+                                .font(.system(size: 16))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(job.location)
+                                .scaledFont(size: 14, weight: .bold)
+                                .foregroundColor(settings.primaryText)
                                 .lineLimit(1)
+                            if let notes = job.notes, !notes.isEmpty {
+                                Text(notes)
+                                    .scaledFont(size: 12)
+                                    .foregroundColor(settings.secondaryText)
+                                    .lineLimit(1)
+                            }
                         }
                     }
-                }
-                
-                // Action Row
-                HStack(spacing: 10) {
-                    Button(action: {
-                        router.selectedJobId = job.id
-                        router.path.append(TechnicianScreen.jobDetails)
-                    }) {
-                        Text("Open Details")
-                            .scaledFont(size: 15, weight: .bold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.elevateDarkGreen)
-                            .cornerRadius(12)
-                    }
-                    .buttonStyle(.plain)
                     
-                    Button(action: {
-                        openMaps()
-                    }) {
-                        Image(systemName: "arrow.turn.up.right")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(settings.primaryText)
-                            .frame(width: 48, height: 48)
-                            .background(Color.elevateLightGray.opacity(0.3))
-                            .cornerRadius(12)
+                    // Action Row
+                    HStack(spacing: 10) {
+                        HStack {
+                            Text("Open Details")
+                                .scaledFont(size: 15, weight: .bold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(settings.accentColor)
+                                .cornerRadius(12)
+                        }
+                        
+                        Button(action: {
+                            HapticManager.shared.playImpact(style: .medium)
+                            openMaps()
+                        }) {
+                            Image(systemName: "arrow.turn.up.right")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(settings.primaryText)
+                                .frame(width: 48, height: 48)
+                                .background(settings.secondaryText.opacity(0.05))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                )
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                    .padding(.top, 4)
                 }
-                .padding(.top, 4)
+                .padding(20)
             }
-            .padding(20)
+            .background(settings.surfaceColor)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+            )
+            .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.04), radius: 10, x: 0, y: 5)
+            .padding(.horizontal, 24)
         }
-        .background(settings.isHighContrast ? Color.black : .white)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(settings.isHighContrast ? Color.white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-        )
-        .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.08), radius: 10, x: 0, y: 5)
-        .padding(.horizontal, 24)
+        .buttonStyle(.plain)
     }
 
     private var statusColor: Color {
         if job.isUrgent { return .red }
         switch job.status.uppercased() {
-        case "COMPLETED": return .elevateDarkGreen
+        case "COMPLETED": return settings.isHighContrast ? settings.primaryText : .green
         case "IN-PROGRESS": return .blue
         case "HOLD": return .orange
         case "CANCELLED": return .gray
@@ -392,7 +385,6 @@ struct JobCard: View {
     }
 }
 
-
 struct StatPill: View {
     var icon: String
     var value: String
@@ -404,30 +396,30 @@ struct StatPill: View {
         VStack(alignment: .leading, spacing: 16) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(settings.isHighContrast ? Color.white.opacity(0.1) : (isPrimary ? Color.white.opacity(0.1) : Color.elevateDarkGreen.opacity(0.05)))
+                    .fill(settings.isHighContrast ? Color.white.opacity(0.1) : (isPrimary ? Color.white.opacity(0.1) : settings.accentColor.opacity(0.05)))
                     .frame(width: 40, height: 40)
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .elevateDarkGreen))
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : settings.accentColor))
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .scaledFont(size: 28, weight: .bold, design: .rounded)
-                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : .black))
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white : settings.primaryText))
                 Text(title)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white.opacity(0.8) : .elevateTextGray))
+                    .foregroundColor(settings.isHighContrast ? .white : (isPrimary ? .white.opacity(0.8) : settings.secondaryText))
                     .tracking(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(settings.isHighContrast ? Color.black : (isPrimary ? Color.elevateDarkGreen : Color.white))
+        .background(settings.isHighContrast ? settings.surfaceColor : (isPrimary ? settings.accentColor : settings.surfaceColor))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
     }

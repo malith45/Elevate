@@ -72,11 +72,11 @@ struct ManagerCreateJobView: View {
                                                     .foregroundColor(settings.secondaryText)
                                             }
                                             .padding(14)
-                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
+                                            .background(settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4))
                                             .cornerRadius(12)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                         }
                                     }
@@ -91,11 +91,11 @@ struct ManagerCreateJobView: View {
                                             .scaledFont(size: 15)
                                             .foregroundColor(settings.primaryText)
                                             .padding(14)
-                                            .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
+                                            .background(settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4))
                                             .cornerRadius(12)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(settings.cardStroke, lineWidth: settings.isHighContrast ? 2 : 0)
+                                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                             )
                                     }
 
@@ -121,7 +121,7 @@ struct ManagerCreateJobView: View {
                                         }
                                         .frame(height: 100)
                                         .padding(10)
-                                        .background(settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4))
+                                        .background(settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4))
                                         .cornerRadius(12)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
@@ -131,16 +131,17 @@ struct ManagerCreateJobView: View {
                                 }
                             }
 
-                            // VENUE & LOCATION SECTION
+                            // SITE & LOCATION SECTION
                             sectionCard(title: "SITE & LOCATION", icon: "mappin.and.ellipse") {
                                 VStack(spacing: 20) {
                                     VStack(alignment: .leading, spacing: 12) {
                                         HStack {
                                             Image(systemName: "location.fill")
-                                                .foregroundColor(.elevateDarkGreen)
+                                                .foregroundColor(settings.accentColor)
                                                 .font(.system(size: 14))
                                             TextField("Search or pin location", text: $location)
                                                 .scaledFont(size: 15)
+                                                .foregroundColor(settings.primaryText)
                                                 .onSubmit {
                                                     performSearch()
                                                 }
@@ -151,21 +152,25 @@ struct ManagerCreateJobView: View {
                                             }
                                         }
                                         .padding(14)
-                                        .background(Color.elevateLightGray.opacity(0.4))
+                                        .background(settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4))
                                         .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
 
                                         MapReader { proxy in
                                             Map(position: $mapPosition) {
                                                 if let siteCoordinate {
                                                     Marker("Job Site", coordinate: siteCoordinate)
-                                                        .tint(Color.elevateDarkGreen)
+                                                        .tint(settings.accentColor)
                                                 }
                                             }
                                             .frame(height: 180)
                                             .clipShape(RoundedRectangle(cornerRadius: 16))
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(Color.elevateLightGray, lineWidth: 1)
+                                                    .stroke(settings.cardStroke, lineWidth: 1)
                                             )
                                             .gesture(
                                                 SpatialTapGesture()
@@ -195,29 +200,37 @@ struct ManagerCreateJobView: View {
                                         VStack(alignment: .leading, spacing: 8) {
                                             Text("DATE")
                                                 .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(.elevateTextGray)
+                                                .foregroundColor(settings.secondaryText)
                                                 .tracking(1)
                                             DatePicker("", selection: $scheduledAt, displayedComponents: .date)
                                                 .labelsHidden()
                                                 .datePickerStyle(.compact)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(8)
-                                                .background(Color.elevateLightGray.opacity(0.4))
+                                                .background(settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4))
                                                 .cornerRadius(10)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 10)
+                                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                )
                                         }
 
                                         VStack(alignment: .leading, spacing: 8) {
                                             Text("TIME")
                                                 .scaledFont(size: 10, weight: .bold)
-                                                .foregroundColor(.elevateTextGray)
+                                                .foregroundColor(settings.secondaryText)
                                                 .tracking(1)
                                             DatePicker("", selection: $scheduledAt, displayedComponents: .hourAndMinute)
                                                 .labelsHidden()
                                                 .datePickerStyle(.compact)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(8)
-                                                .background(Color.elevateLightGray.opacity(0.4))
+                                                .background(settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4))
                                                 .cornerRadius(10)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 10)
+                                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                )
                                         }
                                     }
 
@@ -225,10 +238,10 @@ struct ManagerCreateJobView: View {
                                         HStack(spacing: 12) {
                                             ZStack {
                                                 Circle()
-                                                    .fill(isUrgent ? Color.red.opacity(0.1) : (settings.isHighContrast ? Color.black : Color.elevateLightGray.opacity(0.4)))
+                                                    .fill(isUrgent ? Color.red.opacity(0.1) : (settings.isHighContrast ? Color.black : settings.appBackground.opacity(0.4)))
                                                     .frame(width: 32, height: 32)
                                                     .overlay(
-                                                        Circle().stroke(settings.isHighContrast ? Color.white : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
+                                                        Circle().stroke(isUrgent ? Color.red : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                                     )
                                                 Image(systemName: "exclamationmark.triangle.fill")
                                                     .font(.system(size: 14))

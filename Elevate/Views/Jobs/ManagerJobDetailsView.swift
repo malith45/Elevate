@@ -41,6 +41,7 @@ struct ManagerJobDetailsView: View {
                         if let job = viewModel.job {
                             
                             // HOLD REASON BANNER (NEW)
+                            // HOLD REASON BANNER (NEW)
                             if job.status.uppercased() == "HOLD", let reason = job.holdReason, !reason.isEmpty {
                                 HStack(spacing: 12) {
                                     Image(systemName: "pause.circle.fill")
@@ -59,7 +60,7 @@ struct ManagerJobDetailsView: View {
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                                        .stroke(settings.isHighContrast ? .white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                                 .padding(.top, 8)
                             }
@@ -80,6 +81,7 @@ struct ManagerJobDetailsView: View {
                                 Spacer()
 
                                 Button(action: {
+                                    HapticManager.shared.playImpact(style: .light)
                                     router.selectedJobId = job.id
                                     router.path.append(ManagerScreen.jobIssueReport)
                                 }) {
@@ -118,7 +120,7 @@ struct ManagerJobDetailsView: View {
                                         .foregroundColor(settings.primaryText)
                                         .multilineTextAlignment(.leading)
                                         .padding(10)
-                                        .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateLightGray)
+                                        .background(settings.accentColor.opacity(0.05))
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
@@ -165,7 +167,7 @@ struct ManagerJobDetailsView: View {
 
                                         Map(position: $cameraPosition) {
                                             Marker("Site", systemImage: "mappin.circle.fill", coordinate: siteCoord)
-                                                .tint(Color.elevateDarkGreen)
+                                                .tint(settings.accentColor)
 
                                             if let techCoord = viewModel.technicianLocation {
                                                 Marker("Technician", systemImage: "person.circle.fill", coordinate: techCoord)
@@ -181,6 +183,7 @@ struct ManagerJobDetailsView: View {
                                                 }) {
                                                     HStack(spacing: 4) {
                                                         Image(systemName: "mappin.circle.fill")
+                                                            .foregroundColor(settings.accentColor)
                                                         Text("SITE")
                                                     }
                                                     .scaledFont(size: 8, weight: .bold)
@@ -195,6 +198,7 @@ struct ManagerJobDetailsView: View {
                                                     }) {
                                                         HStack(spacing: 4) {
                                                             Image(systemName: "person.circle.fill")
+                                                                .foregroundColor(.blue)
                                                             Text("TECH")
                                                         }
                                                         .scaledFont(size: 8, weight: .bold)
@@ -206,21 +210,29 @@ struct ManagerJobDetailsView: View {
                                             }
                                             .padding(8)
                                         }
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                     } else {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 14)
-                                                .fill(LinearGradient(colors: [.elevateDarkGreen.opacity(0.85), .elevateDarkGreen.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                                .fill(settings.surfaceColor)
                                                 .frame(height: 180)
 
                                             VStack(spacing: 8) {
                                                 Image(systemName: "map.fill")
                                                     .font(.system(size: 36))
-                                                    .foregroundColor(.white.opacity(0.4))
+                                                    .foregroundColor(settings.secondaryText.opacity(0.4))
                                                 Text("Location preview unavailable")
                                                     .scaledFont(size: 12, weight: .semibold)
-                                                    .foregroundColor(.white.opacity(0.7))
+                                                    .foregroundColor(settings.secondaryText.opacity(0.7))
                                             }
                                         }
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                        )
                                     }
                                 }
                             }
@@ -245,6 +257,7 @@ struct ManagerJobDetailsView: View {
                                 )
 
                                 Button(action: {
+                                    HapticManager.shared.playImpact(style: .light)
                                     router.path.append(ManagerScreen.quotationApproval)
                                 }) {
                                     VStack(spacing: 6) {
@@ -256,7 +269,7 @@ struct ManagerJobDetailsView: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 18)
-                                    .background(settings.isHighContrast ? settings.surfaceColor : Color.elevateDarkGreen)
+                                    .background(settings.accentColor)
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
@@ -281,6 +294,10 @@ struct ManagerJobDetailsView: View {
                                                     PhotoPreview(urlString: url)
                                                         .frame(width: 88, height: 88)
                                                         .cornerRadius(12)
+                                                        .overlay(
+                                                            RoundedRectangle(cornerRadius: 12)
+                                                                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                                                        )
                                                 }
                                                 .buttonStyle(.plain)
                                             }
@@ -312,13 +329,13 @@ struct ManagerJobDetailsView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 16)
-                                .background(settings.isHighContrast ? Color.black : Color.elevateDarkGreen)
+                                .background(settings.isHighContrast ? Color.black : (settings.isHighContrast ? settings.primaryText : Color.green))
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? .white : Color.elevateDarkGreen.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
-                                .shadow(color: Color.elevateDarkGreen.opacity(0.2), radius: 8, x: 0, y: 4)
+                                .shadow(color: Color.green.opacity(0.2), radius: 8, x: 0, y: 4)
                             } else if status == "CANCELLED" {
                                 HStack(spacing: 14) {
                                     Image(systemName: "xmark.octagon.fill")
@@ -342,7 +359,7 @@ struct ManagerJobDetailsView: View {
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(settings.isHighContrast ? .white : Color.red.opacity(0.3), lineWidth: settings.cardStrokeWidth)
+                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                                 )
                                 .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
                             }
@@ -352,7 +369,7 @@ struct ManagerJobDetailsView: View {
                                 VStack(spacing: 12) {
                                     if status == "HOLD" {
                                         HStack(spacing: 12) {
-                                            actionButton(title: "CONTINUE", icon: "play.fill", color: Color.elevateDarkGreen) {
+                                            actionButton(title: "CONTINUE", icon: "play.fill", color: settings.isHighContrast ? settings.primaryText : Color.green) {
                                                 updateStatus(jobId: job.id, status: "IN-PROGRESS")
                                             }
                                             cancelButton
@@ -360,6 +377,7 @@ struct ManagerJobDetailsView: View {
                                     } else if status == "IN-PROGRESS" {
                                         HStack(spacing: 12) {
                                             Button(action: {
+                                                HapticManager.shared.playImpact(style: .light)
                                                 holdReasonText = job.holdReason ?? ""
                                                 showHoldPrompt = true
                                             }) {
@@ -368,7 +386,7 @@ struct ManagerJobDetailsView: View {
                                                     Text("HOLD")
                                                 }
                                                 .scaledFont(size: 15, weight: .bold)
-                                                .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                                                .foregroundColor(settings.accentColor)
                                                 .frame(maxWidth: .infinity)
                                                 .padding(.vertical, 16)
                                                 .background(settings.surfaceColor)
@@ -454,7 +472,10 @@ struct ManagerJobDetailsView: View {
     }
 
     private var cancelButton: some View {
-        Button(action: { authenticateAndCancel() }) {
+        Button(action: { 
+            HapticManager.shared.playImpact(style: .medium)
+            authenticateAndCancel() 
+        }) {
             HStack(spacing: 8) {
                 Image(systemName: "xmark.circle.fill")
                 Text("CANCEL")
@@ -468,7 +489,7 @@ struct ManagerJobDetailsView: View {
             .shadow(color: Color.red.opacity(0.2), radius: 8, x: 0, y: 4)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
         }
         .buttonStyle(.plain)
@@ -492,7 +513,7 @@ struct ManagerJobDetailsView: View {
             .shadow(color: color.opacity(0.2), radius: 8, x: 0, y: 4)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(settings.isHighContrast ? .white : .clear, lineWidth: 1)
+                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
             )
         }
     }
@@ -553,6 +574,7 @@ struct ManagerJobDetailsView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "LKR"
+        formatter.locale = Locale(identifier: "en_LK")
         return formatter.string(from: NSNumber(value: actualValue)) ?? "LKR \(actualValue)"
     }
 
@@ -569,7 +591,7 @@ struct ManagerJobDetailsView: View {
             Text(title)
                 .scaledFont(size: 10, weight: .bold)
         }
-        .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+        .foregroundColor(settings.accentColor)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(settings.surfaceColor)

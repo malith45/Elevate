@@ -187,29 +187,29 @@ struct ManagerDashboardView: View {
                              .padding(24)
                             .background(
                                 settings.isHighContrast ? AnyView(settings.surfaceColor) : 
-                                AnyView(LinearGradient(gradient: Gradient(colors: [Color.elevateDarkGreen, Color.elevateDarkGreen.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                                AnyView(LinearGradient(gradient: Gradient(colors: [settings.accentColor, settings.accentColor.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing))
                             )
                             .cornerRadius(24)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24)
                                     .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
                             )
-                            .shadow(color: settings.isHighContrast ? .clear : Color.elevateDarkGreen.opacity(0.3), radius: 10, x: 0, y: 6)
+                            .shadow(color: settings.isHighContrast ? .clear : settings.accentColor.opacity(0.3), radius: 10, x: 0, y: 6)
                         }
                         .buttonStyle(PlainButtonStyle())
                         
                         // Shortcuts
                         HStack(spacing: 8) {
-                            ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: Color.green.opacity(0.1), iconColor: .elevateDarkGreen) {
+                            ManagerShortcutItem(title: "CREATE\nJOB", icon: "plus", color: settings.accentColor.opacity(0.1), iconColor: settings.accentColor) {
                                 router.path.append(ManagerScreen.createJob)
                             }
-                            ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: Color.elevateLightGray, iconColor: .black) {
+                            ManagerShortcutItem(title: "APPROVE", icon: "checklist", color: settings.secondaryText.opacity(0.1), iconColor: settings.primaryText) {
                                 router.path.append(ManagerScreen.pendingQuotations)
                             }
-                            ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: Color.elevateLightGray, iconColor: .black) {
+                            ManagerShortcutItem(title: "INVENTORY", icon: "shippingbox", color: settings.secondaryText.opacity(0.1), iconColor: settings.primaryText) {
                                 router.path.append(ManagerScreen.inventoryManager)
                             }
-                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: Color.elevateLightGray, iconColor: .black) {
+                            ManagerShortcutItem(title: "STATS", icon: "chart.bar.fill", color: settings.secondaryText.opacity(0.1), iconColor: settings.primaryText) {
                                 router.path.append(ManagerScreen.statistics)
                             }
                         }

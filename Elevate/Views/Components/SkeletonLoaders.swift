@@ -72,6 +72,10 @@ struct SkeletonCard: View {
         .padding(20)
         .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shimmer()
     }
 }
@@ -143,6 +147,10 @@ struct SkeletonTaskRow: View {
         }
         .background(settings.surfaceColor)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shimmer()
     }
 }

@@ -20,6 +20,7 @@ final class ProfilePhotoService {
         ]) { result in
             switch result {
             case .success:
+                ProfileImageStore.shared.deleteImage(for: userId) // Clear disk cache
                 ProfileImageCache.shared.saveRemoteUrl(base64String, for: userId)
                 NotificationCenter.default.post(name: .profilePhotoDidUpdate, object: nil, userInfo: ["userId": userId])
                 completion(.success(base64String))

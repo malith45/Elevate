@@ -28,4 +28,9 @@ final class ProfileImageStore {
         guard let data = try? Data(contentsOf: url) else { return nil }
         return UIImage(data: data)
     }
+
+    func deleteImage(for userId: String) {
+        let url = imageURL(for: userId)
+        try? FileManager.default.removeItem(at: url)
+    }
 }

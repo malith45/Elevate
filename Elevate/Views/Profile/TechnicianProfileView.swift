@@ -234,9 +234,6 @@ struct TechnicianProfileView: View {
         if !viewModel.organizationName.isEmpty {
             return viewModel.organizationName
         }
-        if let user = appSession.currentUser {
-            return user.organizationId
-        }
         return ""
     }
 

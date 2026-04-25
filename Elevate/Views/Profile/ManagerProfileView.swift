@@ -255,10 +255,7 @@ struct ManagerProfileView: View {
         if !viewModel.organizationName.isEmpty {
             return viewModel.organizationName
         }
-        if let user = appSession.currentUser {
-            return user.organizationId
-        }
-        return "Unknown organization"
+        return ""
     }
 
     private var organizationCode: String {

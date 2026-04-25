@@ -56,12 +56,7 @@ final class MapViewModel: ObservableObject {
                 if let travelTime = response?.routes.first?.expectedTravelTime {
                     self?.estimatedTravelTime = travelTime
                 } else {
-                    // Fallback to distance-based calculation if routing fails
-                    let startLoc = CLLocation(latitude: start.latitude, longitude: start.longitude)
-                    let destLoc = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
-                    let distance = startLoc.distance(from: destLoc)
-                    // Average speed in Colombo traffic (approx 25 km/h = 6.94 m/s)
-                    self?.estimatedTravelTime = distance / 6.94
+                    self?.estimatedTravelTime = 0
                 }
             }
         }

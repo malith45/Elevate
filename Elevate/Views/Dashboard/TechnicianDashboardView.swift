@@ -144,13 +144,7 @@ struct TechnicianDashboardView: View {
                     print("DEBUG: MKDirections successful: \(eta)s")
                     self.updateTravelTime(with: eta, isEstimate: false)
                 } else {
-                    // FALLBACK: If routing fails (expected in Sri Lanka), use distance-based estimate
-                    // Average speed in Colombo traffic (approx 25 km/h = 6.94 m/s)
-                    let averageSpeedMps: Double = 6.94 
-                    let estimatedTime = distance / averageSpeedMps
-                    
-                    print("DEBUG: MKDirections failed (\(error?.localizedDescription ?? "No route")). Using Estimate: \(Int(estimatedTime))s")
-                    self.updateTravelTime(with: estimatedTime, isEstimate: true)
+                    self.travelTime = "N/A"
                 }
             }
         }
@@ -168,35 +162,9 @@ struct TechnicianDashboardView: View {
         }
     }
 
-    private func openInAppleMaps(job: Job) {
-        guard let lat = job.siteLatitude, let lon = job.siteLongitude else {
-            let address = job.location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-            if let url = URL(string: "http://maps.apple.com/?address=\(address)") {
-                UIApplication.shared.open(url)
-            }
-            return
-        }
-
-        let sourceItem: MKMapItem
-        let destinationItem: MKMapItem
-        
-        let startCoord = locationService.currentLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
-        let destCoord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        
-        if #available(iOS 26.0, *) {
-            sourceItem = MKMapItem(location: CLLocation(latitude: startCoord.latitude, longitude: startCoord.longitude), address: nil)
-            destinationItem = MKMapItem(location: CLLocation(latitude: destCoord.latitude, longitude: destCoord.longitude), address: nil)
-        } else {
-            sourceItem = MKMapItem(placemark: MKPlacemark(coordinate: startCoord))
-            destinationItem = MKMapItem(placemark: MKPlacemark(coordinate: destCoord))
-        }
-        
-        sourceItem.name = "My Location"
-        destinationItem.name = job.title
-        
-        MKMapItem.openMaps(with: [sourceItem, destinationItem], launchOptions: [
-            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
-        ])
+    private func openInAppMap(job: Job) {
+        router.selectedJobId = job.id
+        router.selectedTab = .map
     }
 
     private var upcomingJob: Job? {

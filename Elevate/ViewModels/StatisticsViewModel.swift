@@ -144,15 +144,9 @@ final class StatisticsViewModel: ObservableObject {
         let assignedUserId = (role == "TECHNICIAN") ? userId : nil
         let allJobs = localStorage.fetchJobs(organizationId: organizationId, userId: assignedUserId)
         let teamRate = calculateCompletionRate(for: allJobs)
-        let targetRate = 0.8
 
-        if technicianId == nil {
-            comparisonLabel = "Vs. Target Average"
-            comparisonDelta = completionRate - targetRate
-        } else {
-            comparisonLabel = "Vs. Team Average"
-            comparisonDelta = completionRate - teamRate
-        }
+        comparisonLabel = "Vs. Team Average"
+        comparisonDelta = completionRate - teamRate
 
         comparisonIsPositive = comparisonDelta >= 0
     }

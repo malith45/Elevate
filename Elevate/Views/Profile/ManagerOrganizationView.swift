@@ -156,7 +156,7 @@ struct ManagerOrganizationView: View {
         .onAppear {
             guard let user = appSession.currentUser else { return }
             if viewModel.organizationName.isEmpty {
-                viewModel.organizationName = user.organizationId
+                // Do not assign ID to name, let it stay empty while loading
             }
             viewModel.load(organizationId: user.organizationId, isOnline: NetworkService.shared.isOnline)
             refreshMemberMetrics(organizationId: user.organizationId)
@@ -194,21 +194,21 @@ struct ManagerOrganizationView: View {
         if !viewModel.organizationName.isEmpty {
             return viewModel.organizationName
         }
-        return appSession.currentUser?.organizationId ?? "Skyline Corp"
+        return ""
     }
 
     private var introductionText: String {
         if !viewModel.introduction.isEmpty {
             return viewModel.introduction
         }
-        return "Manage your organization profile, members, and permissions from this hub."
+        return ""
     }
 
     private var organizationCode: String {
         if let user = appSession.currentUser {
             return user.organizationId
         }
-        return "ORG-1024-SV"
+        return ""
     }
 
     // MARK: - Sub-views

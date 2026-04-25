@@ -37,7 +37,7 @@ struct ManagerDashboardView: View {
                                 .scaledFont(size: 12, weight: .bold)
                                 .foregroundColor(settings.secondaryText)
                             
-                            Text("Good morning, \(appSession.currentUser?.displayName ?? "Marcus")")
+                            Text("Good morning, \(appSession.currentUser?.displayName ?? "User")")
                                 .scaledFont(size: 24, weight: .bold, design: .rounded)
                                 .foregroundColor(settings.primaryText)
                         }

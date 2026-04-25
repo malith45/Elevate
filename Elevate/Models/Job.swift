@@ -3,21 +3,21 @@ import Foundation
 struct Job: Identifiable, Codable, Equatable {
     let id: String
     let organizationId: String
-    let title: String
-    let location: String
-    let siteLatitude: Double?
-    let siteLongitude: Double?
-    let scheduledAt: Date
-    let status: String
-    let priority: String
-    let isUrgent: Bool
-    let isOnHold: Bool
-    let holdReason: String?
-    let cancelledAt: Date?
+    var title: String
+    var location: String
+    var siteLatitude: Double?
+    var siteLongitude: Double?
+    var scheduledAt: Date
+    var status: String
+    var priority: String
+    var isUrgent: Bool
+    var isOnHold: Bool
+    var holdReason: String?
+    var cancelledAt: Date?
     let assignedUserId: String
-    let notes: String?
-    let quotationItems: [QuotationItem]
-    let approvedCost: Double?
-    let photoUrls: [String]
-    let updatedAt: Date
+    var notes: String?
+    var quotationItems: [QuotationItem]
+    var approvedCost: Double?
+    var photoUrls: [String]
+    var updatedAt: Date
 }

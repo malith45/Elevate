@@ -16,6 +16,24 @@ final class CalendarViewModel: ObservableObject {
         let now = Date()
         currentMonth = now
         selectedDate = now
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(eventStoreChanged),
+            name: .EKEventStoreChanged,
+            object: eventStore
+        )
+    }
+
+    @objc private func eventStoreChanged() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.loadEvents(for: self.currentMonth)
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     var isAuthorized: Bool {

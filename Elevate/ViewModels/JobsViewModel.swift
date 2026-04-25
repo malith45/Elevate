@@ -2,9 +2,6 @@ import Foundation
 import Combine
 import FirebaseFirestore
 
-extension Notification.Name {
-    static let jobStatusDidChange = Notification.Name("jobStatusDidChange")
-}
 
 final class JobsViewModel: ObservableObject {
     @Published var jobs: [Job] = []

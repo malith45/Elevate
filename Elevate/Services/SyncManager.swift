@@ -24,6 +24,7 @@ final class SyncManager: ObservableObject {
 
     func startSyncing(organizationId: String, userId: String, role: String, completion: (() -> Void)? = nil) {
         pendingCount = local.pendingActionsCount(organizationId: organizationId, userId: userId)
+        CalendarSyncService.shared.startMonitoring(organizationId: organizationId)
 
         guard network.isOnline else {
             status = .offline

@@ -6,6 +6,7 @@ import UIKit
 
 extension Notification.Name {
     static let notificationsDidChange = Notification.Name("notificationsDidChange")
+    static let jobStatusDidChange = Notification.Name("jobStatusDidChange")
 }
 
 final class NotificationService: NSObject, ObservableObject, UNUserNotificationCenterDelegate, MessagingDelegate {

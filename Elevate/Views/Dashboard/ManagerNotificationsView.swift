@@ -8,6 +8,13 @@ struct ManagerNotificationsView: View {
     @ObservedObject private var network = NetworkService.shared
     @ObservedObject var settings = AccessibilitySettings.shared
     
+    @State private var showResetAlert = false
+    @State private var resetTargetId: String? = nil
+    @State private var resetTargetName: String = ""
+    @State private var newPasswordInput: String = ""
+    @State private var showSuccessAlert = false
+    @State private var resetMessage = ""
+    
     var body: some View {
         ZStack {
             settings.appBackground.ignoresSafeArea()
@@ -61,6 +68,38 @@ struct ManagerNotificationsView: View {
             
         }
         .navigationBarHidden(true)
+        .alert("Reset Password", isPresented: $showResetAlert) {
+            TextField("New Password", text: $newPasswordInput)
+            Button("Cancel", role: .cancel) {
+                newPasswordInput = ""
+                resetTargetId = nil
+            }
+            Button("Reset") {
+                if let userId = resetTargetId, !newPasswordInput.isEmpty {
+                    FirebaseService.shared.resetUserPassword(userId: userId, newPassword: newPasswordInput) { result in
+                        DispatchQueue.main.async {
+                            switch result {
+                            case .success:
+                                resetMessage = "Password for \(resetTargetName) has been reset successfully."
+                                showSuccessAlert = true
+                            case .failure(let error):
+                                resetMessage = "Error: \(error.localizedDescription)"
+                                showSuccessAlert = true
+                            }
+                            newPasswordInput = ""
+                            resetTargetId = nil
+                        }
+                    }
+                }
+            }
+        } message: {
+            Text("Enter a new temporary password for \(resetTargetName).")
+        }
+        .alert("Status", isPresented: $showSuccessAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(resetMessage)
+        }
         .onAppear {
             loadNotifications()
         }
@@ -83,7 +122,16 @@ struct ManagerNotificationsView: View {
     private func handleTap(_ item: NotificationItem) {
         guard appSession.currentUser != nil else { return }
         viewModel.markRead(item, isOnline: NetworkService.shared.isOnline)
-        router.handleDeepLink(type: item.type.uppercased(), targetId: item.targetId)
+        
+        if item.type.uppercased() == "PASSWORD_RESET" {
+            resetTargetId = item.targetId
+            // Extract name from body if possible, or just use a generic title
+            // Body is usually "[Name] has requested a password reset."
+            resetTargetName = item.body.replacingOccurrences(of: " has requested a password reset.", with: "")
+            showResetAlert = true
+        } else {
+            router.handleDeepLink(type: item.type.uppercased(), targetId: item.targetId)
+        }
     }
 }
 

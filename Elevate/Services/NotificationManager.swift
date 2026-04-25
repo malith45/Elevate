@@ -21,6 +21,7 @@ final class NotificationManager {
         case issueResolved = "ISSUE_RESOLVED"
         case issueCommented = "ISSUE_COMMENTED"
         case criticalInventory = "CRITICAL_INVENTORY"
+        case passwordResetRequest = "PASSWORD_RESET"
     }
     
     func sendNotification(

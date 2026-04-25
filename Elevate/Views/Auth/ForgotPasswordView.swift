@@ -50,7 +50,7 @@ struct ForgotPasswordView: View {
             
             // Action Buttons
             VStack(spacing: 24) {
-                PrimaryButton(title: "Send Recovery Link", iconName: nil) {
+                PrimaryButton(title: "Request Recovery", iconName: nil) {
                     let orgId = organizationId.trimmingCharacters(in: .whitespacesAndNewlines)
                     let orgValue = orgId.isEmpty ? nil : orgId
                     viewModel.sendReset(organizationId: orgValue, identification: identification)

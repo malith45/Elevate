@@ -50,7 +50,7 @@ struct NotificationCard: View {
                     .padding(.top, 20)
             }
         }
-        .background(settings.surfaceColor)
+        .background(item.type.uppercased() == "PASSWORD_RESET" ? Color.red.opacity(0.03) : settings.surfaceColor)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
@@ -70,6 +70,7 @@ struct NotificationCard: View {
         if type.contains("QUOTE") { return "doc.text.fill" }
         if type.contains("ISSUE") { return "exclamationmark.triangle.fill" }
         if type.contains("INVENTORY") { return "shippingbox.fill" }
+        if type.contains("PASSWORD_RESET") { return "lock.shield.fill" }
         return "bell.fill"
     }
     
@@ -79,6 +80,7 @@ struct NotificationCard: View {
         if type.contains("QUOTE") { return Color.orange.opacity(0.1) }
         if type.contains("ISSUE") { return Color.red.opacity(0.1) }
         if type.contains("INVENTORY") { return Color.purple.opacity(0.1) }
+        if type.contains("PASSWORD_RESET") { return Color.red.opacity(0.15) }
         return settings.accentColor.opacity(0.1)
     }
     
@@ -88,6 +90,7 @@ struct NotificationCard: View {
         if type.contains("QUOTE") { return .orange }
         if type.contains("ISSUE") { return .red }
         if type.contains("INVENTORY") { return .purple }
+        if type.contains("PASSWORD_RESET") { return .red }
         return settings.accentColor
     }
 
@@ -137,8 +140,9 @@ struct InAppNotificationToast: View {
     var body: some View {
         HStack(spacing: 16) {
             ZStack {
+                let isImportant = notification.type.uppercased() == "PASSWORD_RESET"
                 Circle()
-                    .fill(settings.isHighContrast ? Color.black : settings.accentColor.opacity(0.15))
+                    .fill(settings.isHighContrast ? Color.black : (isImportant ? Color.red.opacity(0.15) : settings.accentColor.opacity(0.15)))
                     .frame(width: 44, height: 44)
                     .overlay(
                         Circle().stroke(settings.isHighContrast ? settings.primaryText : Color.clear, lineWidth: settings.isHighContrast ? 2 : 0)
@@ -146,7 +150,7 @@ struct InAppNotificationToast: View {
                 
                 Image(systemName: iconName(for: notification.type))
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(settings.isHighContrast ? settings.primaryText : settings.accentColor)
+                    .foregroundColor(settings.isHighContrast ? settings.primaryText : (isImportant ? .red : settings.accentColor))
             }
             
             VStack(alignment: .leading, spacing: 2) {
@@ -193,6 +197,8 @@ struct InAppNotificationToast: View {
             return "exclamationmark.triangle.fill"
         case "CRITICAL_INVENTORY":
             return "shippingbox.fill"
+        case "PASSWORD_RESET":
+            return "lock.shield.fill"
         default:
             return "bell.fill"
         }

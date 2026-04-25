@@ -52,7 +52,9 @@ final class NotificationsViewModel: ObservableObject {
 
             DispatchQueue.main.async {
                 var seen = Set<String>()
-                self.notifications = remoteItems.filter { seen.insert($0.id).inserted }
+                self.notifications = remoteItems
+                    .filter { seen.insert($0.id).inserted }
+                    .sorted(by: { $0.createdAt > $1.createdAt })
             }
         }
     }

@@ -153,10 +153,32 @@ final class FirebaseService {
                     if let updateError = updateError {
                         completion(.failure(updateError))
                     } else {
+                        // Notify managers
+                        let displayName = doc.data()["displayName"] as? String ?? trimmed
+                        NotificationManager.shared.notifyManagers(
+                            organizationId: organizationId,
+                            type: .passwordResetRequest,
+                            title: "Password Reset Request",
+                            body: "\(displayName) has requested a password reset.",
+                            targetId: doc.documentID
+                        )
                         completion(.success(()))
                     }
                 }
             }
+    }
+
+    func resetUserPassword(userId: String, newPassword: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("users").document(userId).updateData([
+            "password": newPassword,
+            "passwordResetRequestedAt": FieldValue.delete()
+        ]) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
     }
 
     func fetchUser(userId: String, completion: @escaping (Result<User, Error>) -> Void) {

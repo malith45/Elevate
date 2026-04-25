@@ -11,9 +11,6 @@ import SwiftUI
 @main
 struct ElevateWidgetBundle: WidgetBundle {
     var body: some Widget {
-        ElevateWidget()
-        ElevateWidgetControl()
-        ElevateWidgetLiveActivity()
-        SmartNavigationWidget() // Added our new widget
+        SmartNavigationWidget()
     }
 }

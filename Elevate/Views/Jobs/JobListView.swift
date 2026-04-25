@@ -363,25 +363,9 @@ struct JobCard: View {
     }
     
     private func openMaps() {
-        guard let lat = job.siteLatitude, let lon = job.siteLongitude else { return }
-        let destinationItem: MKMapItem
-        let sourceItem: MKMapItem
-        
-        let startCoord = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
-        let destCoord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        
-        if #available(iOS 26.0, *) {
-            sourceItem = MKMapItem(location: CLLocation(latitude: startCoord.latitude, longitude: startCoord.longitude), address: nil)
-            destinationItem = MKMapItem(location: CLLocation(latitude: destCoord.latitude, longitude: destCoord.longitude), address: nil)
-        } else {
-            sourceItem = MKMapItem(placemark: MKPlacemark(coordinate: startCoord))
-            destinationItem = MKMapItem(placemark: MKPlacemark(coordinate: destCoord))
-        }
-        
-        sourceItem.name = "Colombo Start"
-        destinationItem.name = job.title
-        
-        MKMapItem.openMaps(with: [sourceItem, destinationItem], launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+        router.selectedTab = .map
+        router.mapFocusJobId = job.id
+        router.path = NavigationPath()
     }
 }
 

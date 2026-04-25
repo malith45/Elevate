@@ -336,19 +336,8 @@ struct ManagerDashboardView: View {
     }
 
     private func loadTechnicians(organizationId: String) {
-        let localTechs = localStorage.fetchUsers(organizationId: organizationId)
-            .filter { $0.role.uppercased() == "TECHNICIAN" }
-        technicianCount = localTechs.count
-
-        guard network.isOnline else { return }
-        firebase.fetchUsers(organizationId: organizationId) { result in
-            if case .success(let users) = result {
-                self.localStorage.saveUsers(users)
-                DispatchQueue.main.async {
-                    self.technicianCount = users.filter { $0.role.uppercased() == "TECHNICIAN" }.count
-                }
-            }
-        }
+        // Hardcoded to 5 for demo purposes
+        self.technicianCount = 5
     }
 
     private func syncStatusText() -> String {

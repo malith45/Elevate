@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import Combine
 
 struct ManagerMapView: View {
     @EnvironmentObject private var appSession: AppSession
@@ -8,6 +9,9 @@ struct ManagerMapView: View {
     @State private var mapPosition: MapCameraPosition
     @State private var hasCenteredOnUser = false
     @State private var technicians: [User] = []
+    @State private var mockTechnicians: [User] = []
+    @State private var useMockData: Bool = true
+    @State private var timer: Timer? = nil
     @ObservedObject var settings = AccessibilitySettings.shared
     private let localStorage = LocalStorageService.shared
 
@@ -35,7 +39,8 @@ struct ManagerMapView: View {
                         .tint(settings.accentColor)
                 }
 
-                ForEach(technicians) { tech in
+                let techsToDisplay = useMockData ? mockTechnicians : technicians
+                ForEach(techsToDisplay) { tech in
                     if let lat = tech.latitude, let lon = tech.longitude {
                         Annotation(tech.displayName, coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
                             VStack(spacing: 4) {
@@ -109,9 +114,15 @@ struct ManagerMapView: View {
             if !hasCenteredOnUser, locationService.currentLocation != nil {
                 mapPosition = MapCameraPosition.region(viewModel.savedRegion ?? viewModel.region)
                 hasCenteredOnUser = true
+                generateMockTechnicians()
             }
             if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
                 viewModel.requestRoute()
+            }
+        }
+        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
+            if useMockData {
+                updateMockLocations()
             }
         }
         .onChange(of: mapPosition) { _, newValue in
@@ -131,6 +142,47 @@ struct ManagerMapView: View {
             region.center = current
             viewModel.region = region
             mapPosition = .region(region)
+        }
+    }
+    
+    private func generateMockTechnicians() {
+        let center = locationService.currentLocation ?? CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
+        let names = ["Alex T.", "Sam K.", "Jordan R.", "Taylor W.", "Casey M."]
+        
+        mockTechnicians = names.enumerated().map { index, name in
+            let offsetLat = Double.random(in: -0.01...0.01)
+            let offsetLon = Double.random(in: -0.01...0.01)
+            return User(
+                id: "mock_\(index)",
+                organizationId: "mock_org",
+                username: "mock_user_\(index)",
+                displayName: name,
+                role: "TECHNICIAN",
+                email: "mock@example.com",
+                phone: "555-010\(index)",
+                latitude: center.latitude + offsetLat,
+                longitude: center.longitude + offsetLon,
+                notificationsEnabled: true
+            )
+        }
+    }
+    
+    private func updateMockLocations() {
+        mockTechnicians = mockTechnicians.map { tech in
+            let latJitter = Double.random(in: -0.0005...0.0005)
+            let lonJitter = Double.random(in: -0.0005...0.0005)
+            return User(
+                id: tech.id,
+                organizationId: tech.organizationId,
+                username: tech.username,
+                displayName: tech.displayName,
+                role: tech.role,
+                email: tech.email,
+                phone: tech.phone,
+                latitude: (tech.latitude ?? 0) + latJitter,
+                longitude: (tech.longitude ?? 0) + lonJitter,
+                notificationsEnabled: tech.notificationsEnabled
+            )
         }
     }
 }

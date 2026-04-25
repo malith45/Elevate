@@ -65,9 +65,29 @@ struct TechnicianMapView: View {
             BrandHeaderNav(showOnlineStatus: false)
                 .background(Color.white)
             
-            VStack {
+            VStack(spacing: 12) {
                 Spacer()
                 
+                // Current Location Button
+                HStack {
+                    Spacer()
+                    Button(action: centerOnUser) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(settings.accentColor)
+                            .frame(width: 48, height: 48)
+                            .background(settings.surfaceColor)
+                            .clipShape(Circle())
+                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            .overlay(
+                                Circle()
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                            )
+                    }
+                    .padding(.trailing, 20)
+                }
+                .padding(.bottom, shouldShowTripCard ? 0 : 120)
+
                 if shouldShowTripCard {
                     HStack(spacing: 12) {
                         // Time Badge
@@ -128,32 +148,6 @@ struct TechnicianMapView: View {
                     .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 5)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 110)
-                }
-            }
-
-            VStack {
-                Spacer()
-
-                HStack {
-                    Spacer()
-
-                    VStack(spacing: 12) {
-                        Button(action: centerOnUser) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(settings.accentColor)
-                                .frame(width: 48, height: 48)
-                                .background(settings.surfaceColor)
-                                .clipShape(Circle())
-                                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-                                .overlay(
-                                    Circle()
-                                        .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-                                )
-                        }
-                    }
-                    .padding(.bottom, shouldShowTripCard ? 180 : 120)
-                    .padding(.trailing, 20)
                 }
             }
             

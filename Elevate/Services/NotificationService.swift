@@ -47,6 +47,7 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         DispatchQueue.main.async {
             HapticManager.shared.playNotification(type: .success)
+            SoundManager.shared.playNotificationSound()
         }
         completionHandler([.banner, .sound, .list])
     }

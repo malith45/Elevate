@@ -65,11 +65,13 @@ final class NotificationManager {
                 }
             }
             
-            // Play haptics if enabled in accessibility settings
+            // Play feedback if enabled in accessibility settings
             DispatchQueue.main.async {
                 if AccessibilitySettings.shared.hapticFeedback {
                     HapticManager.shared.playNotification(type: .success)
                 }
+                // Play notification sound
+                SoundManager.shared.playNotificationSound()
             }
         }
     }

@@ -34,6 +34,21 @@ class VoiceOverManager: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendab
     }
 }
 
+// MARK: - Sound Manager
+import AudioToolbox
+
+class SoundManager {
+    static let shared = SoundManager()
+    
+    @AppStorage("soundEnabled") private var soundEnabled = true
+    
+    func playNotificationSound() {
+        guard soundEnabled else { return }
+        // System Sound ID 1007 is the common 'Tri-tone' notification sound
+        AudioServicesPlaySystemSound(1007)
+    }
+}
+
 // MARK: - Haptic Manager
 class HapticManager {
     static let shared = HapticManager()

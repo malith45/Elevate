@@ -25,23 +25,35 @@ final class TechnicianTabRouter: ObservableObject {
     @Published var mapFocusJobId: String?
 
     func handleDeepLink(type: String, targetId: String?) {
+        if type == "NOTIFICATION" || targetId == nil {
+            selectedTab = .dashboard
+            path = NavigationPath() // Clear path to avoid nesting issues
+            path.append(TechnicianScreen.notifications)
+            return
+        }
+
         guard let targetId = targetId else { return }
         
         switch type {
         case "JOB_ASSIGNED", "JOB_CANCELLED":
             selectedJobId = targetId
             selectedTab = .dashboard
+            path = NavigationPath()
             path.append(TechnicianScreen.jobDetails)
         case "QUOTE_APPROVED", "QUOTE_REJECTED":
             selectedJobId = targetId
             selectedTab = .dashboard
+            path = NavigationPath()
             path.append(TechnicianScreen.jobDetails)
         case "ISSUE_RESOLVED", "ISSUE_COMMENTED":
             selectedJobId = targetId
             selectedTab = .dashboard
+            path = NavigationPath()
             path.append(TechnicianScreen.jobIssueReport)
         default:
-            break
+            selectedTab = .dashboard
+            path = NavigationPath()
+            path.append(TechnicianScreen.notifications)
         }
     }
 

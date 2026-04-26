@@ -15,7 +15,6 @@ struct ElevateApp: App {
 
     init() {
         FirebaseApp.configure()
-        NotificationService.shared.configure()
         _appSession = StateObject(wrappedValue: AppSession())
     }
 

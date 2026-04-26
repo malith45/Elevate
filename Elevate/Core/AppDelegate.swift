@@ -6,8 +6,7 @@ import UserNotifications
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        
-        UNUserNotificationCenter.current().delegate = self
+        NotificationService.shared.configure()
         Messaging.messaging().delegate = self
         
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
@@ -26,36 +25,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         print("Failed to register for remote notifications: \(error.localizedDescription)")
     }
     
-    // MARK: - UNUserNotificationCenterDelegate
-    
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([[.banner, .list, .sound]])
-    }
-    
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse,
-                                withCompletionHandler completionHandler: @escaping () -> Void) {
-        let userInfo = response.notification.request.content.userInfo
-        
-        if let type = userInfo["type"] as? String,
-           let targetId = userInfo["targetId"] as? String {
-            
-            // Check current user role to decide which router to use
-            // This is a bit tricky in AppDelegate, but we can access shared instances
-            if let userId = SessionStore.shared.getUserId(),
-               let user = LocalStorageService.shared.fetchUser(id: userId) {
-                if user.role.uppercased() == "MANAGER" {
-                    ManagerTabRouter.shared.handleDeepLink(type: type, targetId: targetId)
-                } else {
-                    TechnicianTabRouter.shared.handleDeepLink(type: type, targetId: targetId)
-                }
-            }
-        }
-        
-        completionHandler()
-    }
+    // Notification handling is now centralized in NotificationService.swift
+    // Messaging logic remains here for APNS token registration
     
     // MARK: - MessagingDelegate
     

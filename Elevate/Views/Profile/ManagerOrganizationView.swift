@@ -233,7 +233,7 @@ struct ManagerOrganizationView: View {
                     Text(value)
                         .scaledFont(size: 14, weight: .semibold)
                         .foregroundColor(.black)
-                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 Spacer()
@@ -280,10 +280,17 @@ struct ManagerOrganizationView: View {
     }
 
     private func editorSheet(title: String, text: Binding<String>, onSave: @escaping () -> Void) -> some View {
-        NavigationStack {
+        let isIntro = title.lowercased().contains("introduction")
+        
+        return NavigationStack {
             VStack(spacing: 24) {
-                CustomTextField(title: title.uppercased(), placeholder: "Enter \(title.lowercased())", iconName: "pencil.and.outline", text: text)
-                    .padding(.top, 32)
+                if isIntro {
+                    CustomTextEditor(title: title.uppercased(), placeholder: "Describe your organization...", iconName: "quote.opening", text: text)
+                        .padding(.top, 32)
+                } else {
+                    CustomTextField(title: title.uppercased(), placeholder: "Enter \(title.lowercased())", iconName: "pencil.and.outline", text: text)
+                        .padding(.top, 32)
+                }
                 
                 Spacer()
             }
@@ -305,7 +312,7 @@ struct ManagerOrganizationView: View {
                 }
             }
         }
-        .presentationDetents([.height(280)])
+        .presentationDetents(isIntro ? [.medium, .large] : [.height(280)])
     }
 
     private func refreshMemberMetrics(organizationId: String) {

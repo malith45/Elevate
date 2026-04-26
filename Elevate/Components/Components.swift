@@ -64,6 +64,67 @@ struct CustomTextField: View {
     }
 }
 
+struct CustomTextEditor: View {
+    var title: String
+    var placeholder: String
+    var iconName: String
+    @Binding var text: String
+    
+    @FocusState private var isFocused: Bool
+    @ObservedObject var settings = AccessibilitySettings.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                    .scaledFont(size: 11, weight: .bold)
+                    .foregroundColor(settings.secondaryText)
+                    .textCase(.uppercase)
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: iconName)
+                    .foregroundColor(isFocused ? settings.accentColor : settings.secondaryText)
+                    .frame(width: 20)
+                    .padding(.top, 12)
+                
+                ZStack(alignment: .topLeading) {
+                    if text.isEmpty {
+                        Text(placeholder)
+                            .scaledFont(size: 15)
+                            .foregroundColor(settings.secondaryText.opacity(0.5))
+                            .padding(.top, 12)
+                            .padding(.leading, 4)
+                    }
+                    
+                    TextEditor(text: $text)
+                        .scaledFont(size: 15)
+                        .foregroundColor(settings.primaryText)
+                        .frame(minHeight: 120)
+                        .focused($isFocused)
+                        .scrollContentBackground(.hidden)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(settings.surfaceColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isFocused ? settings.accentColor : settings.cardStroke,
+                        lineWidth: settings.cardStrokeWidth
+                    )
+            )
+            .shadow(color: isFocused ? settings.accentColor.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
+        }
+    }
+}
+
 struct SecureCustomTextField: View {
     var title: String
     var placeholder: String
@@ -250,12 +311,12 @@ struct EmptyStateView: View {
 struct PasswordRequirementsView: View {
     let password: String
     @ObservedObject var settings = AccessibilitySettings.shared
-
+ 
     private struct Requirement {
         let label: String
         let isMet: Bool
     }
-
+ 
     private var requirements: [Requirement] {
         [
             Requirement(label: "At least 8 characters", isMet: password.count >= 8),
@@ -265,7 +326,7 @@ struct PasswordRequirementsView: View {
             Requirement(label: "One special character (!@#$…)", isMet: password.range(of: "[!@#$%^&*()\\-_=+{}|;:'\",.<>/?]", options: .regularExpression) != nil)
         ]
     }
-
+ 
     var body: some View {
         if !password.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
@@ -273,7 +334,7 @@ struct PasswordRequirementsView: View {
                     .scaledFont(size: 10, weight: .bold)
                     .foregroundColor(settings.secondaryText)
                     .padding(.horizontal, 4)
-
+ 
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(requirements, id: \.label) { req in
                         HStack(spacing: 10) {

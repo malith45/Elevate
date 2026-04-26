@@ -40,10 +40,28 @@ import AudioToolbox
 class SoundManager {
     static let shared = SoundManager()
     
+    private init() {
+        configureAudioSession()
+    }
+    
+    private func configureAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("❌ [SoundManager] Failed to configure audio session: \(error)")
+        }
+    }
+    
     func playNotificationSound() {
+        print("🔊 [SoundManager] playNotificationSound() called. soundEffects enabled: \(AccessibilitySettings.shared.soundEffects)")
         guard AccessibilitySettings.shared.soundEffects else { return }
-        // System Sound ID 1007 is the common 'Tri-tone' notification sound
-        AudioServicesPlaySystemSound(1007)
+        
+        // Use AudioServicesPlayAlertSound for better visibility
+        // ID 1312 is a common modern notification sound (Note)
+        // ID 1007 is Tri-tone
+        AudioServicesPlayAlertSound(1312)
+        print("🔊 [SoundManager] AudioServicesPlayAlertSound(1312) executed")
     }
 }
 

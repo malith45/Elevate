@@ -19,8 +19,7 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
     }
 
     func configure() {
-        UNUserNotificationCenter.current().delegate = self
-        Messaging.messaging().delegate = self
+        // Delegates are now handled by AppDelegate
         requestAuthorization()
     }
 
@@ -51,31 +50,5 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
             SoundManager.shared.playNotificationSound()
         }
         completionHandler([.banner, .sound, .list])
-    }
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        let userInfo = response.notification.request.content.userInfo
-        
-        // Extract data from root or 'data' or 'gcm.notification.data'
-        var data = userInfo
-        if let customData = userInfo["data"] as? [AnyHashable: Any] {
-            data = customData
-        }
-        
-        let type = data["type"] as? String ?? userInfo["type"] as? String ?? "NOTIFICATION"
-        let targetId = data["targetId"] as? String ?? userInfo["targetId"] as? String
-        
-        DispatchQueue.main.async {
-            if let userId = SessionStore.shared.getUserId(),
-               let user = LocalStorageService.shared.fetchUser(id: userId) {
-                if user.role.uppercased() == "MANAGER" {
-                    ManagerTabRouter.shared.handleDeepLink(type: type, targetId: targetId)
-                } else {
-                    TechnicianTabRouter.shared.handleDeepLink(type: type, targetId: targetId)
-                }
-            }
-        }
-        
-        completionHandler()
     }
 }

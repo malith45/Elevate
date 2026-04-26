@@ -32,39 +32,26 @@ final class ManagerTabRouter: ObservableObject {
     @Published var selectedMemberId: String?
 
     func handleDeepLink(type: String, targetId: String?) {
-        if type == "NOTIFICATION" || targetId == nil {
-            selectedTab = .dashboard
-            path = NavigationPath()
-            path.append(ManagerScreen.notifications)
-            return
-        }
-
         guard let targetId = targetId else { return }
         
         switch type {
         case "JOB_STARTED", "JOB_HOLD", "JOB_COMPLETED":
             selectedJobId = targetId
             selectedTab = .dashboard
-            path = NavigationPath()
             path.append(ManagerScreen.jobDetails)
         case "ISSUE_REPORTED":
             selectedJobId = targetId
             selectedTab = .dashboard
-            path = NavigationPath()
             path.append(ManagerScreen.jobIssueReport)
         case "QUOTE_SUBMITTED":
             selectedJobId = targetId
             selectedTab = .dashboard
-            path = NavigationPath()
             path.append(ManagerScreen.quotationApproval)
         case "CRITICAL_INVENTORY":
             selectedTab = .dashboard
-            path = NavigationPath()
             path.append(ManagerScreen.inventoryManager)
         default:
-            selectedTab = .dashboard
-            path = NavigationPath()
-            path.append(ManagerScreen.notifications)
+            break
         }
     }
 }

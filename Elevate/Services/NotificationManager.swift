@@ -55,7 +55,8 @@ final class NotificationManager {
                 "type": type.rawValue,
                 "targetId": targetId as Any,
                 "createdAt": Timestamp(date: Date()),
-                "isRead": false
+                "isRead": false,
+                "sound": "default"
             ]
             
             self.db.collection("notifications").document(docId).setData(notification) { err in
@@ -66,14 +67,8 @@ final class NotificationManager {
                 }
             }
             
-            // Play feedback if enabled in accessibility settings
-            DispatchQueue.main.async {
-                if AccessibilitySettings.shared.hapticFeedback {
-                    HapticManager.shared.playNotification(type: .success)
-                }
-                // Play notification sound
-                SoundManager.shared.playNotificationSound()
-            }
+            // No local feedback here to avoid 'phantom notification' confusion.
+            // Notifications should only play sound/haptics when RECEIVED.
         }
     }
     

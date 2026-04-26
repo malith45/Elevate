@@ -9,6 +9,11 @@ struct WidgetJob: Identifiable {
     let location: String
     let scheduledAt: Date
     let status: String
+    
+    var isOverdue: Bool {
+        let s = status.uppercased()
+        return s != "COMPLETED" && s != "CANCELLED" && s != "IN-PROGRESS" && scheduledAt < Date()
+    }
 }
 
 class WidgetCoreData {
@@ -119,9 +124,9 @@ struct JobWidgetView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("NEXT JOB")
+                Text(job.isOverdue ? "OVERDUE JOB" : "NEXT JOB")
                     .font(.system(size: 10, weight: .heavy))
-                    .foregroundColor(.gray)
+                    .foregroundColor(job.isOverdue ? .red : .gray)
                 
                 Text(job.title)
                     .font(.system(size: 14, weight: .bold))

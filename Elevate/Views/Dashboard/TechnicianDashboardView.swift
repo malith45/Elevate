@@ -471,7 +471,8 @@ struct TechnicianDashboardView: View {
                                 title: job.title,
                                 location: job.location,
                                 priority: job.priority.uppercased(),
-                                color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                isOverdue: job.isOverdue,
+                                color: (job.isOverdue || job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT") ? .red : .blue
                             )
                         }
                         .buttonStyle(.plain)
@@ -587,9 +588,9 @@ struct SmartNavigationCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 if let job = job {
-                    Text("NEXT JOB")
+                    Text(job.isOverdue ? "OVERDUE JOB" : "NEXT JOB")
                         .scaledFont(size: 10, weight: .heavy)
-                        .foregroundColor(settings.secondaryText)
+                        .foregroundColor(job.isOverdue ? .red : settings.secondaryText)
                     
                     Text(job.title)
                         .scaledFont(size: 16, weight: .bold)
@@ -600,7 +601,7 @@ struct SmartNavigationCard: View {
                     if let time = travelTime {
                         Text("\(time) away")
                             .scaledFont(size: 12, weight: .medium)
-                            .foregroundColor(settings.accentColor)
+                            .foregroundColor(job.isOverdue ? .red : settings.accentColor)
                     } else {
                         Text("Calculating ETA...")
                             .scaledFont(size: 12, weight: .medium)
@@ -653,6 +654,7 @@ struct TaskRow: View {
     var title: String
     var location: String
     var priority: String
+    var isOverdue: Bool = false
     var color: Color
     @ObservedObject var settings = AccessibilitySettings.shared
 
@@ -666,19 +668,31 @@ struct TaskRow: View {
             VStack(alignment: .leading, spacing: 8) {
                 // Header (Badge + Time)
                 HStack {
-                    Text(priority)
-                        .scaledFont(size: 9, weight: .bold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(color.opacity(0.12))
-                        .foregroundColor(color)
-                        .cornerRadius(20)
+                    HStack(spacing: 6) {
+                        Text(priority)
+                            .scaledFont(size: 9, weight: .bold)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(color.opacity(0.12))
+                            .foregroundColor(color)
+                            .cornerRadius(20)
+                        
+                        if isOverdue {
+                            Text("OVERDUE")
+                                .scaledFont(size: 8, weight: .black)
+                                .foregroundColor(.red)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(4)
+                        }
+                    }
                     
                     Spacer()
                     
                     Text("\(time) \(ampm)")
                         .scaledFont(size: 11, weight: .bold)
-                        .foregroundColor(settings.secondaryText)
+                        .foregroundColor(isOverdue ? .red : settings.secondaryText)
                 }
                 
                 // Title

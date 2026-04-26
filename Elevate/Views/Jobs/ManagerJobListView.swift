@@ -231,7 +231,7 @@ private struct ManagerJobCard: View {
                 
                 VStack(alignment: .leading, spacing: 16) {
                     // Top Row: Status Pill & Time
-                    HStack {
+                    HStack(spacing: 8) {
                         Text(job.status.uppercased())
                             .scaledFont(size: 9, weight: .bold)
                             .padding(.horizontal, 10)
@@ -240,11 +240,25 @@ private struct ManagerJobCard: View {
                             .foregroundColor(statusColor)
                             .cornerRadius(20)
                         
+                        if job.isOverdue {
+                            Text("OVERDUE")
+                                .scaledFont(size: 9, weight: .black)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.red.opacity(0.1))
+                                .foregroundColor(.red)
+                                .cornerRadius(6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.red.opacity(0.5), lineWidth: 0.5)
+                                )
+                        }
+                        
                         Spacer()
                         
                         Text(timeString(from: job.scheduledAt))
                             .scaledFont(size: 14, weight: .bold)
-                            .foregroundColor(settings.secondaryText)
+                            .foregroundColor(job.isOverdue ? .red : settings.secondaryText)
                     }
                     
                     // Title

@@ -419,7 +419,7 @@ struct ManagerJobDetailsView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            viewModel.load(jobId: jobId)
+            viewModel.load(jobId: jobId, isOnline: network.isOnline)
             reportCount = localStorage.fetchIssueReports(jobId: jobId).count
         }
         .alert("Hold Job", isPresented: $showHoldPrompt) {

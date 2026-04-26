@@ -466,7 +466,7 @@ struct JobDetailsView: View {
         .navigationBarHidden(true)
         .onAppear {
             HapticManager.shared.playImpact(style: .light)
-            viewModel.load(jobId: jobId) 
+            viewModel.load(jobId: jobId, isOnline: network.isOnline) 
         }
         .sheet(isPresented: $showCamera) {
             CameraCaptureView(onCapture: { data in

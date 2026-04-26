@@ -15,10 +15,25 @@ final class JobDetailsViewModel: ObservableObject {
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
 
-    func load(jobId: String) {
+    func load(jobId: String, isOnline: Bool = true) {
         job = localStorage.fetchJob(id: jobId)
         if let assignedId = job?.assignedUserId {
-            assignedTechnician = localStorage.fetchUser(id: assignedId)
+            // Try local first
+            if let localUser = localStorage.fetchUser(id: assignedId) {
+                assignedTechnician = localUser
+            }
+            
+            // If missing or online, fetch from remote to ensure latest profile/display name
+            if isOnline {
+                firebase.fetchUser(userId: assignedId) { [weak self] result in
+                    if case .success(let user) = result {
+                        DispatchQueue.main.async {
+                            self?.localStorage.saveUsers([user])
+                            self?.assignedTechnician = user
+                        }
+                    }
+                }
+            }
 
             // Listen to technician location
             locationListener?.remove()

@@ -239,7 +239,9 @@ struct ManagerDashboardView: View {
                                     }
                                 } else {
                                     ForEach(viewModel.jobs.filter { 
-                                        Calendar.current.isDateInToday($0.scheduledAt) && 
+                                        let isToday = Calendar.current.isDateInToday($0.scheduledAt)
+                                        let isOverdue = $0.scheduledAt < Date()
+                                        return (isToday || isOverdue) && 
                                         $0.status.uppercased() != "COMPLETED" && 
                                         $0.status.uppercased() != "CANCELLED" 
                                     }.prefix(3), id: \.id) { job in
@@ -253,7 +255,8 @@ struct ManagerDashboardView: View {
                                                 title: job.title,
                                                 location: job.location,
                                                 priority: job.priority.uppercased(),
-                                                color: job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT" ? .red : .blue
+                                                isOverdue: job.isOverdue,
+                                                color: (job.isOverdue || job.priority.uppercased() == "HIGH" || job.priority.uppercased() == "URGENT") ? .red : .blue
                                             )
                                         }
                                         .buttonStyle(.plain)

@@ -11,11 +11,12 @@ import FirebaseCore
 @main
 struct ElevateApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject private var appSession = AppSession()
+    @StateObject private var appSession: AppSession
 
     init() {
         FirebaseApp.configure()
         NotificationService.shared.configure()
+        _appSession = StateObject(wrappedValue: AppSession())
     }
 
     var body: some Scene {

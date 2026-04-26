@@ -19,6 +19,14 @@ final class AppSession: ObservableObject {
     init() {
         if let userId = sessionStore.getUserId(), let user = localStorage.fetchUser(id: userId) {
             currentUser = user
+            
+            // Sync to App Group for Widget support on app restore
+            if let sharedDefaults = UserDefaults(suiteName: "group.com.elevate.app") {
+                sharedDefaults.set(user.id, forKey: "currentUserId")
+                sharedDefaults.set(user.organizationId, forKey: "currentOrgId")
+                sharedDefaults.set(user.role, forKey: "userRole")
+            }
+            
             setupLocationTracking()
             setupJobSync()
             if let token = NotificationService.shared.notificationToken() {
@@ -32,10 +40,11 @@ final class AppSession: ObservableObject {
         sessionStore.saveUserId(user.id)
         
         // Sync to App Group for Widget support
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.elevate.app") {
-            sharedDefaults.set(user.id, forKey: "currentUserId")
-            sharedDefaults.set(user.organizationId, forKey: "currentOrgId")
-        }
+            if let sharedDefaults = UserDefaults(suiteName: "group.com.elevate.app") {
+                sharedDefaults.set(user.id, forKey: "currentUserId")
+                sharedDefaults.set(user.organizationId, forKey: "currentOrgId")
+                sharedDefaults.set(user.role, forKey: "userRole")
+            }
         
         currentUser = user
         setupLocationTracking()
@@ -61,6 +70,14 @@ final class AppSession: ObservableObject {
         jobsListener = nil
         notificationsListener = nil
         sessionStore.clear()
+        
+        // Clear App Group for Widget security
+        if let sharedDefaults = UserDefaults(suiteName: "group.com.elevate.app") {
+            sharedDefaults.removeObject(forKey: "currentUserId")
+            sharedDefaults.removeObject(forKey: "currentOrgId")
+            sharedDefaults.removeObject(forKey: "userRole")
+        }
+        
         currentUser = nil
         ManagerTabRouter.shared.currentScreen = .dashboard
         ManagerTabRouter.shared.selectedTab = .dashboard

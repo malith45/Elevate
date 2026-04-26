@@ -73,7 +73,9 @@ final class DashboardViewModel: ObservableObject {
         self.jobs = jobs
         let calendar = Calendar.current
         let todayJobs = jobs.filter { 
-            calendar.isDateInToday($0.scheduledAt) &&
+            let isToday = calendar.isDateInToday($0.scheduledAt)
+            let isOverdue = $0.scheduledAt < Date()
+            return (isToday || isOverdue) &&
             $0.status.uppercased() != "COMPLETED" &&
             $0.status.uppercased() != "CANCELLED"
         }

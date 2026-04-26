@@ -65,7 +65,13 @@ struct SmartNavigationProvider: TimelineProvider {
         
         let context = WidgetCoreData.shared.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "JobEntity")
-        request.predicate = NSPredicate(format: "organizationId == %@ AND assignedUserId == %@", orgId, userId)
+        
+        let role = defaults?.string(forKey: "userRole") ?? "TECHNICIAN"
+        if role == "MANAGER" {
+            request.predicate = NSPredicate(format: "organizationId == %@", orgId)
+        } else {
+            request.predicate = NSPredicate(format: "organizationId == %@ AND assignedUserId == %@", orgId, userId)
+        }
         
         guard let entities = try? context.fetch(request) else { return nil }
         

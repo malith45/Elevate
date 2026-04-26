@@ -71,39 +71,20 @@ struct ManagerJobListView: View {
                                         .padding(.horizontal, 24)
                                 }
                             } else if viewModel.selectedFilter == .upcoming {
-                                let past = pastJobs()
-                                let future = upcomingJobs()
-
-                                if !past.isEmpty {
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        Text("PAST JOBS")
-                                            .scaledFont(size: 10, weight: .bold)
-                                            .foregroundColor(.red)
-                                            .tracking(1)
-                                            .padding(.horizontal, 24)
-
-                                        ForEach(past) { job in
-                                            ManagerJobCard(job: job)
-                                        }
-                                    }
-                                }
-
-                                if !future.isEmpty {
+                                if viewModel.filteredJobs.isEmpty {
+                                    emptyState
+                                } else {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("UPCOMING JOBS")
                                             .scaledFont(size: 10, weight: .bold)
                                             .foregroundColor(settings.accentColor)
                                             .tracking(1)
                                             .padding(.horizontal, 24)
-
-                                        ForEach(future) { job in
+                                        
+                                        ForEach(viewModel.filteredJobs) { job in
                                             ManagerJobCard(job: job)
                                         }
                                     }
-                                }
-
-                                if past.isEmpty && future.isEmpty {
-                                    emptyState
                                 }
                             } else if viewModel.selectedFilter == .completed {
                                 if viewModel.filteredJobs.isEmpty {
@@ -194,15 +175,6 @@ struct ManagerJobListView: View {
         .padding(.vertical, 40)
     }
 
-    private func pastJobs() -> [Job] {
-        let today = Calendar.current.startOfDay(for: Date())
-        return viewModel.filteredJobs.filter { $0.scheduledAt < today }
-    }
-
-    private func upcomingJobs() -> [Job] {
-        let today = Calendar.current.startOfDay(for: Date())
-        return viewModel.filteredJobs.filter { $0.scheduledAt >= today }
-    }
 
     private func todayString() -> String {
         let formatter = DateFormatter()

@@ -26,12 +26,15 @@ final class JobsViewModel: ObservableObject {
             let status = job.status.uppercased()
             switch selectedFilter {
             case .today:
-                return calendar.isDateInToday(job.scheduledAt)
+                let isToday = calendar.isDateInToday(job.scheduledAt)
+                let isOverdue = job.scheduledAt < Date()
+                return (isToday || isOverdue)
                     && status != "COMPLETED"
                     && status != "CANCELLED"
             case .upcoming:
-                // Show all non-terminal active jobs; view handles Past/Upcoming sections
-                return status != "COMPLETED" && status != "CANCELLED"
+                let startOfToday = calendar.startOfDay(for: Date())
+                let isFuture = job.scheduledAt >= calendar.date(byAdding: .day, value: 1, to: startOfToday)!
+                return isFuture && status != "COMPLETED" && status != "CANCELLED"
             case .completed:
                 return status == "COMPLETED" || status == "CANCELLED"
             }

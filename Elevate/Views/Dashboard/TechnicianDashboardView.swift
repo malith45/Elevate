@@ -455,7 +455,9 @@ struct TechnicianDashboardView: View {
                     }
                 } else {
                     let jobs = technicianJobs.filter { 
-                        Calendar.current.isDateInToday($0.scheduledAt) && 
+                        let isToday = Calendar.current.isDateInToday($0.scheduledAt)
+                        let isOverdue = $0.isOverdue
+                        return (isToday || isOverdue) && 
                         $0.status.uppercased() != "COMPLETED" && 
                         $0.status.uppercased() != "CANCELLED" 
                     }.prefix(3)
@@ -489,22 +491,28 @@ struct TechnicianDashboardView: View {
 
 
     private var technicianPendingTodayCount: Int {
-        technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }
-            .filter { 
-                let status = $0.status.uppercased()
-                return status != "COMPLETED" && status != "CANCELLED" 
-            }.count
+        technicianJobs.filter { 
+            let isToday = Calendar.current.isDateInToday($0.scheduledAt)
+            let isOverdue = $0.isOverdue
+            return (isToday || isOverdue)
+        }.filter { 
+            let status = $0.status.uppercased()
+            return status != "COMPLETED" && status != "CANCELLED" 
+        }.count
     }
 
     private var technicianUrgentTodayCount: Int {
-        technicianJobs.filter { Calendar.current.isDateInToday($0.scheduledAt) }
-            .filter { 
-                let priority = $0.priority.uppercased()
-                return priority == "HIGH" || priority == "URGENT"
-            }.filter {
-                let status = $0.status.uppercased()
-                return status != "COMPLETED" && status != "CANCELLED"
-            }.count
+        technicianJobs.filter { 
+            let isToday = Calendar.current.isDateInToday($0.scheduledAt)
+            let isOverdue = $0.isOverdue
+            return (isToday || isOverdue)
+        }.filter { 
+            let priority = $0.priority.uppercased()
+            return priority == "HIGH" || priority == "URGENT"
+        }.filter {
+            let status = $0.status.uppercased()
+            return status != "COMPLETED" && status != "CANCELLED"
+        }.count
     }
 
     private var technicianTotalPendingCount: Int {
@@ -648,88 +656,6 @@ struct SmartNavigationCard: View {
     }
 }
 
-struct TaskRow: View {
-    var time: String
-    var ampm: String
-    var title: String
-    var location: String
-    var priority: String
-    var isOverdue: Bool = false
-    var color: Color
-    @ObservedObject var settings = AccessibilitySettings.shared
-
-    var body: some View {
-        HStack(spacing: 0) {
-            // Left Status Strip
-            Rectangle()
-                .fill(color)
-                .frame(width: 6)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                // Header (Badge + Time)
-                HStack {
-                    HStack(spacing: 6) {
-                        Text(priority)
-                            .scaledFont(size: 9, weight: .bold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(color.opacity(0.12))
-                            .foregroundColor(color)
-                            .cornerRadius(20)
-                        
-                        if isOverdue {
-                            Text("OVERDUE")
-                                .scaledFont(size: 8, weight: .black)
-                                .foregroundColor(.red)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.red.opacity(0.1))
-                                .cornerRadius(4)
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    Text("\(time) \(ampm)")
-                        .scaledFont(size: 11, weight: .bold)
-                        .foregroundColor(isOverdue ? .red : settings.secondaryText)
-                }
-                
-                // Title
-                Text(title)
-                    .scaledFont(size: 15, weight: .bold, design: .rounded)
-                    .foregroundColor(settings.primaryText)
-                    .lineLimit(1)
-                
-                // Location row
-                HStack(spacing: 8) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.elevateLightGray.opacity(0.3))
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "mappin.and.ellipse")
-                            .foregroundColor(settings.accentColor)
-                            .font(.system(size: 12))
-                    }
-                    
-                    Text(location)
-                        .scaledFont(size: 12)
-                        .foregroundColor(settings.secondaryText)
-                        .lineLimit(1)
-                }
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
-        }
-        .background(settings.isHighContrast ? Color.black : .white)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(settings.isHighContrast ? Color.white : settings.cardStroke, lineWidth: settings.cardStrokeWidth)
-        )
-        .shadow(color: Color.black.opacity(settings.isHighContrast ? 0 : 0.08), radius: 8, x: 0, y: 4)
-    }
-}
 
 #Preview {
     TechnicianDashboardView()

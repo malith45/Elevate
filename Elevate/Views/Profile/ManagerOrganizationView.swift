@@ -12,16 +12,19 @@ struct ManagerOrganizationView: View {
     @State private var activeMembersCount = 0
     @State private var managementCount = 0
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject var settings = AccessibilitySettings.shared
     private let localStorage = LocalStorageService.shared
     private let firebase = FirebaseService.shared
 
     var body: some View {
         ZStack {
+            settings.appBackground.ignoresSafeArea()
+            
             VStack(spacing: 0) {
                 BackHeaderNav(isManager: true, onBack: {
                     dismiss()
                 })
-                .background(Color.white)
+                .background(settings.appBackground)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 32) {
@@ -30,9 +33,10 @@ struct ManagerOrganizationView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Organization")
                                 .scaledFont(size: 28, weight: .bold, design: .rounded)
+                                .foregroundColor(settings.primaryText)
                             Text("Manage your corporate identity and team metrics.")
                                 .scaledFont(size: 14)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
@@ -42,7 +46,7 @@ struct ManagerOrganizationView: View {
                             HStack {
                                 Text("CORE IDENTITY")
                                     .scaledFont(size: 10, weight: .bold)
-                                    .foregroundColor(.elevateTextGray)
+                                    .foregroundColor(settings.secondaryText)
                                     .tracking(1)
                                 Spacer()
                                 Image(systemName: "checkmark.shield.fill")
@@ -79,8 +83,12 @@ struct ManagerOrganizationView: View {
                                     }
                                 )
                             }
-                            .background(Color.white)
+                            .background(settings.surfaceColor)
                             .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                            )
                             .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
                             
                             // Organization Code Badge
@@ -92,9 +100,10 @@ struct ManagerOrganizationView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("ORGANIZATION CODE")
                                         .scaledFont(size: 10, weight: .bold)
-                                        .foregroundColor(.elevateTextGray)
+                                        .foregroundColor(settings.secondaryText)
                                     Text(organizationCode)
                                         .scaledFont(size: 15, weight: .bold, design: .monospaced)
+                                        .foregroundColor(settings.primaryText)
                                 }
                                 Spacer()
                                 Text("REG-CORE")
@@ -106,8 +115,12 @@ struct ManagerOrganizationView: View {
                                     .cornerRadius(6)
                             }
                             .padding(16)
-                            .background(Color.white)
+                            .background(settings.surfaceColor)
                             .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+                            )
                             .shadow(color: Color.black.opacity(0.01), radius: 5, x: 0, y: 2)
                         }
                         .padding(.horizontal, 24)
@@ -116,7 +129,7 @@ struct ManagerOrganizationView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("ECOSYSTEM VITALITY")
                                 .scaledFont(size: 10, weight: .bold)
-                                .foregroundColor(.elevateTextGray)
+                                .foregroundColor(settings.secondaryText)
                                 .tracking(1)
                                 .padding(.leading, 4)
 
@@ -228,11 +241,11 @@ struct ManagerOrganizationView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(label)
                         .scaledFont(size: 9, weight: .bold)
-                        .foregroundColor(.elevateTextGray)
+                        .foregroundColor(settings.secondaryText)
                         .tracking(0.5)
                     Text(value)
                         .scaledFont(size: 14, weight: .semibold)
-                        .foregroundColor(.black)
+                        .foregroundColor(settings.primaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 
@@ -264,18 +277,22 @@ struct ManagerOrganizationView: View {
             VStack(spacing: 2) {
                 Text(value)
                     .scaledFont(size: 24, weight: .bold, design: .rounded)
-                    .foregroundColor(.black)
+                    .foregroundColor(settings.primaryText)
                 Text(title)
                     .scaledFont(size: 10, weight: .bold)
-                    .foregroundColor(.elevateTextGray)
+                    .foregroundColor(settings.secondaryText)
                     .multilineTextAlignment(.center)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .padding(.horizontal, 12)
-        .background(Color.white)
+        .background(settings.surfaceColor)
         .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(settings.cardStroke, lineWidth: settings.cardStrokeWidth)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
     }
 

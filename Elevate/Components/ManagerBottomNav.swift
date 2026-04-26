@@ -5,6 +5,7 @@ struct ManagerBottomNav: View {
     var mode: BottomNavMode = .links
     var onSelect: ((TabItem) -> Void)? = nil
     @Namespace private var selectionNamespace
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var body: some View {
         ZStack {
@@ -16,11 +17,19 @@ struct ManagerBottomNav: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 8)
-            .background(.ultraThinMaterial)
-            .background(Color.white.opacity(0.75))
+            .background(
+                ZStack {
+                    if settings.isHighContrast {
+                        Color.black
+                    } else {
+                        Color.white.opacity(0.75)
+                        Rectangle().fill(.ultraThinMaterial)
+                    }
+                }
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 40)
-                    .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                    .stroke(settings.isHighContrast ? Color.white.opacity(0.5) : Color.white.opacity(0.35), lineWidth: 1)
                     .blur(radius: 0.5)
             )
             .cornerRadius(40)
@@ -40,6 +49,7 @@ struct ManagerTabBarButton: View {
     var mode: BottomNavMode
     var selectionNamespace: Namespace.ID
     var onSelect: ((TabItem) -> Void)? = nil
+    @ObservedObject var settings = AccessibilitySettings.shared
     
     var isSelected: Bool {
         selectedTab == tab
@@ -97,7 +107,7 @@ struct ManagerTabBarButton: View {
                     Text(title)
                         .scaledFont(size: 10, weight: .bold)
                 }
-                .foregroundColor(.elevateTextGray)
+                .foregroundColor(settings.isHighContrast ? .elevateDarkGreen : .elevateTextGray)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .scaleEffect(0.98)

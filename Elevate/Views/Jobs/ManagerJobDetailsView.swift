@@ -86,20 +86,21 @@ struct ManagerJobDetailsView: View {
                                     router.path.append(ManagerScreen.jobIssueReport)
                                 }) {
                                     let reports = LocalStorageService.shared.fetchIssueReports(jobId: job.id)
+                                    let unresolvedCount = reports.filter { $0.resolvedAt == nil }.count
                                     HStack(spacing: 4) {
                                         Image(systemName: "doc.text.magnifyingglass")
                                             .font(.system(size: 12, weight: .bold))
-                                        if !reports.isEmpty {
-                                            Text("\(reports.count)")
+                                        if unresolvedCount > 0 {
+                                            Text("\(unresolvedCount)")
                                                 .scaledFont(size: 12, weight: .black)
                                         }
                                     }
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
-                                    .background(Color.red)
+                                    .background(reports.isEmpty ? Color.gray.opacity(0.5) : (unresolvedCount > 0 ? Color.red : Color.green))
                                     .clipShape(Capsule())
-                                    .shadow(color: Color.red.opacity(0.3), radius: 4, x: 0, y: 2)
+                                    .shadow(color: (unresolvedCount > 0 ? Color.red : Color.green).opacity(0.3), radius: 4, x: 0, y: 2)
                                 }
                                 .buttonStyle(.plain)
                             }

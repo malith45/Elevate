@@ -47,8 +47,10 @@ struct JobIssueReportView: View {
                         
                     }
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 100)
+                    .padding(.bottom, 200)
                 }
+                .scrollBounceBehavior(.always)
+                .scrollDismissesKeyboard(.interactively)
             }
         }
         .onAppear {

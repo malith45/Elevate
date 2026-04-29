@@ -2,8 +2,6 @@
 
 Elevate is a native iOS application designed to bridge the gap between management and field technicians. It provides real-time job tracking, inventory management, and geospatial visualization for service-based organizations.
 
-![App Icon](Elevate/Assets.xcassets/AppIcon.appiconset/Contents.json) <!-- Note: Replace with actual image path if available -->
-
 ## 🚀 Key Features
 
 - **Dual-Role Interface:** Specialized dashboards for Managers and Technicians.
@@ -70,4 +68,4 @@ For detailed technical architecture and implementation details, please refer to:
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
-*Built with ❤️ by the Elevate Team.*
+*Built with ❤️ by the malith45.*

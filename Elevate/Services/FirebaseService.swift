@@ -5,6 +5,12 @@ import FirebaseFirestore
 import FirebaseMessaging
 import CoreLocation
 
+/**
+ * FirebaseService
+ * 
+ * Central hub for all Firebase-related operations including Authentication, Firestore CRUD,
+ * Real-time listeners, and Cloud Messaging configuration.
+ */
 final class FirebaseService {
     static let shared = FirebaseService()
 

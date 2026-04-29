@@ -2,6 +2,13 @@ import Foundation
 import Combine
 import WidgetKit
 
+/**
+ * SyncManager
+ * 
+ * Orchestrates the synchronization between local Core Data storage and the remote Firebase backend.
+ * It handles offline data queuing via the `PendingAction` pattern and manages conflict resolution
+ * using timestamp-based logic.
+ */
 final class SyncManager: ObservableObject {
     static let shared = SyncManager()
 

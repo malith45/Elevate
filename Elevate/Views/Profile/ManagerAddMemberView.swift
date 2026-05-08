@@ -124,7 +124,7 @@ struct ManagerAddMemberView: View {
                         .disabled(viewModel.isSaving)
                         .scaleEffect(viewModel.isSaving ? 0.98 : 1.0)
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 120)
                     }
                 }
                 .scrollBounceBehavior(.basedOnSize)

@@ -168,7 +168,7 @@ struct ManagerEditProfileView: View {
                             }
                         }
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 120)
                     }
                 }
                 .scrollBounceBehavior(.basedOnSize)

@@ -143,13 +143,7 @@ struct TechnicianMapView: View {
             locationService.requestAuthorization()
             viewModel.updateRegionIfNeeded()
             
-            if let focusId = router.mapFocusJobId {
-                focusOnJob(id: focusId)
-                // Clear focus after consumption
-                router.mapFocusJobId = nil
-            } else {
-                selectActiveJob()
-            }
+            handleMapFocus()
             
             if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
                 viewModel.requestRoute()
@@ -168,6 +162,26 @@ struct TechnicianMapView: View {
         }
         .onChange(of: mapPosition) { _, newValue in
             viewModel.savedRegion = viewModel.region
+        }
+        .onChange(of: router.mapFocusJobId) { _, _ in
+            handleMapFocus()
+        }
+    }
+
+    private func handleMapFocus() {
+        if let focusId = router.mapFocusJobId {
+            focusOnJob(id: focusId)
+            router.mapFocusJobId = nil
+            viewModel.route = nil
+            if viewModel.shouldRequestRoute(current: locationService.currentLocation) {
+                viewModel.requestRoute()
+            }
+        } else {
+            if let currentJob = activeJob, currentJob.status.uppercased() != "COMPLETED", currentJob.status.uppercased() != "CANCELLED" {
+                // Keep the current selection
+            } else {
+                selectActiveJob()
+            }
         }
     }
 

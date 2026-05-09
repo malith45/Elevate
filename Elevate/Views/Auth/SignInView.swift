@@ -147,7 +147,7 @@ struct SignInView: View {
                         return
                     }
 
-                    guard let userId = sessionStore.getUserId(),
+                    guard let userId = sessionStore.getLastBiometricUserId(),
                           let user = localStorage.fetchUser(id: userId)
                     else {
                         showAuthError(message: "No saved session found. Please sign in with your password first.")

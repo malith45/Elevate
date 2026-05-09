@@ -288,7 +288,7 @@ struct ManagerStatisticsView: View {
     private func selectedTechnicianLabel() -> String {
         guard let selectedId = selectedTechnicianId,
               let tech = viewModel.technicians.first(where: { $0.id == selectedId })
-        else { return "Organization Overview" }
+        else { return "All Organization" }
         return displayName(for: tech)
     }
 

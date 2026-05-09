@@ -7,16 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		107503B1FF866ABA96E79D1C /* PasswordValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72CD17F34EDB9874A69F988A /* PasswordValidatorTests.swift */; };
+		49AC73C214AE5CE2A0B61649 /* UserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DD91D8E7BA0B0EE2BE880D /* UserTests.swift */; };
+		4AFD4C56A0393B22AFA25FBC /* ElevateJobTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AC0BD3006F822BEC80304CA /* ElevateJobTests.swift */; };
 		64630D8B2F960D820000BD2C /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6452779C2F82802D0008744D /* FirebaseAuth */; };
 		64630D8C2F960D820000BD2C /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6452779E2F82802D0008744D /* FirebaseCore */; };
 		64630D8D2F960D820000BD2C /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 645277A02F82802D0008744D /* FirebaseFirestore */; };
 		64630D8E2F960D820000BD2C /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 645277A22F82802D0008744D /* FirebaseMessaging */; };
+		65D84508EF16A0E613692A3E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 924C8F5F510B31570CC59E1D /* Foundation.framework */; };
 		E2661D0E2F9CB2E300386075 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2661D0D2F9CB2E300386075 /* WidgetKit.framework */; };
 		E2661D102F9CB2E300386075 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2661D0F2F9CB2E300386075 /* SwiftUI.framework */; };
 		E2661D1F2F9CB2E500386075 /* ElevateWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E2661D0B2F9CB2E300386075 /* ElevateWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3F2D51C2F4CE5727DDB30832 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 642B88A02F7A6D23000ECE2C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 642B88A72F7A6D23000ECE2C;
+			remoteInfo = Elevate;
+		};
 		E2661D1D2F9CB2E500386075 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 642B88A02F7A6D23000ECE2C /* Project object */;
@@ -41,98 +52,103 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		00B56BE8583F46BCBDE9FB4C /* Elevate/Views/Dashboard/EventEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/EventEditViewController.swift; sourceTree = SOURCE_ROOT; };
-		04B1118853164DC6A540AFD5 /* Elevate/Views/Jobs/ManagerQuotationApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerQuotationApprovalView.swift; sourceTree = SOURCE_ROOT; };
-		06ACE687F6674931AF7949E9 /* Elevate/Services/NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/NotificationService.swift; sourceTree = SOURCE_ROOT; };
-		0E996191E8404D22841C0B60 /* Elevate/Services/NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/NetworkService.swift; sourceTree = SOURCE_ROOT; };
-		1FEEA4F9485B44468F571A5F /* Elevate/Views/Dashboard/ManagerNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerNotificationsView.swift; sourceTree = SOURCE_ROOT; };
-		2211F45FF4CE41D5AAE87BF1 /* Elevate/Core/ManagerTabRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/ManagerTabRouter.swift; sourceTree = SOURCE_ROOT; };
-		22B0D25D64EE4ABA9066F3A5 /* Elevate/Views/Profile/TechnicianProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/TechnicianProfileView.swift; sourceTree = SOURCE_ROOT; };
-		29AF9C270F27486DB5EC67EE /* Elevate/Views/Dashboard/MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/MainTabView.swift; sourceTree = SOURCE_ROOT; };
-		2A08DAC5EFD0433E90FBDB3D /* Elevate/ViewModels/SignInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/SignInViewModel.swift; sourceTree = SOURCE_ROOT; };
-		2A1E0D5098304A2789222337 /* Elevate/Views/Profile/TechnicianAccessibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/TechnicianAccessibilityView.swift; sourceTree = SOURCE_ROOT; };
-		2EE769FAF12244AF9CA29084 /* Elevate/Services/CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/CoreDataStack.swift; sourceTree = SOURCE_ROOT; };
-		2FA12AFE31E446D5BB1D62DA /* Elevate/Services/LocalStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/LocalStorageService.swift; sourceTree = SOURCE_ROOT; };
-		32768371948C46CAA4444BF3 /* Elevate/Views/Auth/SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/SignUpView.swift; sourceTree = SOURCE_ROOT; };
-		33AC1668235A48EEAFB080DE /* Elevate/ViewModels/NotificationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/NotificationsViewModel.swift; sourceTree = SOURCE_ROOT; };
-		34DD2D31A979421BB498B94A /* Elevate/ViewModels/JobDetailsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/JobDetailsViewModel.swift; sourceTree = SOURCE_ROOT; };
-		3B382B631A5C422E90453D11 /* Elevate/ViewModels/QuotationStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/QuotationStatusViewModel.swift; sourceTree = SOURCE_ROOT; };
-		43F43AC58A594E0AAE1201A7 /* Elevate/ViewModels/JobIssueReportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/JobIssueReportViewModel.swift; sourceTree = SOURCE_ROOT; };
-		4507000CE1864F8C89B02E3E /* Elevate/Components/HeaderNavComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/HeaderNavComponents.swift; sourceTree = SOURCE_ROOT; };
-		462B7F73DC4945E7AD5C6679 /* Elevate/ViewModels/ManagerAddMemberViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerAddMemberViewModel.swift; sourceTree = SOURCE_ROOT; };
-		46936FECB97645D096D8002C /* Elevate/Models/Job.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/Job.swift; sourceTree = SOURCE_ROOT; };
-		46D79EAA08584D57AC8EE0D7 /* Elevate/ViewModels/ManagerEditProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerEditProfileViewModel.swift; sourceTree = SOURCE_ROOT; };
-		4988B6A6BB6741E0A76C8BCC /* Elevate/Models/QuotationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/QuotationItem.swift; sourceTree = SOURCE_ROOT; };
-		50FA0227F1A7432F8942A530 /* Elevate/Components/AccessibleComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/AccessibleComponents.swift; sourceTree = SOURCE_ROOT; };
-		53112575E85041E0AD21A715 /* Elevate/ViewModels/CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/CalendarViewModel.swift; sourceTree = SOURCE_ROOT; };
-		5343BEFA5DBA4A4199056692 /* Elevate/Views/Dashboard/ManagerStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerStatisticsView.swift; sourceTree = SOURCE_ROOT; };
-		56A537049CED492B93939C00 /* Elevate/Views/Inventory/ManagerInventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Inventory/ManagerInventoryView.swift; sourceTree = SOURCE_ROOT; };
-		585520F937EC4AA0B7FE1494 /* Elevate/Views/Profile/ManagerAccessibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerAccessibilityView.swift; sourceTree = SOURCE_ROOT; };
-		589DD542E06F4704B99B612E /* Elevate/Components/Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/Components.swift; sourceTree = SOURCE_ROOT; };
-		5BB777E3A4BD44AEA4051B61 /* Elevate/Views/Dashboard/TechnicianNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianNotificationsView.swift; sourceTree = SOURCE_ROOT; };
-		5E40DA9F81394B05949A085F /* Elevate/Views/Dashboard/ManagerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerDashboardView.swift; sourceTree = SOURCE_ROOT; };
-		617A587FDAEF4935B14D2A56 /* Elevate/Views/Auth/ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/ForgotPasswordView.swift; sourceTree = SOURCE_ROOT; };
-		6214203131A74F9B948F584F /* Elevate/ViewModels/AccessibilityViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/AccessibilityViewModel.swift; sourceTree = SOURCE_ROOT; };
-		622F1C6B45B44EB2B0807F3A /* Elevate/Views/Map/TechnicianMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Map/TechnicianMapView.swift; sourceTree = SOURCE_ROOT; };
-		62555E45323E46EABB18999E /* Elevate/Views/Auth/SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/SplashScreenView.swift; sourceTree = SOURCE_ROOT; };
-		6343010DFFF14DEC867B1121 /* Elevate/Views/Dashboard/TechnicianStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianStatisticsView.swift; sourceTree = SOURCE_ROOT; };
+		00B56BE8583F46BCBDE9FB4C /* EventEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/EventEditViewController.swift; sourceTree = SOURCE_ROOT; };
+		04B1118853164DC6A540AFD5 /* ManagerQuotationApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerQuotationApprovalView.swift; sourceTree = SOURCE_ROOT; };
+		06ACE687F6674931AF7949E9 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/NotificationService.swift; sourceTree = SOURCE_ROOT; };
+		0E996191E8404D22841C0B60 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/NetworkService.swift; sourceTree = SOURCE_ROOT; };
+		1FEEA4F9485B44468F571A5F /* ManagerNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerNotificationsView.swift; sourceTree = SOURCE_ROOT; };
+		2211F45FF4CE41D5AAE87BF1 /* ManagerTabRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/ManagerTabRouter.swift; sourceTree = SOURCE_ROOT; };
+		22B0D25D64EE4ABA9066F3A5 /* TechnicianProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/TechnicianProfileView.swift; sourceTree = SOURCE_ROOT; };
+		29AF9C270F27486DB5EC67EE /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/MainTabView.swift; sourceTree = SOURCE_ROOT; };
+		2A08DAC5EFD0433E90FBDB3D /* SignInViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/SignInViewModel.swift; sourceTree = SOURCE_ROOT; };
+		2A1E0D5098304A2789222337 /* TechnicianAccessibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/TechnicianAccessibilityView.swift; sourceTree = SOURCE_ROOT; };
+		2EE769FAF12244AF9CA29084 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/CoreDataStack.swift; sourceTree = SOURCE_ROOT; };
+		2FA12AFE31E446D5BB1D62DA /* LocalStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/LocalStorageService.swift; sourceTree = SOURCE_ROOT; };
+		32768371948C46CAA4444BF3 /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/SignUpView.swift; sourceTree = SOURCE_ROOT; };
+		33AC1668235A48EEAFB080DE /* NotificationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/NotificationsViewModel.swift; sourceTree = SOURCE_ROOT; };
+		34DD2D31A979421BB498B94A /* JobDetailsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/JobDetailsViewModel.swift; sourceTree = SOURCE_ROOT; };
+		3B382B631A5C422E90453D11 /* QuotationStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/QuotationStatusViewModel.swift; sourceTree = SOURCE_ROOT; };
+		43F43AC58A594E0AAE1201A7 /* JobIssueReportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/JobIssueReportViewModel.swift; sourceTree = SOURCE_ROOT; };
+		4507000CE1864F8C89B02E3E /* HeaderNavComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/HeaderNavComponents.swift; sourceTree = SOURCE_ROOT; };
+		462B7F73DC4945E7AD5C6679 /* ManagerAddMemberViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerAddMemberViewModel.swift; sourceTree = SOURCE_ROOT; };
+		46936FECB97645D096D8002C /* Job.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/Job.swift; sourceTree = SOURCE_ROOT; };
+		46D79EAA08584D57AC8EE0D7 /* ManagerEditProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerEditProfileViewModel.swift; sourceTree = SOURCE_ROOT; };
+		4988B6A6BB6741E0A76C8BCC /* QuotationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/QuotationItem.swift; sourceTree = SOURCE_ROOT; };
+		50FA0227F1A7432F8942A530 /* AccessibleComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/AccessibleComponents.swift; sourceTree = SOURCE_ROOT; };
+		53112575E85041E0AD21A715 /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/CalendarViewModel.swift; sourceTree = SOURCE_ROOT; };
+		5343BEFA5DBA4A4199056692 /* ManagerStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerStatisticsView.swift; sourceTree = SOURCE_ROOT; };
+		56A537049CED492B93939C00 /* ManagerInventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Inventory/ManagerInventoryView.swift; sourceTree = SOURCE_ROOT; };
+		585520F937EC4AA0B7FE1494 /* ManagerAccessibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerAccessibilityView.swift; sourceTree = SOURCE_ROOT; };
+		589DD542E06F4704B99B612E /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/Components.swift; sourceTree = SOURCE_ROOT; };
+		5BB777E3A4BD44AEA4051B61 /* TechnicianNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianNotificationsView.swift; sourceTree = SOURCE_ROOT; };
+		5E40DA9F81394B05949A085F /* ManagerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerDashboardView.swift; sourceTree = SOURCE_ROOT; };
+		617A587FDAEF4935B14D2A56 /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/ForgotPasswordView.swift; sourceTree = SOURCE_ROOT; };
+		6214203131A74F9B948F584F /* AccessibilityViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/AccessibilityViewModel.swift; sourceTree = SOURCE_ROOT; };
+		622F1C6B45B44EB2B0807F3A /* TechnicianMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Map/TechnicianMapView.swift; sourceTree = SOURCE_ROOT; };
+		62555E45323E46EABB18999E /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/SplashScreenView.swift; sourceTree = SOURCE_ROOT; };
+		6343010DFFF14DEC867B1121 /* TechnicianStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianStatisticsView.swift; sourceTree = SOURCE_ROOT; };
 		642B88A82F7A6D23000ECE2C /* Elevate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Elevate.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		65E634552CD04A64AA0DD3A2 /* Elevate/Views/Inventory/InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Inventory/InventoryView.swift; sourceTree = SOURCE_ROOT; };
-		70A648BE49F845FC824E8247 /* Elevate/ViewModels/InventoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/InventoryViewModel.swift; sourceTree = SOURCE_ROOT; };
-		71D0140B9FD9450BBD9F7C57 /* Elevate/ViewModels/DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/DashboardViewModel.swift; sourceTree = SOURCE_ROOT; };
-		734D12B88A3B4184A78D7898 /* Elevate/Extensions/Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Elevate/Extensions/Color+Extensions.swift"; sourceTree = SOURCE_ROOT; };
-		75E5F258036A4EEE8C85EC7B /* Elevate/Components/ManagerBottomNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/ManagerBottomNav.swift; sourceTree = SOURCE_ROOT; };
-		77933BC7A9AE427DA9F6E541 /* Elevate/Models/PendingAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/PendingAction.swift; sourceTree = SOURCE_ROOT; };
-		7DCA178AC53C437EB33595B2 /* Elevate/Views/Jobs/JobDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/JobDetailsView.swift; sourceTree = SOURCE_ROOT; };
-		927D6E43B98B411AA0EA9B4E /* Elevate/Models/OrganizationDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/OrganizationDetails.swift; sourceTree = SOURCE_ROOT; };
-		93AF331FD5C440049339CC6E /* Elevate/Views/Jobs/JobIssueReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/JobIssueReportView.swift; sourceTree = SOURCE_ROOT; };
-		974E1375789D4F67941696E0 /* Elevate/Core/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/ContentView.swift; sourceTree = SOURCE_ROOT; };
-		97B36A6996844051948997BF /* Elevate/ViewModels/ManagerJobIssueReportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerJobIssueReportViewModel.swift; sourceTree = SOURCE_ROOT; };
-		9A050E8B993E44DABCC2F949 /* Elevate/Services/LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/LocationService.swift; sourceTree = SOURCE_ROOT; };
-		9DC386E7D9FD4048AA5133B6 /* Elevate/Views/Jobs/JobListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/JobListView.swift; sourceTree = SOURCE_ROOT; };
-		A166FE13507645FA881469D0 /* Elevate/Views/Profile/ManagerOrganizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerOrganizationView.swift; sourceTree = SOURCE_ROOT; };
-		A8310FE440E346619CC68E28 /* Elevate/Views/Map/ManagerMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Map/ManagerMapView.swift; sourceTree = SOURCE_ROOT; };
-		AD4D5246541842639AC133FE /* Elevate/Views/Jobs/ManagerJobListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerJobListView.swift; sourceTree = SOURCE_ROOT; };
-		B90D3C8AA53542439CF5DF99 /* Elevate/Views/Dashboard/ManagerMainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerMainTabView.swift; sourceTree = SOURCE_ROOT; };
-		B9D464E86F154CD3AAD64104 /* Elevate/ViewModels/JobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/JobsViewModel.swift; sourceTree = SOURCE_ROOT; };
-		BA0E15A0A7434D83BDF594F7 /* Elevate/Views/Jobs/QuotationStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/QuotationStatusView.swift; sourceTree = SOURCE_ROOT; };
-		BA3D60B8553B44828D00DCFD /* Elevate/Core/AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/AccessibilityManager.swift; sourceTree = SOURCE_ROOT; };
-		BC08EBAA7A3A43C5A3BF019D /* Elevate/ViewModels/ManagerCreateJobViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerCreateJobViewModel.swift; sourceTree = SOURCE_ROOT; };
-		BD70C7BAC3AF47D1BD94DE01 /* Elevate/Views/Auth/SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/SignInView.swift; sourceTree = SOURCE_ROOT; };
-		C3A8985A235E4511A437B04F /* Elevate/Models/NotificationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/NotificationItem.swift; sourceTree = SOURCE_ROOT; };
-		C6E38DCBC7E344A3868EBCC1 /* Elevate/Views/Jobs/ManagerJobDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerJobDetailsView.swift; sourceTree = SOURCE_ROOT; };
-		C7C8F638F779405EA712F967 /* Elevate/ViewModels/MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/MapViewModel.swift; sourceTree = SOURCE_ROOT; };
-		CDE0A3A91F104E7E8571FBBE /* Elevate/Core/AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/AppSession.swift; sourceTree = SOURCE_ROOT; };
-		D10322620E5C4529ADFA3E5C /* Elevate/ViewModels/StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/StatisticsViewModel.swift; sourceTree = SOURCE_ROOT; };
-		D271FC7212AC442A8B2D3F8B /* Elevate/Views/Dashboard/ManagerCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerCalendarView.swift; sourceTree = SOURCE_ROOT; };
-		D27D94DD75514E959D2FE854 /* Elevate/Views/Profile/ManagerAddMemberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerAddMemberView.swift; sourceTree = SOURCE_ROOT; };
-		D5A56BA57BB24C048016C960 /* Elevate/ViewModels/ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ProfileViewModel.swift; sourceTree = SOURCE_ROOT; };
-		DBA6EB5CE35043C9B51EB779 /* Elevate/Views/Jobs/ManagerCreateJobView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerCreateJobView.swift; sourceTree = SOURCE_ROOT; };
-		E07557B567814CE0A0B08A3D /* Elevate/Services/FirebaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/FirebaseService.swift; sourceTree = SOURCE_ROOT; };
-		E0E8BEF0A3A14786851DF735 /* Elevate/Models/IssueReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/IssueReport.swift; sourceTree = SOURCE_ROOT; };
+		65E634552CD04A64AA0DD3A2 /* InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Inventory/InventoryView.swift; sourceTree = SOURCE_ROOT; };
+		70A648BE49F845FC824E8247 /* InventoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/InventoryViewModel.swift; sourceTree = SOURCE_ROOT; };
+		71D0140B9FD9450BBD9F7C57 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/DashboardViewModel.swift; sourceTree = SOURCE_ROOT; };
+		72CD17F34EDB9874A69F988A /* PasswordValidatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PasswordValidatorTests.swift; sourceTree = "<group>"; };
+		734D12B88A3B4184A78D7898 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Elevate/Extensions/Color+Extensions.swift"; sourceTree = SOURCE_ROOT; };
+		75E5F258036A4EEE8C85EC7B /* ManagerBottomNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/ManagerBottomNav.swift; sourceTree = SOURCE_ROOT; };
+		77933BC7A9AE427DA9F6E541 /* PendingAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/PendingAction.swift; sourceTree = SOURCE_ROOT; };
+		7DCA178AC53C437EB33595B2 /* JobDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/JobDetailsView.swift; sourceTree = SOURCE_ROOT; };
+		8AC0BD3006F822BEC80304CA /* ElevateJobTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ElevateJobTests.swift; sourceTree = "<group>"; };
+		924C8F5F510B31570CC59E1D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		927D6E43B98B411AA0EA9B4E /* OrganizationDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/OrganizationDetails.swift; sourceTree = SOURCE_ROOT; };
+		93AF331FD5C440049339CC6E /* JobIssueReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/JobIssueReportView.swift; sourceTree = SOURCE_ROOT; };
+		974E1375789D4F67941696E0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		97B36A6996844051948997BF /* ManagerJobIssueReportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerJobIssueReportViewModel.swift; sourceTree = SOURCE_ROOT; };
+		9A050E8B993E44DABCC2F949 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/LocationService.swift; sourceTree = SOURCE_ROOT; };
+		9DC386E7D9FD4048AA5133B6 /* JobListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/JobListView.swift; sourceTree = SOURCE_ROOT; };
+		A166FE13507645FA881469D0 /* ManagerOrganizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerOrganizationView.swift; sourceTree = SOURCE_ROOT; };
+		A8310FE440E346619CC68E28 /* ManagerMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Map/ManagerMapView.swift; sourceTree = SOURCE_ROOT; };
+		AD4D5246541842639AC133FE /* ManagerJobListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerJobListView.swift; sourceTree = SOURCE_ROOT; };
+		B2DD91D8E7BA0B0EE2BE880D /* UserTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UserTests.swift; sourceTree = "<group>"; };
+		B90D3C8AA53542439CF5DF99 /* ManagerMainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerMainTabView.swift; sourceTree = SOURCE_ROOT; };
+		B9D464E86F154CD3AAD64104 /* JobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/JobsViewModel.swift; sourceTree = SOURCE_ROOT; };
+		BA0E15A0A7434D83BDF594F7 /* QuotationStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/QuotationStatusView.swift; sourceTree = SOURCE_ROOT; };
+		BA3D60B8553B44828D00DCFD /* AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/AccessibilityManager.swift; sourceTree = SOURCE_ROOT; };
+		BC08EBAA7A3A43C5A3BF019D /* ManagerCreateJobViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerCreateJobViewModel.swift; sourceTree = SOURCE_ROOT; };
+		BD70C7BAC3AF47D1BD94DE01 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Auth/SignInView.swift; sourceTree = SOURCE_ROOT; };
+		C3A8985A235E4511A437B04F /* NotificationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/NotificationItem.swift; sourceTree = SOURCE_ROOT; };
+		C6E38DCBC7E344A3868EBCC1 /* ManagerJobDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerJobDetailsView.swift; sourceTree = SOURCE_ROOT; };
+		C7C8F638F779405EA712F967 /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/MapViewModel.swift; sourceTree = SOURCE_ROOT; };
+		CDE0A3A91F104E7E8571FBBE /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/AppSession.swift; sourceTree = SOURCE_ROOT; };
+		D10322620E5C4529ADFA3E5C /* StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/StatisticsViewModel.swift; sourceTree = SOURCE_ROOT; };
+		D271FC7212AC442A8B2D3F8B /* ManagerCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/ManagerCalendarView.swift; sourceTree = SOURCE_ROOT; };
+		D27D94DD75514E959D2FE854 /* ManagerAddMemberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerAddMemberView.swift; sourceTree = SOURCE_ROOT; };
+		D5A56BA57BB24C048016C960 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ProfileViewModel.swift; sourceTree = SOURCE_ROOT; };
+		DBA6EB5CE35043C9B51EB779 /* ManagerCreateJobView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerCreateJobView.swift; sourceTree = SOURCE_ROOT; };
+		E07557B567814CE0A0B08A3D /* FirebaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/FirebaseService.swift; sourceTree = SOURCE_ROOT; };
+		E0E8BEF0A3A14786851DF735 /* IssueReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/IssueReport.swift; sourceTree = SOURCE_ROOT; };
 		E2661D0B2F9CB2E300386075 /* ElevateWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ElevateWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2661D0D2F9CB2E300386075 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E2661D0F2F9CB2E300386075 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E2661D292F9CB4C500386075 /* ElevateWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ElevateWidgetExtension.entitlements; sourceTree = "<group>"; };
-		E3D36D696562477F9CAAD9D9 /* Elevate/ViewModels/ForgotPasswordViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ForgotPasswordViewModel.swift; sourceTree = SOURCE_ROOT; };
-		E71065595E664CF49A7E9693 /* Elevate/Views/Profile/ManagerEditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerEditProfileView.swift; sourceTree = SOURCE_ROOT; };
-		E85A6C7E41D4488A884EAA3F /* Elevate/ViewModels/ManagerQuotationApprovalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerQuotationApprovalViewModel.swift; sourceTree = SOURCE_ROOT; };
-		E87305C2E4134482820C4A7E /* Elevate/Views/Dashboard/TechnicianDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianDashboardView.swift; sourceTree = SOURCE_ROOT; };
-		E8DBFB23765B4C8196B5E9E7 /* Elevate/Services/SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/SessionStore.swift; sourceTree = SOURCE_ROOT; };
-		E9220D097DC349C3A5E90F5E /* Elevate/Views/Profile/ManagerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerProfileView.swift; sourceTree = SOURCE_ROOT; };
-		E9853925B2D64B32BB574A8A /* Elevate/ViewModels/ManagerOrganizationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerOrganizationViewModel.swift; sourceTree = SOURCE_ROOT; };
-		EA2F33D86D464CFDA6B0375D /* Elevate/Views/Shared/PhotoPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Shared/PhotoPreview.swift; sourceTree = SOURCE_ROOT; };
-		EBFC923437FA4966A0DEE1C9 /* Elevate/Views/Dashboard/TechnicianCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianCalendarView.swift; sourceTree = SOURCE_ROOT; };
-		ECCDAA7B62FC49A6ADF68E3C /* Elevate/Core/ElevateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/ElevateApp.swift; sourceTree = SOURCE_ROOT; };
-		F45533A49BF745B18373380A /* Elevate/Views/Shared/CameraCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Shared/CameraCaptureView.swift; sourceTree = SOURCE_ROOT; };
-		F545C0903B294288A9E5927B /* Elevate/Views/Jobs/ManagerJobIssueReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerJobIssueReportView.swift; sourceTree = SOURCE_ROOT; };
-		F5D87147203E4A859869EECB /* Elevate/Services/SyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/SyncManager.swift; sourceTree = SOURCE_ROOT; };
-		F7BA7B05859044F193E7E2EC /* Elevate/Components/TechnicianBottomNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/TechnicianBottomNav.swift; sourceTree = SOURCE_ROOT; };
-		FA3B4E7BB5B44EA0B988321E /* Elevate/Models/InventoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/InventoryItem.swift; sourceTree = SOURCE_ROOT; };
-		FBA06FDCB1FA473F826A7DC7 /* Elevate/Views/Profile/ManagerMembersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerMembersView.swift; sourceTree = SOURCE_ROOT; };
-		FE3C061798294DC0AFBAD77E /* Elevate/ViewModels/SignUpViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/SignUpViewModel.swift; sourceTree = SOURCE_ROOT; };
-		FE55864289C14FFFA1F44AAC /* Elevate/Models/User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/User.swift; sourceTree = SOURCE_ROOT; };
-		FE6231DEC7BE41068C0D1482 /* Elevate/ViewModels/ManagerMembersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerMembersViewModel.swift; sourceTree = SOURCE_ROOT; };
+		E3D36D696562477F9CAAD9D9 /* ForgotPasswordViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ForgotPasswordViewModel.swift; sourceTree = SOURCE_ROOT; };
+		E71065595E664CF49A7E9693 /* ManagerEditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerEditProfileView.swift; sourceTree = SOURCE_ROOT; };
+		E85A6C7E41D4488A884EAA3F /* ManagerQuotationApprovalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerQuotationApprovalViewModel.swift; sourceTree = SOURCE_ROOT; };
+		E87305C2E4134482820C4A7E /* TechnicianDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianDashboardView.swift; sourceTree = SOURCE_ROOT; };
+		E8DBFB23765B4C8196B5E9E7 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/SessionStore.swift; sourceTree = SOURCE_ROOT; };
+		E9220D097DC349C3A5E90F5E /* ManagerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerProfileView.swift; sourceTree = SOURCE_ROOT; };
+		E9853925B2D64B32BB574A8A /* ManagerOrganizationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerOrganizationViewModel.swift; sourceTree = SOURCE_ROOT; };
+		EA2F33D86D464CFDA6B0375D /* PhotoPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Shared/PhotoPreview.swift; sourceTree = SOURCE_ROOT; };
+		EBFC923437FA4966A0DEE1C9 /* TechnicianCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Dashboard/TechnicianCalendarView.swift; sourceTree = SOURCE_ROOT; };
+		ECCDAA7B62FC49A6ADF68E3C /* ElevateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Core/ElevateApp.swift; sourceTree = SOURCE_ROOT; };
+		F45533A49BF745B18373380A /* CameraCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Shared/CameraCaptureView.swift; sourceTree = SOURCE_ROOT; };
+		F545C0903B294288A9E5927B /* ManagerJobIssueReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Jobs/ManagerJobIssueReportView.swift; sourceTree = SOURCE_ROOT; };
+		F5D87147203E4A859869EECB /* SyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Services/SyncManager.swift; sourceTree = SOURCE_ROOT; };
+		F7935E711888E2A2E6102490 /* ElevateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElevateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7BA7B05859044F193E7E2EC /* TechnicianBottomNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Components/TechnicianBottomNav.swift; sourceTree = SOURCE_ROOT; };
+		FA3B4E7BB5B44EA0B988321E /* InventoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/InventoryItem.swift; sourceTree = SOURCE_ROOT; };
+		FBA06FDCB1FA473F826A7DC7 /* ManagerMembersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Views/Profile/ManagerMembersView.swift; sourceTree = SOURCE_ROOT; };
+		FE3C061798294DC0AFBAD77E /* SignUpViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/SignUpViewModel.swift; sourceTree = SOURCE_ROOT; };
+		FE55864289C14FFFA1F44AAC /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/Models/User.swift; sourceTree = SOURCE_ROOT; };
+		FE6231DEC7BE41068C0D1482 /* ManagerMembersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elevate/ViewModels/ManagerMembersViewModel.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -201,9 +217,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ED785F2E09698C0045F2D184 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				65D84508EF16A0E613692A3E /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4C3B846AFB66EF6E1C0DD6A1 /* ElevateTests */ = {
+			isa = PBXGroup;
+			children = (
+				94ED141CA954D4418633668D /* Core */,
+				DE042289A50097BAC626AD0E /* Models */,
+				A2F63A2A0612F09B0AB23305 /* ViewModels */,
+			);
+			name = ElevateTests;
+			path = ElevateTests;
+			sourceTree = "<group>";
+		};
 		642B889F2F7A6D22000ECE2C = {
 			isa = PBXGroup;
 			children = (
@@ -213,6 +248,7 @@
 				E2661D0C2F9CB2E300386075 /* Frameworks */,
 				642B88A92F7A6D23000ECE2C /* Products */,
 				645427962F87535D0087E383 /* Recovered References */,
+				4C3B846AFB66EF6E1C0DD6A1 /* ElevateTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -221,6 +257,7 @@
 			children = (
 				642B88A82F7A6D23000ECE2C /* Elevate.app */,
 				E2661D0B2F9CB2E300386075 /* ElevateWidgetExtension.appex */,
+				F7935E711888E2A2E6102490 /* ElevateTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -228,95 +265,139 @@
 		645427962F87535D0087E383 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				50FA0227F1A7432F8942A530 /* Elevate/Components/AccessibleComponents.swift */,
-				589DD542E06F4704B99B612E /* Elevate/Components/Components.swift */,
-				4507000CE1864F8C89B02E3E /* Elevate/Components/HeaderNavComponents.swift */,
-				75E5F258036A4EEE8C85EC7B /* Elevate/Components/ManagerBottomNav.swift */,
-				F7BA7B05859044F193E7E2EC /* Elevate/Components/TechnicianBottomNav.swift */,
-				BA3D60B8553B44828D00DCFD /* Elevate/Core/AccessibilityManager.swift */,
-				CDE0A3A91F104E7E8571FBBE /* Elevate/Core/AppSession.swift */,
-				974E1375789D4F67941696E0 /* Elevate/Core/ContentView.swift */,
-				ECCDAA7B62FC49A6ADF68E3C /* Elevate/Core/ElevateApp.swift */,
-				2211F45FF4CE41D5AAE87BF1 /* Elevate/Core/ManagerTabRouter.swift */,
-				734D12B88A3B4184A78D7898 /* Elevate/Extensions/Color+Extensions.swift */,
-				FA3B4E7BB5B44EA0B988321E /* Elevate/Models/InventoryItem.swift */,
-				E0E8BEF0A3A14786851DF735 /* Elevate/Models/IssueReport.swift */,
-				46936FECB97645D096D8002C /* Elevate/Models/Job.swift */,
-				C3A8985A235E4511A437B04F /* Elevate/Models/NotificationItem.swift */,
-				927D6E43B98B411AA0EA9B4E /* Elevate/Models/OrganizationDetails.swift */,
-				77933BC7A9AE427DA9F6E541 /* Elevate/Models/PendingAction.swift */,
-				4988B6A6BB6741E0A76C8BCC /* Elevate/Models/QuotationItem.swift */,
-				FE55864289C14FFFA1F44AAC /* Elevate/Models/User.swift */,
-				2EE769FAF12244AF9CA29084 /* Elevate/Services/CoreDataStack.swift */,
-				E07557B567814CE0A0B08A3D /* Elevate/Services/FirebaseService.swift */,
-				2FA12AFE31E446D5BB1D62DA /* Elevate/Services/LocalStorageService.swift */,
-				9A050E8B993E44DABCC2F949 /* Elevate/Services/LocationService.swift */,
-				0E996191E8404D22841C0B60 /* Elevate/Services/NetworkService.swift */,
-				06ACE687F6674931AF7949E9 /* Elevate/Services/NotificationService.swift */,
-				E8DBFB23765B4C8196B5E9E7 /* Elevate/Services/SessionStore.swift */,
-				F5D87147203E4A859869EECB /* Elevate/Services/SyncManager.swift */,
-				6214203131A74F9B948F584F /* Elevate/ViewModels/AccessibilityViewModel.swift */,
-				53112575E85041E0AD21A715 /* Elevate/ViewModels/CalendarViewModel.swift */,
-				71D0140B9FD9450BBD9F7C57 /* Elevate/ViewModels/DashboardViewModel.swift */,
-				E3D36D696562477F9CAAD9D9 /* Elevate/ViewModels/ForgotPasswordViewModel.swift */,
-				70A648BE49F845FC824E8247 /* Elevate/ViewModels/InventoryViewModel.swift */,
-				34DD2D31A979421BB498B94A /* Elevate/ViewModels/JobDetailsViewModel.swift */,
-				43F43AC58A594E0AAE1201A7 /* Elevate/ViewModels/JobIssueReportViewModel.swift */,
-				B9D464E86F154CD3AAD64104 /* Elevate/ViewModels/JobsViewModel.swift */,
-				462B7F73DC4945E7AD5C6679 /* Elevate/ViewModels/ManagerAddMemberViewModel.swift */,
-				BC08EBAA7A3A43C5A3BF019D /* Elevate/ViewModels/ManagerCreateJobViewModel.swift */,
-				46D79EAA08584D57AC8EE0D7 /* Elevate/ViewModels/ManagerEditProfileViewModel.swift */,
-				97B36A6996844051948997BF /* Elevate/ViewModels/ManagerJobIssueReportViewModel.swift */,
-				FE6231DEC7BE41068C0D1482 /* Elevate/ViewModels/ManagerMembersViewModel.swift */,
-				E9853925B2D64B32BB574A8A /* Elevate/ViewModels/ManagerOrganizationViewModel.swift */,
-				E85A6C7E41D4488A884EAA3F /* Elevate/ViewModels/ManagerQuotationApprovalViewModel.swift */,
-				C7C8F638F779405EA712F967 /* Elevate/ViewModels/MapViewModel.swift */,
-				33AC1668235A48EEAFB080DE /* Elevate/ViewModels/NotificationsViewModel.swift */,
-				D5A56BA57BB24C048016C960 /* Elevate/ViewModels/ProfileViewModel.swift */,
-				3B382B631A5C422E90453D11 /* Elevate/ViewModels/QuotationStatusViewModel.swift */,
-				2A08DAC5EFD0433E90FBDB3D /* Elevate/ViewModels/SignInViewModel.swift */,
-				FE3C061798294DC0AFBAD77E /* Elevate/ViewModels/SignUpViewModel.swift */,
-				D10322620E5C4529ADFA3E5C /* Elevate/ViewModels/StatisticsViewModel.swift */,
-				617A587FDAEF4935B14D2A56 /* Elevate/Views/Auth/ForgotPasswordView.swift */,
-				BD70C7BAC3AF47D1BD94DE01 /* Elevate/Views/Auth/SignInView.swift */,
-				32768371948C46CAA4444BF3 /* Elevate/Views/Auth/SignUpView.swift */,
-				62555E45323E46EABB18999E /* Elevate/Views/Auth/SplashScreenView.swift */,
-				00B56BE8583F46BCBDE9FB4C /* Elevate/Views/Dashboard/EventEditViewController.swift */,
-				29AF9C270F27486DB5EC67EE /* Elevate/Views/Dashboard/MainTabView.swift */,
-				D271FC7212AC442A8B2D3F8B /* Elevate/Views/Dashboard/ManagerCalendarView.swift */,
-				5E40DA9F81394B05949A085F /* Elevate/Views/Dashboard/ManagerDashboardView.swift */,
-				B90D3C8AA53542439CF5DF99 /* Elevate/Views/Dashboard/ManagerMainTabView.swift */,
-				1FEEA4F9485B44468F571A5F /* Elevate/Views/Dashboard/ManagerNotificationsView.swift */,
-				5343BEFA5DBA4A4199056692 /* Elevate/Views/Dashboard/ManagerStatisticsView.swift */,
-				EBFC923437FA4966A0DEE1C9 /* Elevate/Views/Dashboard/TechnicianCalendarView.swift */,
-				E87305C2E4134482820C4A7E /* Elevate/Views/Dashboard/TechnicianDashboardView.swift */,
-				5BB777E3A4BD44AEA4051B61 /* Elevate/Views/Dashboard/TechnicianNotificationsView.swift */,
-				6343010DFFF14DEC867B1121 /* Elevate/Views/Dashboard/TechnicianStatisticsView.swift */,
-				65E634552CD04A64AA0DD3A2 /* Elevate/Views/Inventory/InventoryView.swift */,
-				56A537049CED492B93939C00 /* Elevate/Views/Inventory/ManagerInventoryView.swift */,
-				7DCA178AC53C437EB33595B2 /* Elevate/Views/Jobs/JobDetailsView.swift */,
-				93AF331FD5C440049339CC6E /* Elevate/Views/Jobs/JobIssueReportView.swift */,
-				9DC386E7D9FD4048AA5133B6 /* Elevate/Views/Jobs/JobListView.swift */,
-				DBA6EB5CE35043C9B51EB779 /* Elevate/Views/Jobs/ManagerCreateJobView.swift */,
-				C6E38DCBC7E344A3868EBCC1 /* Elevate/Views/Jobs/ManagerJobDetailsView.swift */,
-				F545C0903B294288A9E5927B /* Elevate/Views/Jobs/ManagerJobIssueReportView.swift */,
-				AD4D5246541842639AC133FE /* Elevate/Views/Jobs/ManagerJobListView.swift */,
-				04B1118853164DC6A540AFD5 /* Elevate/Views/Jobs/ManagerQuotationApprovalView.swift */,
-				BA0E15A0A7434D83BDF594F7 /* Elevate/Views/Jobs/QuotationStatusView.swift */,
-				A8310FE440E346619CC68E28 /* Elevate/Views/Map/ManagerMapView.swift */,
-				622F1C6B45B44EB2B0807F3A /* Elevate/Views/Map/TechnicianMapView.swift */,
-				585520F937EC4AA0B7FE1494 /* Elevate/Views/Profile/ManagerAccessibilityView.swift */,
-				D27D94DD75514E959D2FE854 /* Elevate/Views/Profile/ManagerAddMemberView.swift */,
-				E71065595E664CF49A7E9693 /* Elevate/Views/Profile/ManagerEditProfileView.swift */,
-				FBA06FDCB1FA473F826A7DC7 /* Elevate/Views/Profile/ManagerMembersView.swift */,
-				A166FE13507645FA881469D0 /* Elevate/Views/Profile/ManagerOrganizationView.swift */,
-				E9220D097DC349C3A5E90F5E /* Elevate/Views/Profile/ManagerProfileView.swift */,
-				2A1E0D5098304A2789222337 /* Elevate/Views/Profile/TechnicianAccessibilityView.swift */,
-				22B0D25D64EE4ABA9066F3A5 /* Elevate/Views/Profile/TechnicianProfileView.swift */,
-				F45533A49BF745B18373380A /* Elevate/Views/Shared/CameraCaptureView.swift */,
-				EA2F33D86D464CFDA6B0375D /* Elevate/Views/Shared/PhotoPreview.swift */,
+				50FA0227F1A7432F8942A530 /* AccessibleComponents.swift */,
+				589DD542E06F4704B99B612E /* Components.swift */,
+				4507000CE1864F8C89B02E3E /* HeaderNavComponents.swift */,
+				75E5F258036A4EEE8C85EC7B /* ManagerBottomNav.swift */,
+				F7BA7B05859044F193E7E2EC /* TechnicianBottomNav.swift */,
+				BA3D60B8553B44828D00DCFD /* AccessibilityManager.swift */,
+				CDE0A3A91F104E7E8571FBBE /* AppSession.swift */,
+				974E1375789D4F67941696E0 /* ContentView.swift */,
+				ECCDAA7B62FC49A6ADF68E3C /* ElevateApp.swift */,
+				2211F45FF4CE41D5AAE87BF1 /* ManagerTabRouter.swift */,
+				734D12B88A3B4184A78D7898 /* Color+Extensions.swift */,
+				FA3B4E7BB5B44EA0B988321E /* InventoryItem.swift */,
+				E0E8BEF0A3A14786851DF735 /* IssueReport.swift */,
+				46936FECB97645D096D8002C /* Job.swift */,
+				C3A8985A235E4511A437B04F /* NotificationItem.swift */,
+				927D6E43B98B411AA0EA9B4E /* OrganizationDetails.swift */,
+				77933BC7A9AE427DA9F6E541 /* PendingAction.swift */,
+				4988B6A6BB6741E0A76C8BCC /* QuotationItem.swift */,
+				FE55864289C14FFFA1F44AAC /* User.swift */,
+				2EE769FAF12244AF9CA29084 /* CoreDataStack.swift */,
+				E07557B567814CE0A0B08A3D /* FirebaseService.swift */,
+				2FA12AFE31E446D5BB1D62DA /* LocalStorageService.swift */,
+				9A050E8B993E44DABCC2F949 /* LocationService.swift */,
+				0E996191E8404D22841C0B60 /* NetworkService.swift */,
+				06ACE687F6674931AF7949E9 /* NotificationService.swift */,
+				E8DBFB23765B4C8196B5E9E7 /* SessionStore.swift */,
+				F5D87147203E4A859869EECB /* SyncManager.swift */,
+				6214203131A74F9B948F584F /* AccessibilityViewModel.swift */,
+				53112575E85041E0AD21A715 /* CalendarViewModel.swift */,
+				71D0140B9FD9450BBD9F7C57 /* DashboardViewModel.swift */,
+				E3D36D696562477F9CAAD9D9 /* ForgotPasswordViewModel.swift */,
+				70A648BE49F845FC824E8247 /* InventoryViewModel.swift */,
+				34DD2D31A979421BB498B94A /* JobDetailsViewModel.swift */,
+				43F43AC58A594E0AAE1201A7 /* JobIssueReportViewModel.swift */,
+				B9D464E86F154CD3AAD64104 /* JobsViewModel.swift */,
+				462B7F73DC4945E7AD5C6679 /* ManagerAddMemberViewModel.swift */,
+				BC08EBAA7A3A43C5A3BF019D /* ManagerCreateJobViewModel.swift */,
+				46D79EAA08584D57AC8EE0D7 /* ManagerEditProfileViewModel.swift */,
+				97B36A6996844051948997BF /* ManagerJobIssueReportViewModel.swift */,
+				FE6231DEC7BE41068C0D1482 /* ManagerMembersViewModel.swift */,
+				E9853925B2D64B32BB574A8A /* ManagerOrganizationViewModel.swift */,
+				E85A6C7E41D4488A884EAA3F /* ManagerQuotationApprovalViewModel.swift */,
+				C7C8F638F779405EA712F967 /* MapViewModel.swift */,
+				33AC1668235A48EEAFB080DE /* NotificationsViewModel.swift */,
+				D5A56BA57BB24C048016C960 /* ProfileViewModel.swift */,
+				3B382B631A5C422E90453D11 /* QuotationStatusViewModel.swift */,
+				2A08DAC5EFD0433E90FBDB3D /* SignInViewModel.swift */,
+				FE3C061798294DC0AFBAD77E /* SignUpViewModel.swift */,
+				D10322620E5C4529ADFA3E5C /* StatisticsViewModel.swift */,
+				617A587FDAEF4935B14D2A56 /* ForgotPasswordView.swift */,
+				BD70C7BAC3AF47D1BD94DE01 /* SignInView.swift */,
+				32768371948C46CAA4444BF3 /* SignUpView.swift */,
+				62555E45323E46EABB18999E /* SplashScreenView.swift */,
+				00B56BE8583F46BCBDE9FB4C /* EventEditViewController.swift */,
+				29AF9C270F27486DB5EC67EE /* MainTabView.swift */,
+				D271FC7212AC442A8B2D3F8B /* ManagerCalendarView.swift */,
+				5E40DA9F81394B05949A085F /* ManagerDashboardView.swift */,
+				B90D3C8AA53542439CF5DF99 /* ManagerMainTabView.swift */,
+				1FEEA4F9485B44468F571A5F /* ManagerNotificationsView.swift */,
+				5343BEFA5DBA4A4199056692 /* ManagerStatisticsView.swift */,
+				EBFC923437FA4966A0DEE1C9 /* TechnicianCalendarView.swift */,
+				E87305C2E4134482820C4A7E /* TechnicianDashboardView.swift */,
+				5BB777E3A4BD44AEA4051B61 /* TechnicianNotificationsView.swift */,
+				6343010DFFF14DEC867B1121 /* TechnicianStatisticsView.swift */,
+				65E634552CD04A64AA0DD3A2 /* InventoryView.swift */,
+				56A537049CED492B93939C00 /* ManagerInventoryView.swift */,
+				7DCA178AC53C437EB33595B2 /* JobDetailsView.swift */,
+				93AF331FD5C440049339CC6E /* JobIssueReportView.swift */,
+				9DC386E7D9FD4048AA5133B6 /* JobListView.swift */,
+				DBA6EB5CE35043C9B51EB779 /* ManagerCreateJobView.swift */,
+				C6E38DCBC7E344A3868EBCC1 /* ManagerJobDetailsView.swift */,
+				F545C0903B294288A9E5927B /* ManagerJobIssueReportView.swift */,
+				AD4D5246541842639AC133FE /* ManagerJobListView.swift */,
+				04B1118853164DC6A540AFD5 /* ManagerQuotationApprovalView.swift */,
+				BA0E15A0A7434D83BDF594F7 /* QuotationStatusView.swift */,
+				A8310FE440E346619CC68E28 /* ManagerMapView.swift */,
+				622F1C6B45B44EB2B0807F3A /* TechnicianMapView.swift */,
+				585520F937EC4AA0B7FE1494 /* ManagerAccessibilityView.swift */,
+				D27D94DD75514E959D2FE854 /* ManagerAddMemberView.swift */,
+				E71065595E664CF49A7E9693 /* ManagerEditProfileView.swift */,
+				FBA06FDCB1FA473F826A7DC7 /* ManagerMembersView.swift */,
+				A166FE13507645FA881469D0 /* ManagerOrganizationView.swift */,
+				E9220D097DC349C3A5E90F5E /* ManagerProfileView.swift */,
+				2A1E0D5098304A2789222337 /* TechnicianAccessibilityView.swift */,
+				22B0D25D64EE4ABA9066F3A5 /* TechnicianProfileView.swift */,
+				F45533A49BF745B18373380A /* CameraCaptureView.swift */,
+				EA2F33D86D464CFDA6B0375D /* PhotoPreview.swift */,
 			);
 			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		67B0377355864EDFA54554D7 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				924C8F5F510B31570CC59E1D /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		94ED141CA954D4418633668D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				97A6AD3EAB1B3AB9A700D1ED /* Utilities */,
+			);
+			name = Core;
+			path = Core;
+			sourceTree = "<group>";
+		};
+		97A6AD3EAB1B3AB9A700D1ED /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				72CD17F34EDB9874A69F988A /* PasswordValidatorTests.swift */,
+			);
+			name = Utilities;
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		A2F63A2A0612F09B0AB23305 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		DE042289A50097BAC626AD0E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B2DD91D8E7BA0B0EE2BE880D /* UserTests.swift */,
+				8AC0BD3006F822BEC80304CA /* ElevateJobTests.swift */,
+			);
+			name = Models;
+			path = Models;
 			sourceTree = "<group>";
 		};
 		E2661D0C2F9CB2E300386075 /* Frameworks */ = {
@@ -324,6 +405,7 @@
 			children = (
 				E2661D0D2F9CB2E300386075 /* WidgetKit.framework */,
 				E2661D0F2F9CB2E300386075 /* SwiftUI.framework */,
+				67B0377355864EDFA54554D7 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -359,6 +441,24 @@
 			productReference = 642B88A82F7A6D23000ECE2C /* Elevate.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B008E2ABDE797A99C7CFA1D8 /* ElevateTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74B5D18C018590DBD1ED21CE /* Build configuration list for PBXNativeTarget "ElevateTests" */;
+			buildPhases = (
+				CED6A706B9D5DB2AED6E3BA3 /* Sources */,
+				ED785F2E09698C0045F2D184 /* Frameworks */,
+				986669E3E17ACC2A78A0611B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				184F0108ED026552B033D9B7 /* PBXTargetDependency */,
+			);
+			name = ElevateTests;
+			productName = ElevateTests;
+			productReference = F7935E711888E2A2E6102490 /* ElevateTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		E2661D0A2F9CB2E300386075 /* ElevateWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E2661D212F9CB2E500386075 /* Build configuration list for PBXNativeTarget "ElevateWidgetExtension" */;
@@ -375,8 +475,6 @@
 				E2661D112F9CB2E300386075 /* ElevateWidget */,
 			);
 			name = ElevateWidgetExtension;
-			packageProductDependencies = (
-			);
 			productName = ElevateWidgetExtension;
 			productReference = E2661D0B2F9CB2E300386075 /* ElevateWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -418,12 +516,20 @@
 			targets = (
 				642B88A72F7A6D23000ECE2C /* Elevate */,
 				E2661D0A2F9CB2E300386075 /* ElevateWidgetExtension */,
+				B008E2ABDE797A99C7CFA1D8 /* ElevateTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		642B88A62F7A6D23000ECE2C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		986669E3E17ACC2A78A0611B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -447,6 +553,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CED6A706B9D5DB2AED6E3BA3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				107503B1FF866ABA96E79D1C /* PasswordValidatorTests.swift in Sources */,
+				49AC73C214AE5CE2A0B61649 /* UserTests.swift in Sources */,
+				4AFD4C56A0393B22AFA25FBC /* ElevateJobTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E2661D072F9CB2E300386075 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -457,6 +573,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		184F0108ED026552B033D9B7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Elevate;
+			target = 642B88A72F7A6D23000ECE2C /* Elevate */;
+			targetProxy = 3F2D51C2F4CE5727DDB30832 /* PBXContainerItemProxy */;
+		};
 		E2661D1E2F9CB2E500386075 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E2661D0A2F9CB2E300386075 /* ElevateWidgetExtension */;
@@ -465,6 +587,23 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		3BC5532863C4DD05951C6A41 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.elevate.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Elevate.app/Elevate";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		642B88B12F7A6D24000ECE2C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -662,6 +801,22 @@
 			};
 			name = Release;
 		};
+		B6BB7BF234AB99F7C59A66C8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.elevate.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Elevate.app/Elevate";
+			};
+			name = Debug;
+		};
 		E2661D222F9CB2E500386075 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -741,6 +896,15 @@
 			buildConfigurations = (
 				642B88B42F7A6D24000ECE2C /* Debug */,
 				642B88B52F7A6D24000ECE2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74B5D18C018590DBD1ED21CE /* Build configuration list for PBXNativeTarget "ElevateTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3BC5532863C4DD05951C6A41 /* Release */,
+				B6BB7BF234AB99F7C59A66C8 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

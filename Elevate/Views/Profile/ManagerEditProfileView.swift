@@ -287,6 +287,8 @@ struct ManagerEditProfileView: View {
                                     Image(uiImage: image)
                                         .resizable()
                                         .scaledToFill()
+                                } else if let user = appSession.currentUser {
+                                    ProfilePhotoView(userId: user.id, size: 110)
                                 } else {
                                     Image(systemName: "person.fill.viewfinder")
                                         .font(.system(size: 40))
